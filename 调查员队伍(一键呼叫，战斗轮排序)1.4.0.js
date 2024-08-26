@@ -6,7 +6,8 @@
 // @timestamp    1724468302
 // 2024-08-24 10:58:22
 // @license      MIT
-// @homepageURL  https://github.com/sealdice/javascript
+// @homepageURL  https://github.com/error2913/sealdice-js/
+// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/%E8%B0%83%E6%9F%A5%E5%91%98%E9%98%9F%E4%BC%8D%28%E4%B8%80%E9%94%AE%E5%91%BC%E5%8F%AB%EF%BC%8C%E6%88%98%E6%96%97%E8%BD%AE%E6%8E%92%E5%BA%8F%291.4.0.js
 // ==/UserScript==
 
 // 首先检查是否已经存在
