@@ -6,7 +6,7 @@
 // @timestamp    1721822416
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
-// @updateUrl    
+// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/deepseekchat%E7%89%88AI%E9%AA%B0%E5%A8%98%E5%88%A4%E6%96%AD%E6%8F%92%E5%98%B4%E5%9B%9E%E5%A4%8D%E5%9B%BE%E7%89%87v2.0.0.js
 // ==/UserScript==
 
 if (!seal.ext.find('deepseekai')) {
