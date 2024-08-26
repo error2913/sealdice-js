@@ -6,7 +6,8 @@
 // @timestamp    1717065841
 // 2024-05-30 18:44:01
 // @license      MIT
-// @homepageURL  https://github.com/sealdice/javascript
+// @homepageURL  https://github.com/error2913/sealdice-js/
+// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/%E8%9F%B9%E8%84%9A%E5%B0%8F%E6%B8%B8%E6%88%8Fv1.0.0.js
 // ==/UserScript==
 // 首先检查是否已经存在
 //部分指令参考了星界佬佬的诡秘游戏
