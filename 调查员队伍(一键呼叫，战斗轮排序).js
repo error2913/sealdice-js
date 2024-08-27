@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         team call
 // @author       错误
-// @version      1.4.1
-// @description  .team 获取帮助。在其他框架看到类似的插件，找了一下发现海豹似乎没有，故自己写一个。1.1更新：添加了定时器功能，呼叫后未在限定时间回复的成员将被提及。1.2更新：添加了查看队伍属性功能。在重载插件后，需要队伍成员在群里发言过一次，否则会出现难以理解的bug。1.3更新：添加了设置全队属性的功能和一些配置项。1.4更新：添加了战斗轮排序功能。
+// @version      1.4.2
+// @description  .team 获取帮助。在其他框架看到类似的插件，找了一下发现海豹似乎没有，故自己写一个。.team获取帮助。非指令关键词部分请查看指令。
 // @timestamp    1724468302
 // 2024-08-24 10:58:22
 // @license      MIT
@@ -13,7 +13,7 @@
 // 首先检查是否已经存在
 let ext = seal.ext.find('teamcall');
 if (!ext) {
-    ext = seal.ext.new('teamcall', '错误（2913949387）', '1.4.1');
+    ext = seal.ext.new('teamcall', '错误（2913949387）', '1.4.2');
     seal.ext.register(ext);
     const data = JSON.parse(ext.storageGet("data") || '{}')
     if (!data.hasOwnProperty('call')) data['call'] = {}
@@ -22,6 +22,7 @@ if (!ext) {
     seal.ext.registerStringConfig(ext, '展示成员前缀语', '成员如下')
     seal.ext.registerStringConfig(ext, '展示属性前缀语', '属性如下')
     seal.ext.registerStringConfig(ext, '排序前缀语', '排序如下')
+    seal.ext.registerStringConfig(ext, 'call结束前缀语', '应到{{当前人数}}人，实到{{签到人数}}人，未到{{咕咕人数}}人。未到如下：')
     seal.ext.registerStringConfig(ext, '添加成员回复', '成功添加{{被@的长度}}位调查员，当前队伍人数{{当前人数}}人。')
     seal.ext.registerStringConfig(ext, '删除成员回复', '成功删除{{被@的长度}}位调查员，当前队伍人数{{当前人数}}人。')
     seal.ext.registerStringConfig(ext, '队伍为空', '队伍里没有成员。')
@@ -115,7 +116,10 @@ if (!ext) {
 
                 data['call'][groupId] = data[groupId]
                 setTimeout(() => {
-                    let text = `应到${data[groupId].length}人，实到${data[groupId].length - data['call'][groupId].length}人，未到${data['call'][groupId].length}人。未到如下：`
+                    let text = seal.ext.getStringConfig(ext, "call结束前缀语")
+                    text = text.replace('{{当前人数}}',data[groupId].length)
+                    text = text.replace('{{签到人数}}',data[groupId].length - data['call'][groupId].length)
+                    text = text.replace('{{咕咕人数}}',data['call'][groupId].length)
                     for (let mctx of data['call'][groupId]) text += `\n[CQ:at,qq=${mctx.player.userId.replace(/\D+/g, "")}]`;
                     seal.replyToSender(ctx, msg, text)
                     delete data['call'][groupId];
