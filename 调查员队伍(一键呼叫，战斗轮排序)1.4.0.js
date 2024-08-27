@@ -7,7 +7,7 @@
 // 2024-08-24 10:58:22
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
-// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/%E8%B0%83%E6%9F%A5%E5%91%98%E9%98%9F%E4%BC%8D%28%E4%B8%80%E9%94%AE%E5%91%BC%E5%8F%AB%EF%BC%8C%E6%88%98%E6%96%97%E8%BD%AE%E6%8E%92%E5%BA%8F%291.4.0.js
+// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/%E8%B0%83%E6%9F%A5%E5%91%98%E9%98%9F%E4%BC%8D%28%E4%B8%80%E9%94%AE%E5%91%BC%E5%8F%AB%EF%BC%8C%E6%88%98%E6%96%97%E8%BD%AE%E6%8E%92%E5%BA%8F%29.js
 // ==/UserScript==
 
 // 首先检查是否已经存在
@@ -217,14 +217,12 @@ if (!ext) {
                 for (let mctx of data['call'][groupId]) text += `\n[CQ:at,qq=${mctx.player.userId.replace(/\D+/g, "")}]`;
                 seal.replyToSender(ctx, msg, text)
                 delete data['call'][groupId];
-                ext.storageSet("data", JSON.stringify(data))
                 return;
             },seal.ext.getIntConfig(ext, "呼叫时间限制（s）") * 1000)
         }
         if (message == seal.ext.getStringConfig(ext, "签到")){
             if (!data['call'].hasOwnProperty(groupId)) return;
             data['call'][groupId] = data['call'][groupId].filter(mctx => mctx.player.userId != ctx.player.userId)
-            ext.storageSet("data", JSON.stringify(data))
             return;
         }
         if (message == seal.ext.getStringConfig(ext, "开始战斗轮排序")){
