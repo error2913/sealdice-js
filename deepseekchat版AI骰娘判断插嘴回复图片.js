@@ -96,7 +96,6 @@ if (!seal.ext.find('deepseekai')) {
             console.log('时间差：' + timeDiff + '当前活跃度：' + data['activity'][group].count)
             data['activity'][group].lastTimestamp = timestamp;
         }
-        ext.storageSet("data", JSON.stringify(data));
     }
 
     // 根据活跃度调整计数器和计时器
@@ -148,7 +147,6 @@ if (!seal.ext.find('deepseekai')) {
         if (!data.hasOwnProperty(contextKey)) data[contextKey] = [];
         data[contextKey].unshift(message);
         if (data[contextKey].length > MAX_CONTEXT_LENGTH) data[contextKey] = data[contextKey].slice(0, MAX_CONTEXT_LENGTH);
-        ext.storageSet("data", JSON.stringify(data))
         return imagesign;
     }
 
@@ -412,6 +410,7 @@ if (!seal.ext.find('deepseekai')) {
                         data['interrupt'][group] = false
                         data['chat'][group][0] = true
                         seal.replyToSender(ctx, msg, 'AI已开启');
+                        ext.storageSet("data", JSON.stringify(data))
                         return;
                     }
                 }
@@ -428,8 +427,8 @@ if (!seal.ext.find('deepseekai')) {
                     if (ctx.privilegeLevel >= data['chat'][group][1]) {
                         data['interrupt'][group] = false
                         data['chat'][group][0] = false
-                        ext.storageSet("data", JSON.stringify(data))
                         seal.replyToSender(ctx, msg, 'AI已关闭');
+                        ext.storageSet("data", JSON.stringify(data))
                         return;
                     }
                 }
@@ -454,6 +453,7 @@ if (!seal.ext.find('deepseekai')) {
                     delete data['counter'][val2]
                     delete data['timer'][val2]
                     seal.replyToSender(ctx, msg, '删除完成');
+                    ext.storageSet("data", JSON.stringify(data))
                     return;
                 }
             }
@@ -466,6 +466,7 @@ if (!seal.ext.find('deepseekai')) {
                 data['chat'][val2] = [false, val3]
                 data['interrupt'][val2] = false
                 seal.replyToSender(ctx, msg, '权限修改完成');
+                ext.storageSet("data", JSON.stringify(data))
                 return;
             }
             case 'fgt': {
