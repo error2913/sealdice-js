@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         team call
 // @author       错误
-// @version      1.4.0
+// @version      1.4.1
 // @description  .team 获取帮助。在其他框架看到类似的插件，找了一下发现海豹似乎没有，故自己写一个。1.1更新：添加了定时器功能，呼叫后未在限定时间回复的成员将被提及。1.2更新：添加了查看队伍属性功能。在重载插件后，需要队伍成员在群里发言过一次，否则会出现难以理解的bug。1.3更新：添加了设置全队属性的功能和一些配置项。1.4更新：添加了战斗轮排序功能。
 // @timestamp    1724468302
 // 2024-08-24 10:58:22
@@ -13,7 +13,7 @@
 // 首先检查是否已经存在
 let ext = seal.ext.find('teamcall');
 if (!ext) {
-    ext = seal.ext.new('teamcall', '错误（2913949387）', '1.4.0');
+    ext = seal.ext.new('teamcall', '错误（2913949387）', '1.4.1');
     seal.ext.register(ext);
     const data = JSON.parse(ext.storageGet("data") || '{}')
     if (!data.hasOwnProperty('call')) data['call'] = {}
