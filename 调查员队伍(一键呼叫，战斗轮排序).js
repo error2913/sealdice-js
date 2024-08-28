@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         team call
 // @author       错误
-// @version      1.4.3
+// @version      1.4.4
 // @description  .team 获取帮助。在其他框架看到类似的插件，找了一下发现海豹似乎没有，故自己写一个。.team获取帮助。非指令关键词部分请查看指令。
 // @timestamp    1724468302
 // 2024-08-24 10:58:22
@@ -13,7 +13,7 @@
 // 首先检查是否已经存在
 let ext = seal.ext.find('team call');
 if (!ext) {
-    ext = seal.ext.new('team call', '错误', '1.4.3');
+    ext = seal.ext.new('team call', '错误', '1.4.4');
     seal.ext.register(ext);
     const data = JSON.parse(ext.storageGet("data") || '{}')
     if (!data.hasOwnProperty('call')) data['call'] = {}
@@ -75,7 +75,7 @@ if (!ext) {
                 }
             }
             if (!sign) {
-                let ctxargs = [ctx.endPoint.userId, groupId, msg.guildId, mctx.player.userId, mctx.player.name];
+                let ctxargs = [ctx.endPoint.userId, groupId, msg.guildId, mctx.player.userId];
                 atlst.push(ctxargs)
             }
             mctx = seal.getCtxProxyAtPos(ctx, cmdArgs, pos)
@@ -144,6 +144,7 @@ if (!ext) {
                     ext.storageSet("data", JSON.stringify(data))
                     return;
                 },seal.ext.getIntConfig(ext, "呼叫时间限制（s）") * 1000)
+                return seal.ext.newCmdExecuteResult(true);
             }
             case 'lst': {
                 if (data[groupId].length == 0) {
@@ -151,7 +152,10 @@ if (!ext) {
                     return seal.ext.newCmdExecuteResult(true);
                 }
                 let text = seal.ext.getStringConfig(ext, "展示成员前缀语")
-                for (let mctxargs of data[groupId]) text += `\n${mctxargs[4]}`;
+                for (let mctxargs of data[groupId]) {
+                    let mctx = getCtxById(...mctxargs);
+                    text += `\n${mctx.player.name}`;
+                }
                 seal.replyToSender(ctx, msg, text)
                 return seal.ext.newCmdExecuteResult(true);
             }
@@ -164,11 +168,11 @@ if (!ext) {
                 let text = seal.ext.getStringConfig(ext, "展示属性前缀语")
                 if (val2) for (let mctxargs of data[groupId]) {
                     let mctx = getCtxById(...mctxargs);
-                    text += `\n${mctxargs[4]} ${val2}${seal.vars.intGet(mctx, val2)[0]}`;
+                    text += `\n${mctx.player.name} ${val2}${seal.vars.intGet(mctx, val2)[0]}`;
                 }
                 else for (let mctxargs of data[groupId]) {
                     let mctx = getCtxById(...mctxargs);
-                    text += `\n${mctxargs[4]} hp${seal.vars.intGet(mctx, 'hp')[0]}/${Math.floor((seal.vars.intGet(mctx, 'con')[0] + seal.vars.intGet(mctx, 'siz')[0])/10)} san${seal.vars.intGet(mctx, 'san')[0]}/${seal.vars.intGet(mctx, 'pow')[0]} dex${seal.vars.intGet(mctx, 'dex')[0]}`;
+                    text += `\n${mctx.player.name} hp${seal.vars.intGet(mctx, 'hp')[0]}/${Math.floor((seal.vars.intGet(mctx, 'con')[0] + seal.vars.intGet(mctx, 'siz')[0])/10)} san${seal.vars.intGet(mctx, 'san')[0]}/${seal.vars.intGet(mctx, 'pow')[0]} dex${seal.vars.intGet(mctx, 'dex')[0]}`;
                 }
                 seal.replyToSender(ctx, msg, text)
                 return seal.ext.newCmdExecuteResult(true);
@@ -183,12 +187,15 @@ if (!ext) {
                     return seal.ext.newCmdExecuteResult(true);
                 }
                 
-                let text = seal.ext.getStringConfig(ext, "排序前缀语")
-                data[groupId].sort(function (a, b) {  return seal.vars.intGet(getCtxById(...b), val2)[0] - seal.vars.intGet(getCtxById(...a), val2)[0] })
-                for (let mctxargs of data[groupId]) {
-                    let mctx = getCtxById(...mctxargs);
-                    text += `\n${mctxargs[4]} ${val2}${seal.vars.intGet(mctx, val2)[0]}`;
-                }
+                let text = seal.ext.getStringConfig(ext, "排序前缀语");
+                let memberContexts = data[groupId].map(mctxargs => {
+                    return {
+                        ctx: getCtxById(...mctxargs),
+                        mctxargs: mctxargs
+                    };
+                });
+                memberContexts.sort(function (a, b) {return seal.vars.intGet(b.ctx, val2)[0] - seal.vars.intGet(a.ctx, val2)[0];});
+                for (let member of memberContexts) text += `\n${member.ctx.player.name} ${val2}${seal.vars.intGet(member.ctx, val2)[0]}`;
                 
                 seal.replyToSender(ctx, msg, text)
                 return seal.ext.newCmdExecuteResult(true);
@@ -260,12 +267,15 @@ if (!ext) {
                 return seal.ext.newCmdExecuteResult(true);
             }
             
-            let text = seal.ext.getStringConfig(ext, "排序前缀语")
-            data[groupId].sort(function (a, b) {  return seal.vars.intGet(getCtxById(...b), 'dex')[0] - seal.vars.intGet(getCtxById(...a), 'dex')[0] })
-            for (let mctxargs of data[groupId]) {
-                let mctx = getCtxById(...mctxargs);
-                text += `\n${mctxargs[4]} dex${seal.vars.intGet(mctx, 'dex')[0]}`;
-            }
+            let text = seal.ext.getStringConfig(ext, "排序前缀语");
+            let memberContexts = data[groupId].map(mctxargs => {
+                return {
+                    ctx: getCtxById(...mctxargs),
+                    mctxargs: mctxargs
+                };
+            });
+            memberContexts.sort(function (a, b) {return seal.vars.intGet(b.ctx, 'dex')[0] - seal.vars.intGet(a.ctx, 'dex')[0];});
+            for (let member of memberContexts) text += `\n${member.ctx.player.name} dex${seal.vars.intGet(member.ctx, 'dex')[0]}`;
             
             seal.replyToSender(ctx, msg, text)
             return seal.ext.newCmdExecuteResult(true);
