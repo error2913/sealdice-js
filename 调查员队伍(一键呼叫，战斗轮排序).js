@@ -2,7 +2,7 @@
 // @name         team call
 // @author       错误
 // @version      1.4.4
-// @description  .team 获取帮助。在其他框架看到类似的插件，找了一下发现海豹似乎没有，故自己写一个。.team获取帮助。非指令关键词部分请查看指令。
+// @description  .team 获取帮助。在其他框架看到类似的插件，找了一下发现海豹似乎没有，故自己写一个。.team获取帮助。非指令关键词部分请查看插件配置。
 // @timestamp    1724468302
 // 2024-08-24 10:58:22
 // @license      MIT
@@ -51,7 +51,15 @@ if (!ext) {
 
     const cmdteam = seal.ext.newCmdItemInfo();
     cmdteam.name = 'team';
-    cmdteam.help = '帮助：\n【.team add@xx@xxx...】添加若干成员\n【.team del@xx@xxx...】删除若干成员\n【.team clr】清除队伍\n【.team call】调查员集结！\n【.team lst】成员列表\n【.team show (属性名)】查看属性（可能出现属性全为0的异常情况，队伍中成员在群内发送任意消息可解决）\n【.team st 属性名】数值设置全队属性\n【.team sort 属性名】对成员的该项属性排序';
+    cmdteam.help = `帮助：
+【.team add@xx@xxx...】添加若干成员
+【.team del@xx@xxx...】删除若干成员
+【.team clr】清除队伍
+【.team call】调查员集结！
+【.team lst】成员列表
+【.team show (属性名)】查看属性
+【.team st 属性名】数值设置全队属性
+【.team sort 属性名】对成员的该项属性排序`;
     cmdteam.allowDelegate = true;
     cmdteam.solve = (ctx, msg, cmdArgs) => {
         if (ctx.privilegeLevel < seal.ext.getIntConfig(ext, "使用指令所需权限") || ctx.isPrivate) return;
