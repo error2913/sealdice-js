@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         team call
 // @author       错误
-// @version      1.4.4
+// @version      1.5.0
 // @description  .team 获取帮助。在其他框架看到类似的插件，找了一下发现海豹似乎没有，故自己写一个。.team获取帮助。非指令关键词部分请查看插件配置。
 // @timestamp    1724468302
 // 2024-08-24 10:58:22
@@ -13,7 +13,7 @@
 // 首先检查是否已经存在
 let ext = seal.ext.find('team call');
 if (!ext) {
-    ext = seal.ext.new('team call', '错误', '1.4.4');
+    ext = seal.ext.new('team call', '错误', '1.5.0');
     seal.ext.register(ext);
     const data = JSON.parse(ext.storageGet("data") || '{}')
     if (!data.hasOwnProperty('call')) data['call'] = {}
@@ -32,7 +32,6 @@ if (!ext) {
     seal.ext.registerStringConfig(ext, '开始战斗轮排序', '（战斗轮开始）')
     seal.ext.registerStringConfig(ext, '签到', '到')
     seal.ext.registerIntConfig(ext, '呼叫时间限制（s）', 60)
-    seal.ext.registerIntConfig(ext, '使用指令所需权限', 50)
 
     function getCtxById(epId, groupId, guildId, senderId) {
         let eps = seal.getEndPoints();
@@ -52,17 +51,17 @@ if (!ext) {
     const cmdteam = seal.ext.newCmdItemInfo();
     cmdteam.name = 'team';
     cmdteam.help = `帮助：
-【.team add@xx@xxx...】添加若干成员
-【.team del@xx@xxx...】删除若干成员
+【.team add (me)@xx@xxx...】添加若干成员
+【.team del (me)@xx@xxx...】删除若干成员
 【.team clr】清除队伍
 【.team call】调查员集结！
 【.team lst】成员列表
-【.team show (属性名)】查看属性
-【.team st 属性名】数值设置全队属性
+【.team st (属性名)】查看属性
+【.team st 属性名 表达式】修改全队属性
 【.team sort 属性名】对成员的该项属性排序`;
     cmdteam.allowDelegate = true;
     cmdteam.solve = (ctx, msg, cmdArgs) => {
-        if (ctx.privilegeLevel < seal.ext.getIntConfig(ext, "使用指令所需权限") || ctx.isPrivate) return;
+        if (ctx.isPrivate) return;
         
         let val = cmdArgs.getArgN(1);
         let val2 = cmdArgs.getArgN(2);
@@ -88,6 +87,10 @@ if (!ext) {
             }
             mctx = seal.getCtxProxyAtPos(ctx, cmdArgs, pos)
             pos++;
+        }
+        if (val2 == 'me') {
+            let ctxargs = [ctx.endPoint.userId, groupId, msg.guildId, ctx.player.userId];
+            atlst.push(ctxargs)
         }
 
 
@@ -167,24 +170,6 @@ if (!ext) {
                 seal.replyToSender(ctx, msg, text)
                 return seal.ext.newCmdExecuteResult(true);
             }
-            case 'show': {
-                if (data[groupId].length == 0) {
-                    seal.replyToSender(ctx, msg, seal.ext.getStringConfig(ext, "队伍为空"))
-                    return seal.ext.newCmdExecuteResult(true);
-                }
-                
-                let text = seal.ext.getStringConfig(ext, "展示属性前缀语")
-                if (val2) for (let mctxargs of data[groupId]) {
-                    let mctx = getCtxById(...mctxargs);
-                    text += `\n${mctx.player.name} ${val2}${seal.vars.intGet(mctx, val2)[0]}`;
-                }
-                else for (let mctxargs of data[groupId]) {
-                    let mctx = getCtxById(...mctxargs);
-                    text += `\n${mctx.player.name} hp${seal.vars.intGet(mctx, 'hp')[0]}/${Math.floor((seal.vars.intGet(mctx, 'con')[0] + seal.vars.intGet(mctx, 'siz')[0])/10)} san${seal.vars.intGet(mctx, 'san')[0]}/${seal.vars.intGet(mctx, 'pow')[0]} dex${seal.vars.intGet(mctx, 'dex')[0]}`;
-                }
-                seal.replyToSender(ctx, msg, text)
-                return seal.ext.newCmdExecuteResult(true);
-            }
             case 'sort': {
                 if (data[groupId].length == 0) {
                     seal.replyToSender(ctx, msg, seal.ext.getStringConfig(ext, "队伍为空"))
@@ -213,17 +198,42 @@ if (!ext) {
                     seal.replyToSender(ctx, msg, seal.ext.getStringConfig(ext, "队伍为空"))
                     return seal.ext.newCmdExecuteResult(true);
                 }
-                if(!val3){
-                    seal.replyToSender(ctx, msg, "参数错误")
+                if (!val2) {
+                    let text = seal.ext.getStringConfig(ext, "展示属性前缀语")
+                    if (val2) for (let mctxargs of data[groupId]) {
+                        let mctx = getCtxById(...mctxargs);
+                        text += `\n${mctx.player.name} ${val2}${seal.vars.intGet(mctx, val2)[0]}`;
+                    }
+                    else for (let mctxargs of data[groupId]) {
+                        let mctx = getCtxById(...mctxargs);
+                        text += `\n${mctx.player.name} hp${seal.vars.intGet(mctx, 'hp')[0]}/${Math.floor((seal.vars.intGet(mctx, 'con')[0] + seal.vars.intGet(mctx, 'siz')[0])/10)} san${seal.vars.intGet(mctx, 'san')[0]}/${seal.vars.intGet(mctx, 'pow')[0]} dex${seal.vars.intGet(mctx, 'dex')[0]}`;
+                    }
+                    seal.replyToSender(ctx, msg, text)
                     return seal.ext.newCmdExecuteResult(true);
                 }
 
-                for (let mctxargs of data[groupId]) {
-                    let mctx = getCtxById(...mctxargs);
-                    seal.vars.intSet(mctx, val2, parseInt(val3))
+                if (!val3) {
+                    let text = seal.ext.getStringConfig(ext, "展示属性前缀语")
+                    for (let mctxargs of data[groupId]) {
+                        let mctx = getCtxById(...mctxargs);
+                        text += `\n${mctx.player.name} ${val2}${seal.vars.intGet(mctx, val2)[0]}`;
+                    }
+                    seal.replyToSender(ctx, msg, text)
+                    return seal.ext.newCmdExecuteResult(true);
+                } else {
+                    if (!/^[0-9+\-d]*$/.test(val3)) {
+                        seal.replyToSender(ctx, msg, '表达式错误')
+                        return seal.ext.newCmdExecuteResult(true);
+                    }
+                    let text = seal.ext.getStringConfig(ext, "展示属性前缀语")
+                    text += `\n操作:${val2}${val3}`
+                    for (let mctxargs of data[groupId]) {
+                        let mctx = getCtxById(...mctxargs);
+                        text += `\n${mctx.player.name} ${seal.vars.intGet(mctx, val2)[0]}=>${seal.format(mctx, `{${val2}=${val2}${val3}}`)}`
+                    }
+                    seal.replyToSender(ctx, msg, text)
+                    return seal.ext.newCmdExecuteResult(true);
                 }
-                seal.replyToSender(ctx, msg, seal.ext.getStringConfig(ext, "属性设置回复"))
-                return seal.ext.newCmdExecuteResult(true);
             }
             default: {
                 const ret = seal.ext.newCmdExecuteResult(true);
@@ -238,7 +248,7 @@ if (!ext) {
         let groupId = ctx.group.groupId
 
         if (message == seal.ext.getStringConfig(ext, "非指令呼叫全队")) {
-            if (ctx.privilegeLevel < seal.ext.getIntConfig(ext, "使用指令所需权限") || ctx.isPrivate) return;
+            if (ctx.isPrivate) return;
             if (!data.hasOwnProperty(groupId)) data[groupId] = []
             if (data[groupId].length == 0) {
                 seal.replyToSender(ctx, msg, seal.ext.getStringConfig(ext, "队伍为空"))
@@ -263,12 +273,13 @@ if (!ext) {
             },seal.ext.getIntConfig(ext, "呼叫时间限制（s）") * 1000)
         }
         if (message == seal.ext.getStringConfig(ext, "签到")){
+            if (ctx.isPrivate) return;
             if (!data['call'].hasOwnProperty(groupId)) return;
             data['call'][groupId] = data['call'][groupId].filter(mctxargs => mctxargs[3] != ctx.player.userId)
             return;
         }
         if (message == seal.ext.getStringConfig(ext, "开始战斗轮排序")){
-            if (ctx.privilegeLevel < seal.ext.getIntConfig(ext, "使用指令所需权限") || ctx.isPrivate) return;
+            if (ctx.isPrivate) return;
 
             if (data[groupId].length == 0) {
                 seal.replyToSender(ctx, msg, seal.ext.getStringConfig(ext, "队伍为空"))
