@@ -27,7 +27,6 @@ if (!ext) {
     seal.ext.registerStringConfig(ext, '删除成员回复', '成功删除{{被@的长度}}位调查员，当前队伍人数{{当前人数}}人。')
     seal.ext.registerStringConfig(ext, '队伍为空', '队伍里没有成员。')
     seal.ext.registerStringConfig(ext, '清空队伍', '队伍已清空。')
-    seal.ext.registerStringConfig(ext, '属性设置回复', '全队属性设置成功')
     seal.ext.registerStringConfig(ext, '非指令呼叫全队', '开团了')
     seal.ext.registerStringConfig(ext, '开始战斗轮排序', '（战斗轮开始）')
     seal.ext.registerStringConfig(ext, '签到', '到')
