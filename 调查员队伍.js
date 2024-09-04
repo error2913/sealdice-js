@@ -51,7 +51,7 @@ if (!ext) {
         return undefined;
     }
 
-    function initGroupData(groupId) {
+    function getData(groupId) {
         try {
             data[groupId] = {};
             let groupData = JSON.parse(ext.storageGet(groupId) || '{}');
@@ -94,7 +94,7 @@ if (!ext) {
         let val = cmdArgs.getArgN(1);
         let val2 = cmdArgs.getArgN(2);
         let groupId = ctx.group.groupId
-        if (!data.hasOwnProperty(groupId)) initGroupData(groupId)
+        if (!data.hasOwnProperty(groupId)) getData(groupId)
         let teamnow = data[groupId].teamnow
 
         //获取所有被@的人
@@ -347,7 +347,7 @@ if (!ext) {
 
         if (message == seal.ext.getStringConfig(ext, "非指令呼叫全队")) {
             if (ctx.isPrivate) return;
-            if (!data.hasOwnProperty(groupId)) initGroupData(groupId)
+            if (!data.hasOwnProperty(groupId)) getData(groupId)
             let teamnow = data[groupId].teamnow
 
             if (!data[groupId].teams.hasOwnProperty(teamnow)) {
@@ -378,7 +378,7 @@ if (!ext) {
         }
         if (message == seal.ext.getStringConfig(ext, "签到")){
             if (ctx.isPrivate) return;
-            if (!data.hasOwnProperty(groupId)) initGroupData(groupId)
+            if (!data.hasOwnProperty(groupId)) getData(groupId)
             if (data[groupId].call.length == 0) return;
 
             data[groupId].call = data[groupId].call.filter(mctxargs => mctxargs[3] != ctx.player.userId)
@@ -386,7 +386,7 @@ if (!ext) {
         }
         if (message == seal.ext.getStringConfig(ext, "开始战斗轮排序")){
             if (ctx.isPrivate) return;
-            if (!data.hasOwnProperty(groupId)) initGroupData(groupId)
+            if (!data.hasOwnProperty(groupId)) getData(groupId)
             let teamnow = data[groupId].teamnow
 
             if (!data[groupId].teams.hasOwnProperty(teamnow)) {
