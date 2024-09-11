@@ -1169,7 +1169,10 @@ ${weapon1}(${val1}) vs ${weapon2}(${val2})\n`
   cmdCheat.help = lead;
   cmdCheat.allowDelegate = true;
   cmdCheat.solve = (ctx, msg, cmdArgs) => {
-    if (ctx.privilegeLevel < 100) return;
+    if (ctx.privilegeLevel < 100) {
+      seal.replyToSender(ctx, msg, seal.formatTmpl(ctx, "核心:提示_无权限"));
+      return;
+    }
     let val = cmdArgs.getArgN(1);
     let val2 = cmdArgs.getArgN(2);
     let val3 = cmdArgs.getArgN(3);
@@ -2120,10 +2123,12 @@ $ ${placeprices[i].mingood.price}——>$ ${placeprices[i].maxgood.price} ${plac
   const cmdname = seal.ext.newCmdItemInfo();
   cmdname.name = '改名';
   cmdname.help = '指令：.改名 新名字';
+  cmdname.allowDelegate = true;
   cmdname.solve = (ctx, msg, cmdArgs) => {
     let val = cmdArgs.getRestArgsFrom(1)
-    const id = ctx.player.userId
-    const name = ctx.player.name
+    const mctx = seal.getCtxProxyFirst(ctx, cmdArgs);
+    const id = mctx.player.userId
+    const name = mctx.player.name
     ckId(id, name)
 
     switch (val) {
@@ -2134,6 +2139,11 @@ $ ${placeprices[i].mingood.price}——>$ ${placeprices[i].maxgood.price} ${plac
         return ret;
       }
       default: {
+        if (ctx.player.userId !== mctx.player.userId && ctx.privilegeLevel < 100) {
+          seal.replyToSender(ctx, msg, seal.formatTmpl(ctx, "核心:提示_无权限"));
+          return;
+        }
+
         players[id].name = val
         players[id].saveData()
         seal.replyToSender(ctx, msg, `改名成功！`)
