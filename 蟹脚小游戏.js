@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         蟹脚小游戏
-// @author       错误(2913949387)
-// @version      1.0.0
+// @author       错误
+// @version      2.0.0
 // @description  发送 .加入 姓名 性别 教团 开始游戏，使用指令.cult查看游戏指引，使用指令.cult master查看骰主指令
 // @timestamp    1717065841
 // 2024-05-30 18:44:01
@@ -10,68 +10,84 @@
 // @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/%E8%9F%B9%E8%84%9A%E5%B0%8F%E6%B8%B8%E6%88%8F.js
 // ==/UserScript==
 // 首先检查是否已经存在
-//部分指令参考了星界佬佬的诡秘游戏
+//部分指令参考了星界佬佬的诡秘游戏，虽然已经看不清形状了
 let ext = seal.ext.find('蟹脚小游戏');
 if (!ext) {
   // 不存在，那么建立扩展
-  ext = seal.ext.new('蟹脚小游戏', '错误', '1.0.0');
+  ext = seal.ext.new('蟹脚小游戏', '错误', '2.0.0');
   // 注册扩展
   seal.ext.register(ext);
+
   seal.ext.registerIntConfig(ext, "指令间隔/s(抢劫)", 30)
   seal.ext.registerIntConfig(ext, "指令间隔/s(前往)", 30)
   seal.ext.registerIntConfig(ext, "指令间隔/s(逛逛)", 30)
   seal.ext.registerIntConfig(ext, "指令间隔/s(强行越狱)", 60)
-  const lead = `游戏指引：\n今日商店、 查看背包、 前往、 注销、 购入、 售出、 个人信息、 武器商店、 买武器、 发展信众、 教团信息、 逛逛、 抢劫、 翻垃圾、 排行榜、 情报、 行情、 散播、 清空背包、 改名、 献祭、 送、 成就、 使用、 转账`
-  const attrb = JSON.parse(ext.storageGet("attrb") || '{}')
-  const places = JSON.parse(ext.storageGet("places") || '{}')
-  const cults = JSON.parse(ext.storageGet("cults") || '{}')
-  const weaponnow = JSON.parse(ext.storageGet("weaponnow") || '{}')
+  seal.ext.registerIntConfig(ext, "逮捕时间/s", 180)
+  seal.ext.registerIntConfig(ext, "精神病院时间/s", 600)
+  seal.ext.registerIntConfig(ext, "迷路概率%", 20)
+  seal.ext.registerIntConfig(ext, "越狱概率%", 50)
+  seal.ext.registerIntConfig(ext, "献祭概率%", 40)
+  seal.ext.registerIntConfig(ext, "最大抢夺率%", 50)
+
+  const lead = `游戏指引:
+今日商店、查看背包、个人信息、
+武器商店、发展信众、教团信息、
+买武器、翻垃圾、排行榜、前往、
+注销、购入、售出、逛逛、抢劫、
+情报、行情、散播、丢弃、改名、
+献祭、使用、转账、送`
+  const players = {}
+  const places = {}
+  const cults = {}
+  const playerlist = JSON.parse(ext.storageGet("playerlist") || '{}')
+  const use = JSON.parse(ext.storageGet("use") || '{}')
+
   //所有地点和教团的一个数组（都可以改、但最好使用指令 .写 del 清除下数据，不然可能会有bug（清除完最后重新装一次不然可能还会有bug
   const allplaces = ["阿卡姆", "金斯波特", "印斯茅斯", "南极营地", "拉莱耶", "乌撒", "无名之城"]//乱写的
   const allcults = ["大衮密令教", "黄印兄弟会", "银色暮光密教", "血腥之舌", "不灭之炎的奴仆"]
   //教团对应的邪神
-  const cultgods = { "大衮密令教": ["父神大衮", "母神海德拉", "天父克苏鲁"], "黄印兄弟会": ["黄衣之王哈斯塔"], "银色暮光密教": ["克苏鲁", "犹格索托斯", "奈亚拉托提普"], "血腥之舌": ["奈亚拉托提普"], "不灭之炎的奴仆": ["活火焰克图格亚"] }
+  const cultgods = {
+    "大衮密令教": ["父神大衮", "母神海德拉", "天父克苏鲁"],
+    "黄印兄弟会": ["黄衣之王哈斯塔"],
+    "银色暮光密教": ["克苏鲁", "犹格索托斯", "奈亚拉托提普"],
+    "血腥之舌": ["奈亚拉托提普"],
+    "不灭之炎的奴仆": ["活火焰克图格亚"]
+  }
+  //衣服颜色
+  const level = {
+    "灰": 250,
+    "蓝": 1000,
+    "红": 2500,
+    "黑": 5000,
+    "紫": 10000,
+    "白": 15000,
+    "金": 20000
+  }
   //入教宣誓————懒了不搞了，先摆在这里
   const cultpledge = {
-    "大衮密令教": 'Ia!Dagon!我，${attrb[qq]["name"]}，庄严宣誓，我不会妨碍或将深潜者的行动告知他人。我若离弃这誓言，就必被人所讳避，我将被判作不配得大衮宠爱之人，并接受所定的一切惩罚，即便是死。Ia!Dagon!',
+    "大衮密令教": 'Ia!Dagon!我，${players[id].name}，庄严宣誓，我不会妨碍或将深潜者的行动告知他人。我若离弃这誓言，就必被人所讳避，我将被判作不配得大衮宠爱之人，并接受所定的一切惩罚，即便是死。Ia!Dagon!',
     "黄印兄弟会": ``,
     "银色暮光密教": ``,
     "血腥之舌": ``
   }
-  //成就列表，没什么用只是写在这里防止忘记
-  const achieves = ["『留下买路财』", "『第一桶金』", "『目无法纪』", "『插翅难逃』", "『孩子你无敌了』", "『冤大头』", "『失信、执行！』", "『时间差不多咯~』", "『金色传说！』"]
+
   //一些文本
-  let culttexttmp = ""
-  for (let cult of allcults) { culttexttmp += cult + "、" }
-  const culttext = culttexttmp.slice(0, -1)
-  let placetexttmp = ""
-  for (let place of allplaces) { placetexttmp += place + "、" }
-  const placetext = placetexttmp.slice(0, -1)
-  //初始化————
-  for (let cult of allcults) {
-    if (!cults.hasOwnProperty(cult)) { cults[cult] = {} }
-    if (!cults[cult].hasOwnProperty("members")) { cults[cult]["members"] = []; }
-    if (!cults[cult].hasOwnProperty("seeing")) { cults[cult]["seeing"] = {}; }
-  }
-  for (let cult in cultgods) {
-    for (let god of cultgods[cult]) {
-      if (!cults[cult]["seeing"].hasOwnProperty(god)) { cults[cult]["seeing"][god] = 0 }
-    }
-  }
-  for (let place of allplaces) {
-    if (!places.hasOwnProperty(place)) { places[place] = {} }
-    if (!places[place].hasOwnProperty("members")) { places[place]["members"] = []; }
-    if (!places[place].hasOwnProperty("says")) { places[place]["says"] = []; }
-  }
+  let cultText = ""
+  for (let cult of allcults) { cultText += cult + "、" }
+  cultText = cultText.slice(0, -1)
+
+  let placeText = ""
+  for (let place of allplaces) { placeText += place + "、" }
+  placeText = placeText.slice(0, -1)
 
   //货物列表
-  const goods = {
-    "灰": ["手电筒", "提灯", "土豆", "皮下注射器", "阿司匹林", "女士内衣", "男士内裤", "婴儿奶嘴", "防水火柴", "致死镜", "米纳尔的星石", "羊皮纸"],
-    "蓝": ["铅蓄电池", "留声机唱片", "胶卷", "警用手铐", "潜水服", "医用威士忌", "黄铜头像", "瑟德夫卡之像", "梦境结晶器", "书写专用血液"],
-    "紫": ["灵魂精盐", "医用血包", "雷明顿牌打字机", "11.43mm自动手枪子弹", "雪茄", "翡翠小像", "盖尔之镜", "月之透镜"],
-    "金": ["夏塔克鸟蛋", "缸中之脑", "黄金蜂蜜酒", "伊波恩戒指", "格拉基启示录残卷", "银之匙", "透特的匕首"],
-    "红": ["不明的乳汁", "奇怪多面体", "阿尔哈兹莱德之灯", "光辉的偏方三八面体", "拉莱耶圆盘"]
-  }
+  const goodlst = [
+    { p: 1, max: 13, min: 10, weight: 100, lst: ["手电筒", "提灯", "土豆", "皮下注射器", "阿司匹林", "女士内衣", "男士内裤", "婴儿奶嘴", "防水火柴", "致死镜", "米纳尔的星石", "羊皮纸"] },
+    { p: 1, max: 150, min: 100, weight: 50, lst: ["铅蓄电池", "留声机唱片", "胶卷", "警用手铐", "潜水服", "医用威士忌", "黄铜头像", "瑟德夫卡之像", "梦境结晶器", "书写专用血液"] },
+    { p: 0.9, max: 1314, min: 750, weight: 10, lst: ["灵魂精盐", "医用血包", "雷明顿牌打字机", "11.43mm自动手枪子弹", "雪茄", "翡翠小像", "盖尔之镜", "月之透镜"] },
+    { p: 0.5, max: 10000, min: 5000, weight: 2, lst: ["夏塔克鸟蛋", "缸中之脑", "黄金蜂蜜酒", "伊波恩戒指", "格拉基启示录残卷", "银之匙", "透特的匕首"] },
+    { p: 0.2, max: 93750, min: 31250, weight: 1, lst: ["不明的乳汁", "奇怪多面体", "阿尔哈兹莱德之灯", "光辉的偏方三八面体", "拉莱耶圆盘"] }
+  ]
   //武器列表
   const weaponlst = {
     "弓箭": 20, "黄铜指虎": 20, "长鞭": 15, "燃烧的火把": 20, "电锯": 40, "甩棍": 30, "大头棍": 30, "护身棒": 30,
@@ -100,8 +116,12 @@ if (!ext) {
     "德国梅塞迪斯- 奔驰 SS": 7750, "英国宾利 3 升型": 9000, "英国劳斯莱斯：幻影Ⅰ型": 10800, "杜森堡 J 型车": 20000
   }
   //神话生物列表
-  const myths = ["食尸鬼", "古老者", "恐怖猎手", "空鬼", "蛇人", "深潜者", "修格斯", "星之彩", "炎之精", "钻地魔虫", "拜亚基", "蠕行者", "黑山羊幼崽",
-    "飞天水螅", "廷达罗斯猎犬", "米戈", "夏盖虫族", "星之眷属", "无形之子"
+  const myths = [
+    "食尸鬼", "古老者", "恐怖猎手", "空鬼",
+    "蛇人", "深潜者", "修格斯", "星之彩",
+    "炎之精", "钻地魔虫", "拜亚基", "蠕行者",
+    "黑山羊幼崽", "飞天水螅", "廷达罗斯猎犬", "米戈",
+    "夏盖虫族", "星之眷属", "无形之子"
   ]
   //神话生物前缀
   const mythwords = [
@@ -120,365 +140,668 @@ if (!ext) {
     "悲观失望的", "乐观向上的", "顽固不化的", "灵活多变的",
     "随意随性的"
   ]
-  //根据用户性别来判断称呼
-  function call(qq) {
-    if (attrb[qq]["sex"] == "男") {
-      return "他"
-    } else {
-      return "她"
-    }
-  }
-  //抽取货物添加到shoplst[place]
-  function addgoodtoshop(shoplst_place, level, max, min) {
-    let a
-    for (let i = 0; i < Math.ceil(goods[level].length / 2); i++) {
-      a = goods[level][Math.floor(Math.random() * goods[level].length)]
-      while (shoplst_place.hasOwnProperty(a)) {
-        a = goods[level][Math.floor(Math.random() * goods[level].length)]
-      }
-      shoplst_place[a] = Math.floor(Math.random() * (max - min + 1)) + min
-    }
-  }
-  //更新当地商店
-  function updateshop(place) {
-    let shoplst = {}
-    shoplst[place] = {}
-    addgoodtoshop(shoplst[place], "灰", 13, 10)
-    addgoodtoshop(shoplst[place], "蓝", 75, 50)
-    addgoodtoshop(shoplst[place], "紫", 438, 250)
-    if (Math.random() < 0.5) { addgoodtoshop(shoplst[place], "金", 2500, 1250) }
-    if (Math.random() < 0.2) { addgoodtoshop(shoplst[place], "红", 18750, 6250) }
-    return shoplst[place]
-  }
-  //生成当地商店
-  function shop(date, place) {
-    let obj
-    if (places[place].hasOwnProperty("date") == false || places[place]["date"] != date) {
-      obj = updateshop(place)
-      places[place]["date"] = date
-      places[place]["goods"] = obj
-    } else {
-      obj = places[place]["goods"]
-    }
-    ext.storageSet("places", JSON.stringify(places))
 
-    let shoplst = Object.keys(obj)
-    let text = place + "的商品如下"
-    let arr = []
-    for (let i = 0; i < shoplst.length; i++) {
-      if (arr.length % 2 == 0) {
-        text += "\n"
-      } else {
-        text += "｜"
-      }
-      text += shoplst[i] + ":$" + obj[shoplst[i]]
-      arr.push(shoplst[i])
-    }
-    return text
-  }
-  //更新教团信息和地点……信息，感觉还能优化啊
-  function updating(cultmember = false, placemember = false) {
-    if (cultmember) {
-      for (let cult of allcults) { cults[cult]["members"] = [] }
-      for (let qq in attrb) {
-        let belong = attrb[qq]["belong"]
-        cults[belong]["members"].push(qq)
-      }
-    }
-    if (placemember) {
-      for (let place of allplaces) { places[place]["members"] = [] }
-      for (let qq in attrb) {
-        let place = attrb[qq]["place"]
-        places[place]["members"].push(qq)
-      }
-    }
-    ext.storageSet("attrb", JSON.stringify(attrb))
-    ext.storageSet("places", JSON.stringify(places))
-    ext.storageSet("cults", JSON.stringify(cults))
-    ext.storageSet("weaponnow", JSON.stringify(weaponnow))
-  }
-  //更新武器商店
-  function updateweapon() {
-    let shoplst = {}
-    let weapon = ""
-    let weapons = Object.keys(weaponlst)
-    for (let i = 0; i < 5; i++) {
-      weapon = weapons[Math.floor(Math.random() * weapons.length)]
-      while (shoplst.hasOwnProperty(weapon)) {
-        weapon = weapons[Math.floor(Math.random() * weapons.length)]
-      }
-      shoplst[weapon] = { "price": Math.ceil(Math.pow(1.2, weaponlst[weapon] / 5) * 15), "rest": Math.ceil(Math.random() * 2) }
-    }
-    return shoplst
-  }
-  //生成武器商店
-  function weaponshop(date) {
-    let obj = {}
-    if (weaponnow.hasOwnProperty("date") == false || weaponnow["date"] != date) {
-      obj = updateweapon()
-      weaponnow["date"] = date
-      weaponnow["goods"] = obj
-    }
-    else { obj = weaponnow["goods"] }
-    ext.storageSet("weaponnow", JSON.stringify(weaponnow))
+  const views = [
+    "图书馆", "森林", "祭坛", "教堂",
+    "沙漠", "遗迹", "废弃小屋", "洞穴",
+    "剧院", "墓地", "医院", "工厂",
+    "学校", "码头", "矿井", "城堡",
+    "实验室",
+  ]
+  const viewwords = ["废弃的", "黑暗的", "古老的", "荒凉的", "暴风雨中的", "幽暗的"]
+  const viewfounds = [
+    "一本{{word}}书籍，书中记载着关于人类智慧的深刻见解",
+    "一位{{word}}吟游诗人，他为你演奏了一首治愈心灵的乐曲",
+    "一幅{{word}}壁画，壁画中的光芒照亮了你的内心",
+    "一只{{word}}海龟，它缓慢而沉稳的游动让你感到时间的流逝变得缓慢",
+    "一片{{word}}绿洲，清澈的泉水和茂密的植被让你感到生命的奇迹",
+    "一面{{word}}镜子，镜中的自己显得格外平静和自信",
+    "一颗{{word}}宝石，宝石的光芒照亮了你的内心",
+    "一台{{word}}留声机，播放的音乐让你感到时光倒流",
+    "一瓶{{word}}镇静剂，服用后感到内心的焦虑逐渐平息",
+    "一台{{word}}收音机，播放的广播让你感到与外界的联系",
+    "一棵{{word}}古树，树下的宁静让你感到内心的平静",
+    "一艘{{word}}船只，船上的航海日志让你感到冒险的激情",
+    "一颗{{word}}水晶，水晶的光芒照亮了你的内心",
+  ]
+  const viewfoundwords = ["古老的", "神秘的", "刻有祝福符文的", "巨大的", "温暖的", "发光的", "老旧的"]
 
-    let shoplst = Object.keys(obj)
-    let text = "今天销售的武器如下"
-    for (let i = 0; i < shoplst.length; i++) {
-      text += "\n" + shoplst[i] + ":$" + obj[shoplst[i]]["price"] + " 剩余:" + obj[shoplst[i]]["rest"]
+  class Player {
+    constructor(id, name) {
+      this.id = id;
+      this.name = name;
+      this.cult = allcults[Math.floor(Math.random() * allcults.length)];
+      this.place = allplaces[Math.floor(Math.random() * allplaces.length)];
+      this.car = '二手别克';
+      this.weapon = '催泪瓦斯';
+      this.goods = { "土豆": 20 };
+      this.san = Math.floor(Math.random() * (80 - 40 + 1)) + 40;
+      this.down = 0;
+      this.money = 100;
+      this.contr = 0;
+      this.color = '无'
+      this.exp = 0;
+      this.time = {
+        adTime: 0,
+        movTime: 0,
+        strollTime: 0,
+        healTime: 0,
+        robTime: 0,
+        arrestTime: 0,
+        escTime: 0
+      };
     }
-    return text
-  }
-  //检查san值并判断，返回文本
-  function checksan(qq, now) {
-    let san = attrb[qq]["san"]
-    let text = ""
-    if (san <= 0) {
-      let lostmoney = Math.ceil(Math.random() * attrb[qq]["money"])
-      if (lostmoney < 100) { lostmoney = 100 }
 
-      attrb[qq]["healtime"] = now
-      attrb[qq]["san"] = 20
-      attrb[qq]["money"] -= lostmoney
-      text = `\nsan值小于零！陷入了永久的疯狂之中——吗？被抓进精神病院十分钟，扣除医疗费用$ ${lostmoney}，san值恢复至20。\n<${attrb[qq]["name"]}>目前有$ ${attrb[qq]["money"]}` + checkachieve(qq, now)
-    }
-    if (san > 0 && san <= 20) {
-      //没货
-      if (Object.keys(attrb[qq]["goods"]).length === 0) {
-        text = `\n嗬嗬嗬——你的san值已经低于20——`
+    // 从存储中获取数据并初始化玩家对象
+    static getData(id) {
+      try {
+        let idData = JSON.parse(ext.storageGet(id) || '{}');
+        let player = new Player(id, idData.name)
+        player.cult = idData.cult
+        player.place = idData.place
+        player.car = idData.car
+        player.weapon = idData.weapon
+        player.goods = idData.goods
+        player.san = idData.san
+        player.down = idData.down
+        player.money = idData.money
+        player.contr = idData.contr
+        player.color = idData.color
+        player.exp = idData.exp
+
+        players[id] = player
+      } catch (error) {
+        console.error(`Failed to initialize ${id}:`, error);
       }
-      //有货
-      else {
-        //计算货物数量
-        let goodsnum = 0
-        for (let good in attrb[qq]["goods"]) {
-          goodsnum += attrb[qq]["goods"][good]
-        }
+    }
 
+    // 保存玩家数据到存储
+    saveData() {
+      ext.storageSet(this.id, JSON.stringify(this));
+    }
+
+    movPlace(dest) {
+      let place = this.place
+      if (places.hasOwnProperty(place)) {
+        places[place].members = places[place].members.filter(item => item !== this.id)
+        places[place].saveData()
+      }
+      if (places.hasOwnProperty(dest)) {
+        places[dest].members.push(this.id)
+        places[dest].saveData()
+      }
+
+      this.place = dest
+      this.saveData()
+    }
+
+    movCult(dest) {
+      let cult = this.cult
+      if (cults.hasOwnProperty(cult)) {
+        cults[cult].members = cults[cult].members.filter(item => item !== this.id)
+        cults[cult].saveData()
+      }
+      if (cults.hasOwnProperty(dest)) {
+        cults[dest].members.push(this.id)
+        cults[dest].saveData()
+      }
+
+      this.cult = dest
+      this.color = '灰'
+      this.contr = 0
+      this.saveData()
+    }
+
+    //把钱从第一个人抢给第二个人，返回抢到的数字
+    robMoneyTo(altid) {
+      let maxrob = seal.ext.getIntConfig(ext, "最大抢夺率%") /100
+      let lostmoney = Math.ceil(Math.random() * this.money * maxrob)
+
+      this.money -= lostmoney
+      players[altid].money += lostmoney
+      return lostmoney;
+    }
+
+    //将num数量的货物添加到背包，返回溢出数量
+    addGoodTo(good, num) {
+      let space = carlst[this.car]
+      let goodsnum = 0
+      for (let good in this.goods) goodsnum += this.goods[good]
+      let outnum = goodsnum + num - space
+
+      //货物是否溢出
+      if (outnum > 0) {
+        num -= outnum
+        //增加落魄值作为补偿
+        this.down += outnum / 10
+        this.down = parseFloat(this.down.toFixed(1));
+      } else outnum = 0
+
+      if (num > 0) {
+        if (!this.goods.hasOwnProperty(good)) this.goods[good] = num
+        else this.goods[good] += num
+      }
+      this.saveData()
+      return outnum;
+    }
+
+    //把num数量的货物从背包去除，返回bool
+    takeGood(good, num) {
+      if (!this.goods.hasOwnProperty(good) || this.goods[good] < num) return false;
+
+      this.goods[good] -= num;
+      if (this.goods[good] <= 0) delete this.goods[good];
+      this.saveData()
+      return true;
+    }
+
+    //把货物抢给另一个人，这里老是出bug，抢的都是写什么undefined*NaN啦、啥都没有*null啦  #死掉
+    robGoodsTo(altid) {
+      let maxrob = seal.ext.getIntConfig(ext, "最大抢夺率%") / 100
+
+      //计算货物数量
+      let goodsnum = 0
+      for (let good in this.goods) goodsnum += this.goods[good]
+
+      let lostlst = {}
+      let drawtime = Math.ceil(Math.random() * goodsnum * maxrob)
+      //按权重抽取至少一个货物
+      for (let i = 0; i < drawtime; i++) {
         let ran = Math.ceil(Math.random() * goodsnum)
         let tmpsum = 0
-        let lostgood = ''
+
         //抽取种类
-        for (let good in attrb[qq]["goods"]) {
-          tmpsum += attrb[qq]["goods"][good]
-          if (ran <= tmpsum) { lostgood = good; break; }
-        }
+        for (let good in this.goods) {
+          tmpsum += this.goods[good]
 
-        attrb[qq]["goods"][lostgood] -= 1
-        if (attrb[qq]["goods"][lostgood] == 0) {
-          delete attrb[qq]["goods"][lostgood];
-        }
-
-        text = `\n嗬嗬嗬——你的san值已经低于20——随机丢失一件${lostgood}`
-      }
-    }
-    if (san > 90) {
-      text = "\n哟哈！精神满溢！"
-    }
-    return text;
-  }
-  //检查成就是否完成，返回文本
-  function checkachieve(qq, now, esc = false) {
-    let text = ``
-    if (attrb[qq]["robwin"] >= 100) {
-      let index = attrb[qq]["achieves"].indexOf("『留下买路财』")
-      if (index == -1) {
-        attrb[qq]["achieves"].push("『留下买路财』")
-        text += `\n获得成就：『留下买路财』`
-      }
-    }
-    if (attrb[qq]["roblose"] >= 10) {
-      let index = attrb[qq]["achieves"].indexOf("『冤大头』")
-      if (index == -1) {
-        attrb[qq]["achieves"].push("『冤大头』")
-        text += `\n获得成就：『冤大头』`
-      }
-    }
-    if (attrb[qq]["money"] >= 1000) {
-      let index = attrb[qq]["achieves"].indexOf("『第一桶金』")
-      if (index == -1) {
-        attrb[qq]["achieves"].push("『第一桶金』")
-        text += `\n获得成就：『第一桶金』`
-      }
-    }
-    if (attrb[qq]["money"] < 0) {
-      let index = attrb[qq]["achieves"].indexOf("『失信、执行！』")
-      if (index == -1) {
-        attrb[qq]["achieves"].push("『失信、执行！』")
-        text += `\n获得成就：『失信、执行！』`
-      }
-    }
-    if (attrb[qq]["weapon"] == "5英寸舰载炮") {
-      let index = attrb[qq]["achieves"].indexOf("『孩子你无敌了』")
-      if (index == -1) {
-        attrb[qq]["achieves"].push("『孩子你无敌了』")
-        text += `\n获得成就：『孩子你无敌了』`
-      }
-    }
-    if (attrb[qq]["rubbish"] >= 100) {
-      let index = attrb[qq]["achieves"].indexOf("『金色传说！』")
-      if (index == -1) {
-        attrb[qq]["achieves"].push("『金色传说！』")
-        text += `\n获得成就：『金色传说！』`
-      }
-    }
-    if (attrb[qq]["contr"] >= 1000) {
-      let index = attrb[qq]["achieves"].indexOf("『时间差不多咯~』")
-      if (index == -1) {
-        attrb[qq]["achieves"].push("『时间差不多咯~』")
-        text += `\n获得成就：『时间差不多咯~』`
-      }
-    }
-    if (esc == true) {
-      let index = attrb[qq]["achieves"].indexOf("『目无法纪』")
-      if (index == -1) {
-        attrb[qq]["achieves"].push("『目无法纪』")
-        text += `\n获得成就：『目无法纪』`
-      }
-    }
-    if (180 * 1000 - now + attrb[qq]["policetime"] >= 600 * 1000) {
-      let index = attrb[qq]["achieves"].indexOf("『插翅难逃』")
-      if (index == -1) {
-        attrb[qq]["achieves"].push("『插翅难逃』")
-        text += `\n获得成就：『插翅难逃』`
-      }
-    }
-    return text;
-  }
-  //检查指令，返回文本
-  function checkcmd(qq, now, chkheal = true, chkplc = true, anotherqq = 0, anotherheal = true, anotherplc = true) {
-    let text = ``
-    if (!attrb.hasOwnProperty(qq)) {
-      text = `你还没有加入任何教团。`
-      return text;
-    }
-    if (chkheal) {
-      if (now - attrb[qq]["healtime"] < 600 * 1000) {
-        text = `<${attrb[qq]["name"]}>在精神病院无力地嘶吼着。`
-        return text;
-      }
-    }
-    if (chkplc) {
-      if (now - attrb[qq]["policetime"] < 180 * 1000) {
-        let t = now / 1000 - attrb[qq]["policetime"] / 1000
-        text = `<${attrb[qq]["name"]}>还有${180 - t}秒就可以逃出来了！`
-        return text;
-      }
-    }
-    if (anotherqq != 0 && anotherqq != qq) {
-      if (!attrb.hasOwnProperty(anotherqq)) {
-        text = "对方还没有加入任何教团。"
-        return text;
-      }
-      if (anotherheal) {
-        if (now - attrb[anotherqq]["healtime"] < 600 * 1000) {
-          text = `<${attrb[qq]["name"]}>遇到了正在精神病院咆哮的<${attrb[anotherqq]["name"]}>。`
-          return text;
+          if (ran <= tmpsum) {
+            this.takeGood(good, 1)
+            lostlst[good] = (lostlst[good] || 0) + 1
+            goodsnum -= 1
+            break;
+          }
         }
       }
-      if (anotherplc) {
-        if (now - attrb[anotherqq]["policetime"] < 180 * 1000) {
-          text = `<${attrb[qq]["name"]}>遇到了正在尝试越狱的<${attrb[anotherqq]["name"]}>。`
-          return text;
+      //把货物加给第二个人并输出文本
+      let text = ``
+      let outnum = 0
+      for (let good in lostlst) {
+        text += `${good}×${lostlst[good]}、`
+        outnum += players[altid].addGoodTo(good, lostlst[good])
+      }
+      text = text.slice(0, -1)
+
+      if (outnum > 0) text += `溢出${outnum}件`
+      return text;
+    }
+
+    //抢劫：发起对另一个人的抢劫
+    rob(altid, now) {
+      this.time.robTime = now
+
+      let place = this.place
+      let altplace = players[altid].place
+      let weapon1 = this.weapon
+      let weapon2 = players[altid].weapon
+      let val1 = weaponlst[weapon1]
+      let val2 = weaponlst[weapon2]
+      let lv1 = this.getLv()[0]
+      let lv2 = players[altid].getLv()[0]
+      let ran1 = Math.random()
+      let ran2 = Math.random()
+      let text = `地点:${players[altid].place}
+${this.name}(Lv${lv1})=>${players[altid].name}(Lv${lv2})
+${weapon1}(${val1}) vs ${weapon2}(${val2})\n`
+
+      //位置不对
+      if (place !== altplace) {
+        let missText = this.ckMiss(altplace)
+        if (missText) return missText
+        else this.movPlace(altplace)
+      }
+
+      //赢
+      if (ran1 * val1 * lv1 >= ran2 * val2 * lv2) {
+        this.exp += 5
+        players[altid].exp += 1
+
+        let goodsnum = 0
+        for (let good in players[altid].goods) goodsnum += players[altid].goods[good]
+
+        text += `抢劫成功！\n`
+        //抢钱
+        if (players[altid].money <= 0) text += `对方钱包空空\n`
+        else text += `抢走了$ ${players[altid].robMoneyTo(this.id)}\n`
+        //抢货
+        if (goodsnum > 20) text += players[altid].robGoodsTo(this.id)
+      }
+      //输
+      else {
+        this.exp += 1
+        players[altid].exp += 5
+
+        let goodsnum = 0
+        for (let good in this.goods) goodsnum += this.goods[good]
+
+        text += `抢劫失败！\n`
+        //抢钱
+        if (this.money <= 0) text += `你钱包空空\n`
+        else text += `被抢走了$ ${this.robMoneyTo(altid)}\n`
+        //抢货
+        if (goodsnum > 20) text += this.robGoodsTo(altid)
+      }
+      this.saveData()
+      return text;
+    }
+
+    //修改san值并判断，返回文本
+    stSan(now, num) {
+      //修改san值
+      this.san += num
+
+      let maxheal = 0.8
+
+      let text = ``
+      if (num >= 0) text = `san+${num}=>${this.san}`
+      else text = `san${num}=>${this.san}`
+
+      if (this.san <= 0) {
+        let lostmoney = Math.ceil(Math.random() * this.money * maxheal)
+        lostmoney = lostmoney < 500 ? 500 : lostmoney
+
+        let healInterval = seal.ext.getIntConfig(ext, "精神病院时间/s")
+        this.time.healTime = now
+        this.san += Math.floor(Math.random() * (80 - 40 + 1)) + 40;
+        this.money -= lostmoney
+
+        text += `\nsan值小于零！精神崩溃！被抓进${this.place}精神病院${healInterval}秒，扣除医疗费用$ ${lostmoney}。\nsan值=>${this.san}\n货币=>$ ${this.money}`
+      }
+      else if (this.san <= 20) {
+        text += `\n警告！精神不稳定！`
+      }
+      else if (this.san > 100) {
+        text += "\n哟哈！精神满溢！"
+        this.san = 100
+      }
+      this.saveData()
+      return text;
+    }
+
+    stMoney(num) {
+      this.money += num
+      this.saveData()
+    }
+
+    //检查指令，返回Bool
+    ckCmd(ctx, msg, ckHeal = true, ckArrest = true) {
+      const now = parseInt(seal.format(ctx, "{$tTimestamp}"))
+      let healInterval = seal.ext.getIntConfig(ext, "精神病院时间/s")
+      let arrestInterval = seal.ext.getIntConfig(ext, "逮捕时间/s")
+      let text = ``
+      if (ckHeal) {
+        let t = now - this.time.healTime
+        if (t < healInterval) {
+          text = `<${this.name}>在精神病院无力地嘶吼着，治疗结束还有${healInterval - t}！`
         }
       }
+      if (ckArrest) {
+        let t = now - this.time.arrestTime
+        if (t < arrestInterval) {
+          text = `<${this.name}>在越狱中，还有${arrestInterval - t}秒就可以逃出来了！`
+        }
+      }
+      if (text) {
+        seal.replyToSender(ctx, msg, text)
+        return true
+      } else return false
     }
-    return text;
-  }
-  //检查另一个被@的人，返回文本
-  function checkanother(anotherqq, now) {
-    let text = ``
-    if (!attrb.hasOwnProperty(anotherqq)) {
-      text = "对方还没有加入任何教团。"
+
+    //翻垃圾时间~翻一次、返回一段文本
+    rubbish() {
+      this.down -= 3
+      this.exp += 1
+      let ran = Math.random()
+      let text = ``
+      //翻到货物
+      if (ran <= 0.85) {
+        let ran = Math.random()
+        let good
+        let num = 0
+
+        //按权重概率抽取
+        let sumW = 0
+        for (let i = 0; i < goodlst.length; i++) sumW += goodlst[i].weight
+        let tmpW = 0
+        for (let i = 0; i < goodlst.length; i++) {
+          tmpW += goodlst[i].weight
+          if (ran <= tmpW / sumW) {
+            let goods = goodlst[i].lst
+            good = goods[Math.floor(Math.random() * goods.length)]
+            num = Math.ceil(Math.random() * goodlst[i].weight)
+            break;
+          }
+        }
+
+        let outnum = this.addGoodTo(good, num)
+        text = `${good}×${num}`
+        if (outnum > 0) text += `，溢出${outnum}件`
+      }
+      //翻到回san道具
+      else if (ran <= 0.95) {
+        let good = '圣水'
+        let num = 1
+
+        let outnum = this.addGoodTo(good, num)
+        text = `${good}×${num}`
+        if (outnum > 0) text += `，溢出${outnum}件`
+      }
+      //翻到车
+      else {
+        let formercar = this.car
+        let cars = Object.keys(carlst)
+        let car = cars[Math.floor(Math.random() * cars.length)]
+
+        if (carlst[this.car] > carlst[car]) {
+          this.money += carlst[car]
+          text = `一台${car}！卖掉赚了$ ${carlst[car]}！`
+        }
+        else {
+          this.car = car
+          text = `一台${car}！原来的${formercar}就丢到垃圾堆里吧。`
+        }
+      }
+      this.saveData()
       return text;
     }
-    if (now - attrb[anotherqq]["healtime"] < 600 * 1000) {
-      text = `<${attrb[anotherqq]["name"]}>在精神病院无力地嘶吼着。`
+
+    ckMiss(altplace) {
+      let text = ``
+      if (Math.random() * 100 <= seal.ext.getIntConfig(ext, "迷路概率%")) {
+        let newplace
+        let place = this.place
+
+        do newplace = allplaces[Math.floor(Math.random() * allplaces.length)]
+        while (newplace == place || newplace == altplace)
+
+        this.movPlace(newplace)
+        text = `<${this.name}>迷路了！走着走着竟然到了${newplace}！\n`
+      }
+      return text
+    }
+
+    meetMyth(now) {
+      let lostsan = Math.ceil(Math.random() * 6)
+      let view = views[Math.floor(Math.random() * views.length)]
+      let viewword = viewwords[Math.floor(Math.random() * viewwords.length)]
+      let myth = myths[Math.floor(Math.random() * myths.length)]
+      let mythword = mythwords[Math.floor(Math.random() * mythwords.length)]
+      this.exp += 2
+      return `地点:${this.place}，${viewword + view}\n<${this.name}>遇到了${mythword}${myth}！\n${this.stSan(now, -lostsan)}`
+    }
+
+    meetOther(now, ctx, msg) {
+      let members = places[this.place].members
+      let altid
+      do altid = members[Math.floor(Math.random() * members.length)]
+      while (altid == this.id && members.length > 1)
+
+      if (players[altid].ckCmd(ctx, msg)) return;
+
+      return this.rob(altid, now)
+    }
+
+    meetPolice(now) {
+      let arrestInterval = seal.ext.getIntConfig(ext, "逮捕时间/s")
+      this.down += 8
+      this.time.arrestTime = now
+
+      let goods = Object.keys(this.goods)
+      let reason = goods.length > 0 ? `因为检查出车上有${goods[Math.floor(Math.random() * goods.length)]}，` : ``
+
+      return `<${this.name}>在${this.place}遇到了警察！${reason}被抓起来了！但作为${this.cult}的资深教徒，越狱只需要${arrestInterval}秒！\n落魄值+8=>${this.down}`
+    }
+
+    meetView(now) {
+      let addsan = Math.ceil(Math.random() * 6)
+      let view = views[Math.floor(Math.random() * views.length)]
+      let viewword = viewwords[Math.floor(Math.random() * viewwords.length)]
+      let viewfound = viewfounds[Math.floor(Math.random() * viewfounds.length)]
+      let viewfoundword = viewfoundwords[Math.floor(Math.random() * viewfoundwords.length)]
+      this.exp += 1
+      return `地点:${this.place}，${viewword + view}\n<${this.name}>遇到了${viewfound.replace('{{word}}', viewfoundword)}\n${this.stSan(now, addsan)}`
+    }
+
+    meet(now, ctx, msg) {
+      let members = places[this.place].members
+      let ran = Math.random()
+      if (members.length > 1 && ran <= 0.3) return this.meetOther(now, ctx, msg)
+      else if (ran <= 0.6) return this.meetMyth(now)
+      else if (ran <= 0.9) return this.meetPolice(now)
+      else return this.meetView(now)
+    }
+
+    getLv() {
+      let expLimit = 10
+      let lv = 1
+      while (this.exp >= expLimit) {
+        lv += 1
+        expLimit += lv * 10
+      }
+      return [lv, expLimit]
+    }
+
+    colorUp() {
+      let color = this.color
+      let text = ``
+      if (this.contr >= level[color]) {
+        let colors = Object.keys(level)
+        let index = colors.indexOf(color)
+        if (index == colors.length - 1) text = `\n已达到最高位阶`
+        else {
+          this.color = colors[index + 1]
+          text = `\n晋升至${this.color}衣`
+        }
+      }
       return text;
     }
-    if (now - attrb[anotherqq]["policetime"] < 180 * 1000) {
-      text = `<${attrb[anotherqq]["name"]}>正在紧张地越狱中。`
-      return text;
-    }
-    return text;
-  }
-  //把钱从第一个人抢给第二个人，返回抢到的数字
-  function robmoney(qq, anotherqq) {
-    attrb[qq]["roblose"] += 1
-    attrb[anotherqq]["robwin"] += 1
-    let lostmoney = Math.ceil(Math.random() * attrb[qq]["money"])
 
-    attrb[qq]["money"] -= lostmoney
-    attrb[anotherqq]["money"] += lostmoney
-    return lostmoney;
-  }
-  //将num数量的货物添加至qq的背包,返回文本
-  function addgoodtoqq(qq, good, num) {
-    let text = ``
-    let space = carlst[attrb[qq]["car"]]
-    let goodsnum = 0
-    num = parseInt(num)
-    for (let good in attrb[qq]["goods"]) {
-      goodsnum += attrb[qq]["goods"][good]
+    /**使用货物，返回文本*/
+    useGood(good, num) {
+      if (good == "圣水") {
+        this.takeGood('圣水', num)
+        return `<${this.name}>使用了${good}×${num}\n${this.stSan(now, 10 * num)}`
+      }
+      if (Object.keys(weaponlst).includes(good)) {
+        let formerweapon = this.weapon
+        this.weapon = good
+        this.takeGood(good, 1)
+        this.addGoodTo(formerweapon, 1)
+        return `<${this.name}>更换了武器\n${formerweapon}=>${good}`
+      }
+      if (Object.keys(use).includes(good)) {
+        this.takeGood(good, num)
+        return use[good]
+      }
+      return `无法使用${good}`
     }
-    //溢出的情况
-    if (goodsnum + num > space) {
-      let outnum = goodsnum + num - space
-      num -= outnum
-      if (!attrb[qq]["goods"].hasOwnProperty(good)) { attrb[qq]["goods"][good] = num }
-      else { attrb[qq]["goods"][good] += num }
-      text = `${good}×${num}，溢出${outnum}件`
-    }
-    //没溢出
-    else {
-      if (!attrb[qq]["goods"].hasOwnProperty(good)) { attrb[qq]["goods"][good] = num }
-      else { attrb[qq]["goods"][good] += num }
-      text = `${good}×${num}`
-    }
-    return text;
-  }
-  //把货物从第一个人抢给第二个人，这里老是出bug，抢的都是写什么undefined*NaN啦、啥都没有*null啦  #死掉
-  function robgoods(qq, anotherqq) {
-    attrb[qq]["roblose"] += 1
-    attrb[anotherqq]["robwin"] += 1
-    //计算货物数量
-    let goodsnum = 0
-    for (let good in attrb[qq]["goods"]) {
-      goodsnum += attrb[qq]["goods"][good]
-    }
-    let lostlst = {}
-    let drawtime = Math.ceil(Math.random() * goodsnum)
-    //按权重抽取至少一个货物
-    for (let i = 0; i < drawtime; i++) {
-      let ran = Math.ceil(Math.random() * goodsnum)
-      let tmpsum = 0
-      let lostgood = ''
-      //抽取种类
-      for (let good in attrb[qq]["goods"]) {
-        tmpsum += attrb[qq]["goods"][good]
-        if (ran <= tmpsum) { lostgood = good; break; }
+
+    /**发展信众 */
+    mission(now) {
+      let increase = Math.floor(Math.random() * (150 - 100 + 1)) + 100
+      let index = Object.keys(level).indexOf(this.color)
+      increase *= index + 1
+      let timestamp = this.time.adTime * 1000
+
+      if (new Date(timestamp).toDateString() === new Date().toDateString()) {
+        return `<${this.name}>今天的传单已经派完了`
       }
 
-      attrb[qq]["goods"][lostgood] -= 1
-      if (attrb[qq]["goods"][lostgood] == 0) {
-        delete attrb[qq]["goods"][lostgood];
-      }
-      if (lostlst.hasOwnProperty(lostgood)) { lostlst[lostgood] += 1 } else { lostlst[lostgood] = 1 }
+      this.time.adTime = now
+      this.contr += increase
 
-      //重置总数，可恶啊啊啊啊没写这段又出bug了
-      goodsnum = 0
-      for (let good in attrb[qq]["goods"]) {
-        goodsnum += attrb[qq]["goods"][good]
-      }
-      if (goodsnum == 0) { break; }
+      let moneyincrease = this.contr * (Math.floor(Math.random() * (15 - 5 + 1)) + 5)
+      this.money += moneyincrease
+
+      this.saveData()
+      return `地点:${this.place}\n<${this.name}>发展了${increase}个信众。\n贡献度=>${this.contr}\n货币+$ ${moneyincrease}=>$ ${this.money}`
     }
-    //把货物加给第二个人并输出文本
-    let text = ``
-    for (let lostgood in lostlst) {
-      text += addgoodtoqq(anotherqq, lostgood, lostlst[lostgood]) + `、`
-    }
-    return text.slice(0, -1);
   }
+
+  class Place {
+    constructor(name) {
+      this.name = name
+      this.members = []
+      this.says = []
+      this.shop = {}
+      this.date = ''
+    }
+
+    // 从存储中获取数据并初始化地点对象
+    static getData(name) {
+      try {
+        let placeData = JSON.parse(ext.storageGet(name) || '{}');
+        let place = new Place(name)
+        place.members = placeData.members || []
+        place.says = placeData.says || []
+        place.shop = placeData.shop || {}
+        place.date = placeData.date || ''
+
+        places[name] = place
+      } catch (error) {
+        console.error(`Failed to initialize ${name}:`, error);
+      }
+    }
+
+    // 保存地点数据到存储
+    saveData() {
+      ext.storageSet(this.name, JSON.stringify(this));
+    }
+
+    //更新当地商店
+    updateshop(date) {
+      this.date = date
+      this.shop = {}
+
+      let ran = Math.random()
+      for (let i = 0; i < goodlst.length; i++) {
+        if (ran < goodlst[i].p) {
+          let max = goodlst[i].max
+          let min = goodlst[i].min
+          let goods = goodlst[i].lst
+          let good;
+
+          //生成商品列表
+          for (let k = 0; k < Math.ceil(goods.length / 2); k++) {
+            do good = goods[Math.floor(Math.random() * goods.length)]
+            while (this.shop.hasOwnProperty(good))
+            this.shop[good] = Math.floor(Math.random() * (max - min + 1)) + min
+          }
+        }
+      }
+
+      this.saveData()
+    }
+
+    //获取当地商店货物列表，返回文本
+    getShop(date) {
+      let place = this.name
+      if (this.date != date) this.updateshop(date)
+
+      let shoplst = Object.keys(this.shop)
+      let text = `${place}商店`
+      let good = ''
+      for (let i = 0; i < shoplst.length; i++) {
+        good = shoplst[i]
+        text += i % 2 == 0 ? `\n` : `|`
+        text += `${good}:$${this.shop[good]}`
+      }
+      return text
+    }
+  }
+
+  class Cult {
+    constructor(name) {
+      this.name = name
+      this.members = []
+      this.ones = {}
+      this.weapons = {}
+      this.date = ''
+    }
+
+    // 从存储中获取数据并初始化教团对象
+    static getData(name) {
+      try {
+        let cultData = JSON.parse(ext.storageGet(name) || '{}');
+        let cult = new Cult(name)
+        cult.members = cultData.members || []
+        cult.ones = cultData.ones || {}
+        cult.weapons = cultData.weapons || {}
+        cult.date = cultData.date || ''
+
+        cults[name] = cult
+      } catch (error) {
+        console.error(`Failed to initialize ${cult}:`, error);
+      }
+    }
+
+    // 保存教团数据到存储
+    saveData() {
+      ext.storageSet(this.name, JSON.stringify(this));
+    }
+
+    //更新武器商店
+    updateWeapon(date) {
+      this.date = date
+      this.weapons = {}
+
+      let weapon
+      let weapons = Object.keys(weaponlst)
+
+      for (let i = 0; i < 5; i++) {
+        do weapon = weapons[Math.floor(Math.random() * weapons.length)]
+        while (this.weapons.hasOwnProperty(weapon))
+        let num = weaponlst[weapon] / 5
+        this.weapons[weapon] = {
+          price: Math.ceil(Math.pow(1.2, num) * 100 * num),
+          rest: Math.ceil(Math.random() * 2)
+        }
+      }
+
+      this.saveData()
+    }
+    //生成武器商店
+    weaponShop(date) {
+      let cult = this.name
+      if (this.date != date) this.updateWeapon(date)
+
+      let shoplst = Object.keys(this.weapons)
+      let text = `${cult}武器商店`
+      for (let i = 0; i < shoplst.length; i++) {
+        let weapon = shoplst[i]
+        text += `\n${weapon}(${weaponlst[weapon]}):$ ${this.weapons[weapon].price} 剩余:${this.weapons[weapon].rest}`
+      }
+      return text
+    }
+  }
+
+  //初始化————
+  for (let id in playerlist) if (!players.hasOwnProperty(id)) Player.getData(id)
+  for (let place of allplaces) if (!places.hasOwnProperty(place)) Place.getData(place)
+  for (let cult of allcults) if (!cults.hasOwnProperty(cult)) {
+    Cult.getData(cult)
+    if (cultgods.hasOwnProperty(cult)) cultgods[cult].forEach(god => { if (!cults[cult].ones.hasOwnProperty(god)) cults[cult].ones[god] = 0; })
+  }
+
+  function getTime() {
+    const now = new Date();
+    const dateString = now.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }).replace(/,/g, '');;
+    const [date, time] = dateString.split(' ');
+    const [month, day, year] = date.split('/');
+    const [hours, minutes, seconds] = time.split(':');
+
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')} ${hours}:${minutes}:${seconds}`;
+  }
+
   //打乱数组
   function shuffle(array) {
     let arr = array
@@ -488,247 +811,74 @@ if (!ext) {
     }
     return arr
   }
-  //翻垃圾时间~翻一次、返回一段文本
-  function rubbish(qq) {
-    let ran = Math.random()
-    attrb[qq]["exp"] -= 3
-    attrb[qq]["rubbish"] += 1
-    let text = ``
-    //翻到货物
-    if (ran <= 0.9) {
-      let good = ``
-      let num = 0
-      if (ran <= 0.01) {
-        good = goods["红"][Math.floor(Math.random() * goods["红"].length)]
-        num = 1
-      }
-      if (ran > 0.01 && ran <= 0.06) {
-        good = goods["金"][Math.floor(Math.random() * goods["金"].length)]
-        num = Math.ceil(Math.random() * 2)
-      }
-      if (ran > 0.06 && ran <= 0.25) {
-        good = goods["紫"][Math.floor(Math.random() * goods["紫"].length)]
-        num = Math.ceil(Math.random() * 6)
-      }
-      if (ran > 0.25 && ran <= 0.5) {
-        good = goods["蓝"][Math.floor(Math.random() * goods["蓝"].length)]
-        num = Math.ceil(Math.random() * 12)
-      }
-      if (ran > 0.5 && ran <= 0.9) {
-        good = goods["灰"][Math.floor(Math.random() * goods["灰"].length)]
-        num = Math.ceil(Math.random() * 20)
-      }
 
-      text = addgoodtoqq(qq, good, num) + `！`
+  //检查是否存在该玩家并加入游戏
+  function ckId(id, name) {
+    if (!playerlist.hasOwnProperty(id)) {
+      const player = new Player(id, name)
+      players[id] = player
+      players[id].movPlace(players[id].place)
+      players[id].movCult(players[id].cult)
+      playerlist[id] = getTime()
+      ext.storageSet('playerlist', JSON.stringify(playerlist));
     }
-    //翻到回san道具
-    if (ran <= 0.93 && ran > 0.9) {
-      text = addgoodtoqq(qq, "圣水", 1) + `！`
-    }
-    //翻到车
-    if (ran > 0.93) {
-      let formercar = attrb[qq]["car"]
-      let cars = Object.keys(carlst)
-      let car = cars[Math.floor(Math.random() * cars.length)]
-
-      if (carlst[attrb[qq]["car"]] > carlst[car]) {
-        attrb[qq]["money"] += carlst[car]
-        text = `一台${car}！卖掉赚了$ ${carlst[car]}！`
-      }
-      else {
-        attrb[qq]["car"] = car
-        text = `一台${car}！原来的${formercar}就丢到垃圾堆里吧。`
-      }
-    }
-    return text;
   }
-  //抢劫：第一个人发起对第二个人的抢劫
-  function rob(qq, anotherqq, now) {
-    attrb[qq]["robtime"] = now
 
-    let place = attrb[qq]["place"]
-    let val1 = weaponlst[attrb[qq]["weapon"]]
-    let val2 = weaponlst[attrb[anotherqq]["weapon"]]
-    let ran1 = Math.random()
-    let ran2 = Math.random()
-    let text = `<${attrb[qq]["name"]}>在${place}找到了<${attrb[anotherqq]["name"]}>，`
-    if (attrb[qq]["place"] !== attrb[anotherqq]["place"]) {
-      //迷路了！！！
-      if (Math.random() <= 0.2) {
-        text = `<${attrb[qq]["name"]}>在追踪${attrb[anotherqq]["name"]}的时候迷路了……`
-        let newplace = allplaces[Math.floor(Math.random() * allplaces.length)]
-        while (newplace == attrb[anotherqq]["place"]) {
-          newplace = allplaces[Math.floor(Math.random() * allplaces.length)]
-        }
-
-        if (newplace != place) {
-          attrb[qq]["place"] = newplace;
-          text += `竟然来到了${newplace}！`
-        }
-        return text;
-      }
-      attrb[qq]["place"] = attrb[anotherqq]["place"]
-      text = `<${attrb[qq]["name"]}>在${attrb[anotherqq]["place"]}追到了<${attrb[anotherqq]["name"]}>，`
-    }
-
-    //新来的赢
-    if (ran1 * val1 >= ran2 * val2) {
-      let goodsnum = 0
-      for (let good in attrb[anotherqq]["goods"]) {
-        goodsnum += attrb[anotherqq]["goods"][good]
-      }
-
-      text += `用${attrb[qq]["weapon"]}揍了${call(anotherqq)}一顿后，`
-      //抢货
-      if (Math.random() < 0.5 && goodsnum >= 20) {
-        text += `抢走了${robgoods(anotherqq, qq)}。`
-      }
-      //抢钱
-      else {
-        if (attrb[anotherqq]["money"] <= 0) {
-          text += `一边嫌弃${call(anotherqq)}是个穷鬼一边离开了。`
-        }
-        else {
-          text += `抢走了$ ${robmoney(anotherqq, qq)}。`
-        }
+  /**检查参数是否为数字并返回，若为all则返回ifAll，无效则返回0*/
+  function ckNum(val, ifAll) {
+    switch (val) {
+      case '': return 1
+      case 'all': return ifAll
+      default: {
+        val = parseInt(val)
+        return isNaN(val) ? 0 : val
       }
     }
-    //新来的输
-    else {
-      let goodsnum = 0
-      for (let good in attrb[qq]["goods"]) {
-        goodsnum += attrb[qq]["goods"][good]
-      }
-
-      text += `被${call(anotherqq)}的${attrb[anotherqq]["weapon"]}反过来揍了一顿后，`
-      //抢货
-      if (Math.random() < 0.5 && goodsnum >= 20) {
-        text += `被抢走了${robgoods(qq, anotherqq)}。`
-      }
-      //抢钱
-      else {
-        if (attrb[qq]["money"] <= 0) {
-          text += `${call(anotherqq)}嫌弃你是个穷鬼并离开了。`
-        }
-        else {
-          text += `被抢走了$ ${robmoney(qq, anotherqq)}。`
-        }
-      }
-    }
-    return text;
-  }
-  //加入
-  function addplayer(qq, name, sex, belong) {
-    attrb[qq] = {}
-    //昵称
-    attrb[qq]["name"] = name
-    //所属
-    attrb[qq]["belong"] = belong
-    //性别
-    attrb[qq]["sex"] = sex
-    //san值
-    attrb[qq]["san"] = Math.floor(Math.random() * (80 - 40 + 1)) + 40
-    //落魄值
-    attrb[qq]["exp"] = 0
-    //货币
-    attrb[qq]["money"] = 100
-    //贡献
-    attrb[qq]["contr"] = 0
-    //载具
-    attrb[qq]["car"] = "二手别克"
-    //货物
-    attrb[qq]["goods"] = { "土豆": 20 }
-    //武器
-    attrb[qq]["weapon"] = "催泪瓦斯"
-    //位置
-    attrb[qq]["place"] = allplaces[Math.floor(Math.random() * allplaces.length)]
-    //发传单时间
-    attrb[qq]["missionTime"] = 1717065841 * 1000
-    //前往时间
-    attrb[qq]["gotime"] = 1717065841 * 1000
-    //逛逛时间
-    attrb[qq]["happytime"] = 1717065841 * 1000
-    //关进医院时间
-    attrb[qq]["healtime"] = 1717065841 * 1000
-    //被抓时间
-    attrb[qq]["policetime"] = 1717065841 * 1000
-    //抢劫时间
-    attrb[qq]["robtime"] = 1717065841 * 1000
-    //越狱时间
-    attrb[qq]["esctime"] = 1717065841 * 1000
-    //成就列表
-    attrb[qq]["achieves"] = []
-    //抢劫赢的次数
-    attrb[qq]["robwin"] = 0
-    //抢劫输的次数
-    attrb[qq]["roblose"] = 0
-    //翻垃圾的次数
-    attrb[qq]["rubbish"] = 0
   }
 
   const cmdadd = seal.ext.newCmdItemInfo();
   cmdadd.name = "加入";
-  cmdadd.help = "指令：.加入 昵称 性别 教团（当前教团可用 .教团信息 查看），或者使用 .加入 随便";
+  cmdadd.help = "指令：.加入 教团（当前教团可用 .教团信息 查看），或者使用 .加入 随便";
   cmdadd.solve = (ctx, msg, cmdArgs) => {
     let val = cmdArgs.getArgN(1);
-    const qq = seal.format(ctx, "{$t账号ID_RAW}")
-    const name = val
-    const sex = cmdArgs.getArgN(2)
-    const belong = cmdArgs.getArgN(3)
-    if (attrb.hasOwnProperty(qq)) {
-      seal.replyToSender(ctx, msg, `${ctx.player.name}，你早已加入了。`)
-      return;
-    }
+    const id = ctx.player.userId
+    const name = ctx.player.name
+    ckId(id, name)
+
     switch (val) {
+      case "":
       case "help": {
         const ret = seal.ext.newCmdExecuteResult(true);
         ret.showHelp = true;
         return ret;
       }
       case "随便": {
-        const name = ctx.player.name
-        let sex = "男"
-        if (Math.random() <= 0.5) {
-          sex = "女"
-        }
-        const belong = allcults[Math.floor(Math.random() * allcults.length)]
-        if (attrb.hasOwnProperty(qq)) {
-          seal.replyToSender(ctx, msg, `早已加入了。`)
-          return;
-        }
-        addplayer(qq, name, sex, belong)
+        val = allcults[Math.floor(Math.random() * allcults.length)]
+        break;
+      }
+    }
 
-        seal.replyToSender(ctx, msg, `${name}，欢迎你加入${belong}。你来到了${attrb[qq]["place"]}。当前有$ 100,土豆×20`)
-        seal.replyToSender(ctx, msg, lead)
-        updating(true, true)
+    //乱写是吧
+    if (!allcults.includes(val)) {
+      seal.replyToSender(ctx, msg, `很抱歉，你不能自创教团。目前可加入的有${cultText}`)
+      return;
+    }
+
+    const cult = val
+    if (!playerlist.hasOwnProperty(id)) {
+      players[id].movCult(cult)
+      seal.replyToSender(ctx, msg, `${name}，欢迎你加入${cult}。你来到了${players[id].place}。当前有$ 100,土豆×20`)
+      seal.replyToSender(ctx, msg, lead)
+      return;
+    } else {
+      if (players[id].ckCmd(ctx, msg)) return;
+      if (players[id].cult == cult) {
+        seal.replyToSender(ctx, msg, `${players[id].name}，你已经是${cult}的成员了!`)
         return;
       }
-      default: {
-        if (!belong) {
-          const ret = seal.ext.newCmdExecuteResult(true);
-          ret.showHelp = true;
-          return ret;
-        }
-        if (sex !== "男" && sex !== "女") {
-          seal.replyToSender(ctx, msg, `请正确输入性别（男/女）。`)
-          return;
-        }
-
-        //乱写是吧
-        let sign = false
-        for (let cult of allcults) { if (belong == cult) { sign = true } }
-        if (!sign) {
-          seal.replyToSender(ctx, msg, `很抱歉，你不能自创教团。目前可加入的有${culttext}`)
-          return;
-        }
-
-        addplayer(qq, name, sex, belong)
-
-        seal.replyToSender(ctx, msg, `${name}，欢迎你加入${belong}。你来到了${attrb[qq]["place"]}。当前有$ 100,土豆×20`)
-        seal.replyToSender(ctx, msg, lead)
-        updating(true, true)
-        return;
-      }
+      players[id].movCult(cult)
+      seal.replyToSender(ctx, msg, `${players[id].name}，欢迎你加入${cult}。`)
+      return;
     }
   }
 
@@ -737,13 +887,12 @@ if (!ext) {
   cmdShop.help = "指令：.今日商店 （地点）";
   cmdShop.solve = (ctx, msg, cmdArgs) => {
     let val = cmdArgs.getArgN(1);
-    const qq = seal.format(ctx, "{$t账号ID_RAW}")
-    const now = parseInt(seal.format(ctx, "{$tTimestamp}")) * 1000
-    let checkmsg = checkcmd(qq, now, false, false)
-    if (checkmsg !== ``) {
-      seal.replyToSender(ctx, msg, checkmsg)
-      return;
-    }
+    const id = ctx.player.userId
+    const name = ctx.player.name
+    //检查是否存在
+    ckId(id, name)
+
+    if (!val) val = players[id].place
     switch (val) {
       case "help": {
         const ret = seal.ext.newCmdExecuteResult(true);
@@ -751,19 +900,14 @@ if (!ext) {
         return ret;
       }
       default: {
-        if (!val) { val = attrb[qq]["place"] }
         //又乱写是吧
-        let sign = false
-        for (let place of allplaces) { if (val == place) { sign = true } }
-        if (!sign) {
-          seal.replyToSender(ctx, msg, `暂无此地。目前的地点有${placetext}`)
+        if (!allplaces.includes(val)) {
+          seal.replyToSender(ctx, msg, `暂无此地。目前的地点有${placeText}`)
           return;
         }
 
         const date = seal.format(ctx, "{$tDate}")
-        let text = shop(date, val)
-        seal.replyToSender(ctx, msg, text + `\n你目前有$ ${attrb[qq]["money"]}。`)
-        updating()
+        seal.replyToSender(ctx, msg, places[val].getShop(date) + `\n你目前有$ ${players[id].money}。`)
         return;
       }
     }
@@ -774,13 +918,11 @@ if (!ext) {
   cmdgoods.help = "指令：.查看背包（如果你的背包里出现了undefined、NaN、null之类不可名状的脏东西，请使用 .清除背包 ，以免传染给其他人）";
   cmdgoods.solve = (ctx, msg, cmdArgs) => {
     let val = cmdArgs.getArgN(1);
-    const qq = seal.format(ctx, "{$t账号ID_RAW}")
-    const now = parseInt(seal.format(ctx, "{$tTimestamp}")) * 1000
-    let checkmsg = checkcmd(qq, now, false, false)
-    if (checkmsg !== ``) {
-      seal.replyToSender(ctx, msg, checkmsg)
-      return;
-    }
+    const id = ctx.player.userId
+    const name = ctx.player.name
+    const now = parseInt(seal.format(ctx, "{$tTimestamp}"))
+    ckId(id, name)
+
     switch (val) {
       case "help": {
         const ret = seal.ext.newCmdExecuteResult(true);
@@ -788,19 +930,18 @@ if (!ext) {
         return ret;
       }
       default: {
-        let money = attrb[qq]["money"]
-        let arr = Object.keys(attrb[qq]["goods"])
+        let money = players[id].money
+        let arr = Object.keys(players[id].goods)
 
         //计算货物数量
         let goodsnum = 0
-        for (let good in attrb[qq]["goods"]) {
-          goodsnum += attrb[qq]["goods"][good]
-        }
+        for (let good in players[id].goods) goodsnum += players[id].goods[good]
 
-        text = `<${attrb[qq]["name"]}>的背包：\n货币：$ ${money}\n空间:${goodsnum}/${carlst[attrb[qq]["car"]]}`
+        text = `<${players[id].name}>的背包：\n货币：$ ${money}\n空间:${goodsnum}/${carlst[players[id].car]}`
         for (let i = 0; i < arr.length; i++) {
-          if (attrb[qq]["goods"][arr[i]] != 0) {
-            text += `\n${arr[i]}×${attrb[qq]["goods"][arr[i]]}`
+          if (players[id].goods[arr[i]] != 0) {
+            if (weaponlst.hasOwnProperty(arr[i])) text += `\n${arr[i]}(${weaponlst[arr[i]]})×${players[id].goods[arr[i]]}`
+            else text += `\n${arr[i]}×${players[id].goods[arr[i]]}`
           }
         }
         seal.replyToSender(ctx, msg, text)
@@ -811,21 +952,19 @@ if (!ext) {
 
   const cmdmove = seal.ext.newCmdItemInfo();
   cmdmove.name = "前往";
-  cmdmove.help = `指令：.前往 地点（目前可去的地点有${placetext}）`;
+  cmdmove.help = `指令：.前往 地点（目前可去的地点有${placeText}）`;
   cmdmove.solve = (ctx, msg, cmdArgs) => {
     let val = cmdArgs.getArgN(1);
-    const qq = seal.format(ctx, "{$t账号ID_RAW}")
-    const now = parseInt(seal.format(ctx, "{$tTimestamp}")) * 1000
-    let checkmsg = checkcmd(qq, now)
-    if (checkmsg !== ``) {
-      seal.replyToSender(ctx, msg, checkmsg)
-      return;
-    }
+    const id = ctx.player.userId
+    const name = ctx.player.name
+    const now = parseInt(seal.format(ctx, "{$tTimestamp}"))
+    ckId(id, name)
+    if (players[id].ckCmd(ctx, msg)) return
+
     //冷却时间~
-    let interval = seal.ext.getConfig(ext, "指令间隔/s(前往)").value * 1000
-    if (now - attrb[qq]["gotime"] < interval) {
-      return;
-    }
+    let interval = seal.ext.getIntConfig(ext, "指令间隔/s(前往)")
+    if (now - players[id].time.movTime < interval) return;
+
     switch (val) {
       case "":
       case "help": {
@@ -835,84 +974,19 @@ if (!ext) {
       }
       default: {
         //又乱写是吧
-        let sign = false
-        for (let place of allplaces) { if (val == place) { sign = true } }
-        if (!sign) {
-          seal.replyToSender(ctx, msg, `暂无此地。目前可去的地点有${placetext}`)
+        if (!allplaces.includes(val)) {
+          seal.replyToSender(ctx, msg, `暂无此地。目前可去的地点有${placeText}`)
           return;
         }
-        if (val == attrb[qq]["place"]) {
+
+        if (val == players[id].place) {
           seal.replyToSender(ctx, msg, `你已经到${val}啦！`)
           return;
         }
-        let formerplace = attrb[qq]["place"]
-        attrb[qq]["gotime"] = now
-        attrb[qq]["place"] = val;
 
-        let place = attrb[qq]["place"]
-        let members = places[place]["members"]
-        let ran = Math.random()
-
-        //遇到了谁？
-        if (members.length > 1 && ran <= 0.3) {
-          let anotherqq = members[Math.floor(Math.random() * members.length)]
-          while (anotherqq == qq) {
-            anotherqq = members[Math.floor(Math.random() * members.length)]
-          }
-          if (now - attrb[anotherqq]["healtime"] < 600 * 1000) {
-            seal.replyToSender(ctx, msg, `<${attrb[qq]["name"]}>在${place}遇到了正在精神病院咆哮的<${attrb[anotherqq]["name"]}>。`)
-            return;
-          }
-          if (now - attrb[anotherqq]["policetime"] < 180 * 1000) {
-            seal.replyToSender(ctx, msg, `<${attrb[qq]["name"]}>在${place}遇到了正在尝试越狱的<${attrb[anotherqq]["name"]}>。`)
-            return;
-          }
-          seal.replyToSender(ctx, msg, rob(qq, anotherqq, now) + checkachieve(qq, now))
-          updating(false, true)
-          return;
-        }
-        //疯狂啦~
-        if (ran <= 0.5) {
-          let lostsan = Math.floor(Math.random() * 6) + 1
-          let myth = myths[Math.floor(Math.random() * myths.length)]
-          let mythword = mythwords[Math.floor(Math.random() * mythwords.length)]
-          attrb[qq]["san"] -= lostsan;
-
-          seal.replyToSender(ctx, msg, `<${attrb[qq]["name"]}>在${place}遇到了${mythword}${myth}！san-${lostsan}。` + `\n当前san值为${attrb[qq]["san"]}` + checksan(qq, now))
-          updating(false, true)
-          return;
-        }
-        //警察！
-        if (ran > 0.5 && ran <= 0.8) {
-          attrb[qq]["exp"] += 8
-          attrb[qq]["policetime"] = now
-          let goods = Object.keys(attrb[qq]["goods"])
-          let plccheck = ``
-          if (goods.length !== 0) {
-            plccheck = `因为检查出车上有${goods[Math.floor(Math.random() * goods.length)]}，`
-          }
-
-          seal.replyToSender(ctx, msg, `<${attrb[qq]["name"]}>在${place}遇到了警察！${plccheck}被抓起来了！但作为${attrb[qq]["belong"]}的资深教徒，越狱只需要三分钟！\n落魄值+8=${attrb[qq]["exp"]}`)
-          updating(false, true)
-          return;
-        }
-        //我是迷路大师！
-        if (ran > 0.8) {
-          let newplace = allplaces[Math.floor(Math.random() * allplaces.length)]
-          while (newplace == val) {
-            newplace = allplaces[Math.floor(Math.random() * allplaces.length)]
-          }
-          attrb[qq]["place"] = newplace;
-          attrb[qq]["gotime"] = 1717065841 * 1000
-
-          if (newplace == formerplace) {
-            seal.replyToSender(ctx, msg, `<${attrb[qq]["name"]}>迷路了！走着走着竟然回到了${newplace}！`)
-            return;
-          }
-          seal.replyToSender(ctx, msg, `<${attrb[qq]["name"]}>迷路了！竟然来到了${newplace}！`)
-          updating(false, true)
-          return;
-        }
+        players[id].time.movTime = now
+        players[id].movPlace(val)
+        seal.replyToSender(ctx, msg, players[id].meet(now, ctx, msg));
       }
     }
   }
@@ -922,23 +996,26 @@ if (!ext) {
   cmdCancel.help = "指令：.注销（注销就是注销了）";
   cmdCancel.solve = (ctx, msg, cmdArgs) => {
     let val = cmdArgs.getArgN(1);
-    const qq = seal.format(ctx, "{$t账号ID_RAW}")
-    const now = parseInt(seal.format(ctx, "{$tTimestamp}")) * 1000
-    let checkmsg = checkcmd(qq, now, false, false)
-    if (checkmsg !== ``) {
-      seal.replyToSender(ctx, msg, checkmsg)
-      return;
-    }
+    const id = ctx.player.userId
+
     switch (val) {
       case "help": {
         const ret = seal.ext.newCmdExecuteResult(true);
         ret.showHelp = true;
         return ret;
       }
-      default: {
-        delete attrb[qq]
-        updating(true, true)
+      case "确认": {
+        players[id].movCult('不存在')
+        players[id].movPlace('不存在')
+        delete players[id]
+        delete playerlist[id]
+        ext.storageSet('playerlist', JSON.stringify(playerlist));
+
         seal.replyToSender(ctx, msg, "注销成功！")
+        return;
+      }
+      default: {
+        seal.replyToSender(ctx, msg, "请使用 【.注销 确认】 进行注销！")
         return;
       }
     }
@@ -950,14 +1027,17 @@ if (!ext) {
   cmdBuy.solve = (ctx, msg, cmdArgs) => {
     let val = cmdArgs.getArgN(1);
     let val2 = cmdArgs.getArgN(2);
+    const id = ctx.player.userId
+    const name = ctx.player.name
+    const now = parseInt(seal.format(ctx, "{$tTimestamp}"))
+    ckId(id, name)
+    if (players[id].ckCmd(ctx, msg)) return
+
+    let money = players[id].money
+    let place = players[id].place
     const date = seal.format(ctx, "{$tDate}")
-    const qq = seal.format(ctx, "{$t账号ID_RAW}")
-    const now = parseInt(seal.format(ctx, "{$tTimestamp}")) * 1000
-    let checkmsg = checkcmd(qq, now)
-    if (checkmsg !== ``) {
-      seal.replyToSender(ctx, msg, checkmsg)
-      return;
-    }
+    places[place].getShop(date)
+
     switch (val) {
       case "":
       case "help": {
@@ -966,52 +1046,40 @@ if (!ext) {
         return ret;
       }
       default: {
-        let money = attrb[qq]["money"]
-        let place = attrb[qq]["place"]
-        let kunkun = shop(date, place)
-        let space = carlst[attrb[qq]["car"]]
-        let goodsnum = 0
-        for (let good in attrb[qq]["goods"]) {
-          goodsnum += attrb[qq]["goods"][good]
-        }
-
-        if (!val2) { val2 = 1 }
-        if ((val2 !== "all" && isNaN(val2)) || val2 <= 0) {
-          const ret = seal.ext.newCmdExecuteResult(true);
-          ret.showHelp = true;
-          return ret;
-        }
-        if (!places[place]["goods"].hasOwnProperty(val)) {
-          seal.replyToSender(ctx, msg, `没有在售。<${attrb[qq]["name"]}>当前位于${attrb[qq]["place"]}`)
+        if (!places[place].shop.hasOwnProperty(val)) {
+          seal.replyToSender(ctx, msg, `没有在售。<${players[id].name}>当前位于${players[id].place}`)
           return;
         }
-        if (val2 == "all") {
-          val2 = Math.floor(attrb[qq]["money"] / places[place]["goods"][val])
-          if (goodsnum + val2 > space) {
-            val2 = space - goodsnum
-          }
+
+        let space = carlst[players[id].car]
+        let goodsnum = 0
+        for (let good in players[id].goods) goodsnum += players[id].goods[good]
+
+        let maxCost = Math.floor(money / places[place].shop[val])
+        let ifAll = goodsnum + maxCost > space ? space - goodsnum : maxCost
+        val2 = ckNum(val2, ifAll)
+        if (val2 <= 0) {
+          seal.replyToSender(ctx, msg, '请输入正确的数字！');
+          return;
         }
 
-        val2 = parseInt(val2)
         //溢出的情况
         if (goodsnum + val2 > space) {
-          seal.replyToSender(ctx, msg, `<${attrb[qq]["name"]}>的车装不下啦！`)
+          seal.replyToSender(ctx, msg, `<${players[id].name}>的车装不下啦！`)
           return;
         }
 
-        let price = places[place]["goods"][val] * val2
+        let price = places[place].shop[val] * val2
         //钱不够的情况
         if (price > money) {
-          seal.replyToSender(ctx, msg, `<${attrb[qq]["name"]}>看了看自己的钱包摇了摇头。`)
+          seal.replyToSender(ctx, msg, `<${players[id].name}>看了看自己的钱包摇了摇头。`)
           return;
         }
 
-        attrb[qq]["money"] = money - price
-        let text = addgoodtoqq(qq, val, val2)
+        players[id].money -= price
+        players[id].addGoodTo(val, val2)
 
-
-        seal.replyToSender(ctx, msg, `<${attrb[qq]["name"]}>花费了$ ${price}，购买到${text}。`)
-        updating()
+        seal.replyToSender(ctx, msg, `<${players[id].name}>花费了$ ${price}，购买到${val}×${val2}。`)
         return;
       }
     }
@@ -1023,16 +1091,18 @@ if (!ext) {
   cmdSell.solve = (ctx, msg, cmdArgs) => {
     let val = cmdArgs.getArgN(1);
     let val2 = cmdArgs.getArgN(2);
-    const qq = seal.format(ctx, "{$t账号ID_RAW}")
-    const now = parseInt(seal.format(ctx, "{$tTimestamp}")) * 1000
-    let checkmsg = checkcmd(qq, now)
-    if (checkmsg !== ``) {
-      seal.replyToSender(ctx, msg, checkmsg)
-      return;
-    }
+    const id = ctx.player.userId
+    const name = ctx.player.name
+    ckId(id, name)
+    if (players[id].ckCmd(ctx, msg)) return
+
     const date = seal.format(ctx, "{$tDate}")
-    let place = attrb[qq]["place"]
-    let text = shop(date, place)
+    let place = players[id].place
+    places[place].getShop(date)
+
+    let text = ``
+    let increase = 0
+
     switch (val) {
       case "":
       case "help": {
@@ -1042,68 +1112,56 @@ if (!ext) {
       }
       //卖掉所有能卖的货物
       case "all": {
-        let text = ``
-        let increase = 0
-        for (let level in goods) {
-          for (let val of goods[level]) {
-            if (places[place]["goods"].hasOwnProperty(val) && attrb[qq]["goods"].hasOwnProperty(val)) {
-              val2 = attrb[qq]["goods"][val]
-              let price = places[place]["goods"][val] * val2
-              increase += price
-              text += `${val}×${val2}、`
-              delete attrb[qq]["goods"][val]
-            }
+        for (let good in players[id].goods) {
+          if (places[place].shop.hasOwnProperty(good)) {
+            let num = players[id].goods[good]
+
+            let price = places[place].shop[good] * num
+            increase += price
+            text += `\n${good}×${num}、`
+            players[id].money += price
+            players[id].takeGood(good, num)
           }
         }
+
         if (increase == 0) {
-          seal.replyToSender(ctx, msg, `<${attrb[qq]["name"]}>的背包里好像没什么好卖的呢~` + checkachieve(qq, now))
+          seal.replyToSender(ctx, msg, `<${players[id].name}>的背包里好像没什么好卖的呢~`)
           return;
         }
-        attrb[qq]["money"] += increase
 
-        seal.replyToSender(ctx, msg, `<${attrb[qq]["name"]}>出售了${text.slice(0, -1)}，得到$ ${increase}。` + checkachieve(qq, now))
-        updating()
-        return;
+        break;
       }
       default: {
-        if (!places[place]["goods"].hasOwnProperty(val)) {
-          seal.replyToSender(ctx, msg, `<${attrb[qq]["name"]}>当前位于${attrb[qq]["place"]}。暂不收购该商品。`)
+        if (!places[place].shop.hasOwnProperty(val)) {
+          seal.replyToSender(ctx, msg, `<${players[id].name}>当前位于${players[id].place}。暂不收购该商品。`)
           return;
         }
-
-        if (!val2) { val2 = 1 }
-        if ((val2 !== "all" && isNaN(val2)) || val2 <= 0) {
-          const ret = seal.ext.newCmdExecuteResult(true);
-          ret.showHelp = true;
-          return ret;
-        }
-
-        if (!attrb[qq]["goods"].hasOwnProperty(val)) {
+        if (!players[id].goods.hasOwnProperty(val)) {
           seal.replyToSender(ctx, msg, "库中没有此物品。")
           return;
         }
-        if (val2 == "all") {
-          val2 = attrb[qq]["goods"][val]
+
+        val2 = ckNum(val2, players[id].goods[val])
+        if (val2 <= 0) {
+          seal.replyToSender(ctx, msg, '请输入正确的数字！');
+          return;
         }
-        val2 = parseInt(val2)
-        if (attrb[qq]["goods"][val] < val2) {
+        if (players[id].goods[val] < val2) {
           seal.replyToSender(ctx, msg, "库中物品数量不足！")
           return;
         }
-        let price = places[place]["goods"][val] * val2
-        attrb[qq]["money"] += price
 
-        attrb[qq]["goods"][val] -= val2
-        if (attrb[qq]["goods"][val] == 0) {
-          delete attrb[qq]["goods"][val];
-        }
+        increase = places[place].shop[val] * val2
+        text = `${val}×${val2}、`
 
+        players[id].money += increase
+        players[id].takeGood(val, val2)
 
-        seal.replyToSender(ctx, msg, `<${attrb[qq]["name"]}>出售了${val}×${val2}，得到$ ${price}。` + checkachieve(qq, now))
-        updating()
-        return;
+        break;
       }
     }
+    seal.replyToSender(ctx, msg, `<${players[id].name}>出售了${text.slice(0, -1)}\n货币+$ ${increase}=>$ ${players[id].money}。`)
+    return;
   }
 
   const cmdCheat = seal.ext.newCmdItemInfo();
@@ -1111,10 +1169,16 @@ if (!ext) {
   cmdCheat.help = lead;
   cmdCheat.allowDelegate = true;
   cmdCheat.solve = (ctx, msg, cmdArgs) => {
-    const mctx = seal.getCtxProxyFirst(ctx, cmdArgs);
+    if (ctx.privilegeLevel < 100) return;
     let val = cmdArgs.getArgN(1);
     let val2 = cmdArgs.getArgN(2);
     let val3 = cmdArgs.getArgN(3);
+
+    const mctx = seal.getCtxProxyFirst(ctx, cmdArgs);
+    const id = mctx.player.userId
+    const name = mctx.player.name
+    const now = parseInt(seal.format(ctx, "{$tTimestamp}"))
+    ckId(id, name)
 
     switch (val) {
       case "":
@@ -1123,178 +1187,196 @@ if (!ext) {
         ret.showHelp = true;
         return ret;
       }
-      default: {
-        if (ctx.privilegeLevel != 100) {
-          return;
-        }
-        if (val == "master") {
-          seal.replyToSender(ctx, msg, "指令：.cult 参数1 参数2（参数目前有\n加入（@另一个人）\ndel(清除所有数据)\n刷新商店\n刷新武器\n重置地点\n自首\n保释\n加时 数值（分钟）\n清空成就\nmoney 数值(修改金额)\ncontr 数值(修改贡献度)\nlp 数值(修改落魄值)\nsan 数值\n赏 金额\n赐 物品名称，\n除了这些外，默认参数1为物品名称，参数2为物品数量写入到背包中）")
-          return;
-        }
-
-        let anotherPeople = mctx.player.userId
-        const qq = anotherPeople.replace(/\D+/g, "")
-        const now = parseInt(seal.format(ctx, "{$tTimestamp}")) * 1000
-        if (val == "加入") {
-          const name = mctx.player.name
-          let sex = "男"
-          if (Math.random() <= 0.5) {
-            sex = "女"
-          }
-          const belong = allcults[Math.floor(Math.random() * allcults.length)]
-          if (attrb.hasOwnProperty(qq)) {
-            seal.replyToSender(ctx, msg, `早已加入了。`)
-            return;
-          }
-          addplayer(qq, name, sex, belong)
-
-          seal.replyToSender(ctx, msg, `${name}，欢迎你加入${belong}。你来到了${attrb[qq]["place"]}。`)
-          updating(true, true)
-          return;
-        }
-        if (!attrb.hasOwnProperty(qq)) {
-          seal.replyToSender(ctx, msg, `[CQ:at,qq=${qq}]还没有注册账号！`)
-          return;
-        }
-        //更新数据用
-        /*if (val == "updt") {
-          for (let qq in attrb) {
-            attrb[qq]["esctime"] = 1717065841 * 1000
-            delete attrb[qq]["raiseTime"]
-          }
-          seal.replyToSender(ctx, msg, `成功！`)
-          updating()
-          return;
-        }*/
-        if (val == "del") {
-          for (let i in attrb) { delete attrb[i] }
-          for (let i in places) { delete places[i] }
-          for (let i in cults) { delete cults[i] }
-          for (let i in weaponnow) { delete weaponnow[i] }
-
-          //初始化————
-          for (let cult of allcults) {
-            if (!cults.hasOwnProperty(cult)) { cults[cult] = {} }
-            if (!cults[cult].hasOwnProperty("members")) { cults[cult]["members"] = []; }
-            if (!cults[cult].hasOwnProperty("seeing")) { cults[cult]["seeing"] = {}; }
-          }
-          for (let cult in cultgods) {
-            for (let god of cultgods[cult]) {
-              if (!cults[cult]["seeing"].hasOwnProperty(god)) { cults[cult]["seeing"][god] = 0 }
+      case 'master': {
+        seal.replyToSender(ctx, msg, "参数：add、del、upd、free、arrest、money、san、contr、down、exp、赏、赐、加时")
+        return;
+      }
+      case 'upd': {
+        switch (val2) {
+          case 'shop': {
+            for (let place of allplaces) {
+              places[place].date = ''
+              places[place].saveData()
             }
+            seal.replyToSender(ctx, msg, `商店刷新成功！`)
+            return;
           }
-          for (let place of allplaces) {
-            if (!places.hasOwnProperty(place)) { places[place] = {} }
-            if (!places[place].hasOwnProperty("members")) { places[place]["members"] = []; }
-            if (!places[place].hasOwnProperty("says")) { places[place]["says"] = []; }
+          case 'weapon': {
+            for (let cult of allcults) {
+              cults[cult].date = ''
+              cults[cult].saveData()
+            }
+            seal.replyToSender(ctx, msg, `武器商店刷新成功！`)
+            return;
           }
-          ext.storageSet("attrb", JSON.stringify(attrb))
-          ext.storageSet("places", JSON.stringify(places))
-          ext.storageSet("cults", JSON.stringify(cults))
-          ext.storageSet("weaponnow", JSON.stringify(weaponnow))
-          seal.replyToSender(ctx, msg, `成功！`)
-          return;
+          case 'place': {
+            for (let id in playerlist) {
+              let newplace = allplaces[Math.floor(Math.random() * allplaces.length)]
+              players[id].movPlace(newplace)
+            }
+            seal.replyToSender(ctx, msg, `玩家地点刷新成功！`)
+            return;
+          }
+          default: {
+            seal.replyToSender(ctx, msg, `参数2为shop、weapon、place。`)
+            return;
+          }
         }
-        if (val == "刷新商店") {
-          for (let place of allplaces) { delete places[place]["date"] }
-          seal.replyToSender(ctx, msg, `成功！`)
-          return;
-        }
-        if (val == "刷新武器") {
-          delete weaponnow["date"]
-          seal.replyToSender(ctx, msg, `成功！`)
-          return;
-        }
-        if (val == "重置地点") {
-          for (let qq in attrb) { attrb[qq]["place"] = allplaces[Math.floor(Math.random() * allplaces.length)] }
-          updating(false, true)
-          seal.replyToSender(ctx, msg, `成功！`)
-          return;
-        }
-        if (val == "保释") {
-          //关进医院时间
-          attrb[qq]["healtime"] = 1717065841 * 1000
-          //被抓时间
-          attrb[qq]["policetime"] = 1717065841 * 1000
-          updating()
-          seal.replyToSender(ctx, msg, `成功！`)
-          return;
-        }
-        if (val == "自首") {
-          //被抓时间
-          attrb[qq]["policetime"] = now
-          updating()
-          seal.replyToSender(ctx, msg, `成功！`)
-          return;
-        }
-        if (val == "清空成就") {
-          attrb[qq]["achieves"] = []
-          updating()
-          seal.replyToSender(ctx, msg, `成功！`)
+      }
+      case 'free': {
+        //关进医院时间
+        players[id].time.healtime = 0
+        //被抓时间
+        players[id].time.arrestTime = 0
+        seal.replyToSender(ctx, msg, `释放成功！`)
+        return;
+      }
+      case 'arrest': {
+        //被抓时间
+        players[id].time.arrestTime = now
+        seal.replyToSender(ctx, msg, `逮捕成功！`)
+        return;
+      }
+      case 'money': {
+        let increase = parseInt(val2)
+        if (isNaN(increase)) {
+          seal.replyToSender(ctx, msg, `请输入数字`)
           return;
         }
 
-        //需要两个参数
+        players[id].money = increase
+        players[id].saveData()
+        seal.replyToSender(ctx, msg, `修改money成功！`)
+        return;
+      }
+      case 'san': {
+        let increase = parseInt(val2)
+        if (isNaN(increase)) {
+          seal.replyToSender(ctx, msg, `请输入数字`)
+          return;
+        }
+
+        players[id].san = increase
+        players[id].saveData()
+        seal.replyToSender(ctx, msg, `修改san值成功！`)
+        return;
+      }
+      case 'contr': {
+        let increase = parseInt(val2)
+        if (isNaN(increase)) {
+          seal.replyToSender(ctx, msg, `请输入数字`)
+          return;
+        }
+
+        players[id].contr = increase
+        players[id].saveData()
+        seal.replyToSender(ctx, msg, `修改贡献度成功！`)
+        return;
+      }
+      case 'down': {
+        let increase = parseInt(val2)
+        if (isNaN(increase)) {
+          seal.replyToSender(ctx, msg, `请输入数字`)
+          return;
+        }
+
+        players[id].down = increase
+        players[id].saveData()
+        seal.replyToSender(ctx, msg, `修改落魄值成功！`)
+        return;
+      }
+      case 'exp': {
+        let increase = parseInt(val2)
+        if (isNaN(increase)) {
+          seal.replyToSender(ctx, msg, `请输入数字`)
+          return;
+        }
+
+        players[id].exp = increase
+        players[id].saveData()
+        seal.replyToSender(ctx, msg, `修改经验值成功！`)
+        return;
+      }
+      case '赏': {
+        let increase = parseInt(val2)
+        if (isNaN(increase)) {
+          seal.replyToSender(ctx, msg, `请输入数字`)
+          return;
+        }
+
+        for (let id in playerlist) {
+          players[id].money += increase
+          players[id].saveData()
+        }
+
+        seal.replyToSender(ctx, msg, `赏$ ${increase}成功！`)
+        return;
+      }
+      case '赐': {
+        if (!val3) {
+          seal.replyToSender(ctx, msg, `参数3缺失`)
+          return;
+        }
+        let num = parseInt(val3)
+        if (isNaN(num) || num <= 0) {
+          seal.replyToSender(ctx, msg, `请输入大于0的数字`)
+          return;
+        }
+        for (let id in playerlist) players[id].addGoodTo(val2, num)
+
+        seal.replyToSender(ctx, msg, `赐${val2}×${num}成功！`)
+        return;
+      }
+      case '加时': {
+        let increase = parseInt(val2)
+        if (isNaN(increase) || increase <= 0) {
+          seal.replyToSender(ctx, msg, `请输入大于0的数字`)
+          return;
+        }
+
+        //被抓时间
+        players[id].time.arrestTime += increase
+        seal.replyToSender(ctx, msg, `加时${increase}秒成功！`)
+        return;
+      }
+      case 'add': {
+        let val3 = cmdArgs.getRestArgsFrom(3)
+        if (!val3) {
+          seal.replyToSender(ctx, msg, `add 物品名称 回执`)
+          return;
+        }
+        use[val2] = val3
+        ext.storageSet('use', JSON.stringify(use));
+        seal.replyToSender(ctx, msg, `添加成功！`)
+        return;
+      }
+      case 'del': {
         if (!val2) {
-          seal.replyToSender(ctx, msg, `参数错误`)
+          seal.replyToSender(ctx, msg, `del 物品名称`)
           return;
         }
-        if (val == "money") {
-          attrb[qq]["money"] = parseInt(val2)
-          seal.replyToSender(ctx, msg, `成功！`)
-          updating()
+        if (!use.hasOwnProperty(val2)) {
+          seal.replyToSender(ctx, msg, `没有此物品`)
           return;
         }
-        if (val == "赏") {
-          for (let QQ in attrb) {
-            attrb[QQ]["money"] += parseInt(val2)
-          }
-          seal.replyToSender(ctx, msg, `成功！`)
-          updating()
-          return;
-        }
-        if (val == "赐") {
-          if (!val3) {
-            seal.replyToSender(ctx, msg, `.写 xxx xxx`)
-            return;
-          }
-          for (let QQ in attrb) {
-            addgoodtoqq(QQ, val2, val3)
-          }
-          seal.replyToSender(ctx, msg, `成功！`)
-          updating()
-          return;
-        }
-        if (val == "lp") {
-          attrb[qq]["exp"] = parseInt(val2)
-          seal.replyToSender(ctx, msg, `成功！`)
-          updating()
-          return;
-        }
-        if (val == "contr") {
-          attrb[qq]["contr"] = parseInt(val2)
-          seal.replyToSender(ctx, msg, `成功！`)
-          updating()
-          return;
-        }
-        if (val == "san") {
-          attrb[qq]["san"] = parseInt(val2)
-          seal.replyToSender(ctx, msg, `成功！`)
-          updating()
-          return;
-        }
-        if (val == "加时") {
-          //被抓时间
-          attrb[qq]["policetime"] += parseInt(val2) * 60 * 1000
-          updating()
-          seal.replyToSender(ctx, msg, `成功！`)
-          return;
-        }
+        delete use[val2]
+        ext.storageSet('use', JSON.stringify(use));
+        seal.replyToSender(ctx, msg, `删除成功！`)
+        return;
+      }
+      default: {
+        if (!val) return
         //修改背包物品
-        attrb[qq]["goods"][val] = parseInt(val2)
-        if (attrb[qq]["goods"][val] == 0) { delete attrb[qq]["goods"][val]; }
-        seal.replyToSender(ctx, msg, `成功！`)
-        updating()
+        let increase = parseInt(val2)
+        if (isNaN(increase) || increase < 0) {
+          seal.replyToSender(ctx, msg, `请输入大于等于0的数字`)
+          return;
+        }
+
+        players[id].goods[val] = increase
+        if (increase == 0) delete players[id].goods[val];
+
+        seal.replyToSender(ctx, msg, `修改背包成功！`)
         return;
       }
     }
@@ -1305,13 +1387,10 @@ if (!ext) {
   cmdinfo.help = "指令：.个人信息";
   cmdinfo.solve = (ctx, msg, cmdArgs) => {
     let val = cmdArgs.getArgN(1);
-    const qq = seal.format(ctx, "{$t账号ID_RAW}")
-    const now = parseInt(seal.format(ctx, "{$tTimestamp}")) * 1000
-    let checkmsg = checkcmd(qq, now, false, false)
-    if (checkmsg !== ``) {
-      seal.replyToSender(ctx, msg, checkmsg)
-      return;
-    }
+    const id = ctx.player.userId
+    const name = ctx.player.name
+    ckId(id, name)
+
     switch (val) {
       case "help": {
         const ret = seal.ext.newCmdExecuteResult(true);
@@ -1319,13 +1398,26 @@ if (!ext) {
         return ret;
       }
       default: {
+        const player = players[id]
+        //计算等级
+        let [lv, expLimit] = player.getLv()
+
         //计算货物数量
         let goodsnum = 0
-        for (let good in attrb[qq]["goods"]) {
-          goodsnum += attrb[qq]["goods"][good]
-        }
+        for (let good in player.goods) goodsnum += player.goods[good]
 
-        title = `﹌﹌﹌﹌﹌﹌﹌﹌﹌﹌[CQ:image,file=http://q2.qlogo.cn/headimg_dl?dst_uin=${qq}&spec=5]昵称:<${attrb[qq]["name"]}>\n所属:${attrb[qq]["belong"]}\n性别:${attrb[qq]["sex"]} | san值:${attrb[qq]["san"]} | 落魄值:${attrb[qq]["exp"]}\n货币:$ ${attrb[qq]["money"]} | 贡献度:${attrb[qq]["contr"]}\n武器:${attrb[qq]["weapon"]}  数值:${weaponlst[attrb[qq]["weapon"]]}\n载具:${attrb[qq]["car"]}（${goodsnum}/${carlst[attrb[qq]["car"]]}）\n位置:${attrb[qq]["place"]}`
+        let qq = id.replace(/\D+/g, '')
+
+        title = `﹌﹌﹌﹌﹌﹌﹌﹌﹌﹌[CQ:image,file=http://q2.qlogo.cn/headimg_dl?dst_uin=${qq}&spec=5]昵称:<${player.name}>
+所属:${player.cult}
+职位:${player.color}衣
+等级:${lv} (${player.exp}/${expLimit})
+san值:${player.san} | 落魄值:${player.down}
+货币:$ ${player.money} | 贡献度:${player.contr}
+武器:${player.weapon}  数值:${weaponlst[player.weapon]}
+载具:${player.car} (${goodsnum}/${carlst[player.car]})
+位置:${player.place}
+加入时间:${playerlist[id]}`
         seal.replyToSender(ctx, msg, `${title}`)
         return;
       }
@@ -1337,13 +1429,11 @@ if (!ext) {
   cmdwShop.help = "指令：.武器商店";
   cmdwShop.solve = (ctx, msg, cmdArgs) => {
     let val = cmdArgs.getArgN(1);
-    const qq = seal.format(ctx, "{$t账号ID_RAW}")
-    const now = parseInt(seal.format(ctx, "{$tTimestamp}")) * 1000
-    let checkmsg = checkcmd(qq, now, false, false)
-    if (checkmsg !== ``) {
-      seal.replyToSender(ctx, msg, checkmsg)
-      return;
-    }
+    const id = ctx.player.userId
+    const name = ctx.player.name
+    //检查是否存在
+    ckId(id, name)
+
     switch (val) {
       case "help": {
         const ret = seal.ext.newCmdExecuteResult(true);
@@ -1351,10 +1441,10 @@ if (!ext) {
         return ret;
       }
       default: {
+        let cult = players[id].cult
         const date = seal.format(ctx, "{$tDate}")
-        let text = weaponshop(date)
-        seal.replyToSender(ctx, msg, text + `\n<${attrb[qq]["name"]}>目前有$ ${attrb[qq]["money"]}。（买武器指令：.买武器 武器名称）`)
-        updating()
+
+        seal.replyToSender(ctx, msg, `${cults[cult].weaponShop(date)}\n<${players[id].name}>目前有$ ${players[id].money}。\n（指令：.买武器 武器名称）`)
         return;
       }
     }
@@ -1364,14 +1454,18 @@ if (!ext) {
   cmdbwp.name = "买武器";
   cmdbwp.help = "指令：.买武器 武器名称";
   cmdbwp.solve = (ctx, msg, cmdArgs) => {
-    let val = cmdArgs.getArgN(1);
-    const qq = seal.format(ctx, "{$t账号ID_RAW}")
-    const now = parseInt(seal.format(ctx, "{$tTimestamp}")) * 1000
-    let checkmsg = checkcmd(qq, now)
-    if (checkmsg !== ``) {
-      seal.replyToSender(ctx, msg, checkmsg)
-      return;
-    }
+    let val = cmdArgs.getRestArgsFrom(1)
+    const id = ctx.player.userId
+    const name = ctx.player.name
+    const now = parseInt(seal.format(ctx, "{$tTimestamp}"))
+    ckId(id, name)
+    if (players[id].ckCmd(ctx, msg)) return
+
+    const date = seal.format(ctx, "{$tDate}")
+    const cult = players[id].cult
+    let money = players[id].money
+    cults[cult].weaponShop(date)
+
     switch (val) {
       case "":
       case "help": {
@@ -1380,42 +1474,39 @@ if (!ext) {
         return ret;
       }
       default: {
-        const date = seal.format(ctx, "{$tDate}")
-        let money = attrb[qq]["money"]
-        let formerweapon = attrb[qq]["weapon"]
-        let text = weaponshop(date)
-
-        if (attrb[qq]["weapon"] == val) {
-          seal.replyToSender(ctx, msg, `<${attrb[qq]["name"]}>已经有了${val}。`)
-          return;
-        }
-        if (!weaponnow["goods"].hasOwnProperty(val)) {
+        if (!cults[cult].weapons.hasOwnProperty(val)) {
           seal.replyToSender(ctx, msg, `没有在售。`)
           return;
         }
         //剩余数量不足
-        if (weaponnow["goods"][val]["rest"] <= 0) {
+        if (cults[cult].weapons[val].rest <= 0) {
           seal.replyToSender(ctx, msg, `${val}已经卖光啦！`)
           return;
         }
-        //武器太辣鸡
-        if (weaponlst[val] < weaponlst[attrb[qq]["weapon"]]) {
-          seal.replyToSender(ctx, msg, `你看了看手中的${attrb[qq]["weapon"]}，觉得似乎并不太需要这个`)
-          return;
-        }
+
+        let space = carlst[players[id].car]
+        let goodsnum = 0
+        for (let good in players[id].goods) goodsnum += players[id].goods[good]
+
         //钱不够
-        let price = weaponnow["goods"][val]["price"]
+        let price = cults[cult].weapons[val].price
         if (price > money) {
           seal.replyToSender(ctx, msg, `钱不够呢。`)
           return;
         }
 
-        attrb[qq]["money"] = money - price
-        attrb[qq]["weapon"] = val
-        weaponnow["goods"][val]["rest"] -= 1
+        //溢出的情况
+        if (goodsnum + 1 > space) {
+          seal.replyToSender(ctx, msg, `<${players[id].name}>的车装不下啦！`)
+          return;
+        }
 
-        seal.replyToSender(ctx, msg, `<${attrb[qq]["name"]}>花费了$ ${price}，购买到新的${val}。原来的${formerweapon}就丢到垃圾桶吧。` + checkachieve(qq, now))
-        updating()
+        players[id].money -= price
+        cults[cult].weapons[val].rest -= 1
+        players[id].addGoodTo(val, 1)
+        players[id].useGood(val, 1)
+
+        seal.replyToSender(ctx, msg, `<${players[id].name}>花费了$ ${price}，购买到${val}。`)
         return;
       }
     }
@@ -1426,13 +1517,12 @@ if (!ext) {
   cmdmission.help = "指令：.发展信众";
   cmdmission.solve = (ctx, msg, cmdArgs) => {
     let val = cmdArgs.getArgN(1);
-    const now = parseInt(seal.format(ctx, "{$tTimestamp}")) * 1000
-    const qq = seal.format(ctx, "{$t账号ID_RAW}")
-    let checkmsg = checkcmd(qq, now)
-    if (checkmsg !== ``) {
-      seal.replyToSender(ctx, msg, checkmsg)
-      return;
-    }
+    const id = ctx.player.userId
+    const name = ctx.player.name
+    const now = parseInt(seal.format(ctx, "{$tTimestamp}"))
+    ckId(id, name)
+    if (players[id].ckCmd(ctx, msg)) return
+
     switch (val) {
       case "help": {
         const ret = seal.ext.newCmdExecuteResult(true);
@@ -1440,22 +1530,7 @@ if (!ext) {
         return ret;
       }
       default: {
-        let increase = parseInt(seal.format(ctx, "{$t增加=1d50+100}"))
-        let timestamp = attrb[qq]["missionTime"]
-
-        if (new Date(timestamp).toDateString() === new Date().toDateString()) {
-          seal.replyToSender(ctx, msg, `<${attrb[qq]["name"]}>今天的传单已经派完了`)
-          return;
-        }
-        attrb[qq]["missionTime"] = now
-        attrb[qq]["contr"] += increase
-
-        let ran = Math.floor(Math.random() * (15 - 5 + 1)) + 5
-        let moneyincrease = attrb[qq]["contr"] * ran
-        attrb[qq]["money"] += moneyincrease
-
-        seal.replyToSender(ctx, msg, `<${attrb[qq]["name"]}>今天在${attrb[qq]["place"]}发展了${increase}个信众，目前贡献度为${attrb[qq]["contr"]}，收取了$ ${moneyincrease}。` + checkachieve(qq, now))
-        updating()
+        seal.replyToSender(ctx, msg, players[id].mission(now))
         return;
       }
     }
@@ -1477,11 +1552,11 @@ if (!ext) {
         let cultinfo = {}
 
         for (let cult of allcults) {
-          let allcontr = cults[cult]["members"].length;//加上玩家人数
+          let allcontr = cults[cult].members.length;//加上玩家人数
           let allmoney = 0;
-          for (let qq of cults[cult]["members"]) {
-            allcontr += attrb[qq]["contr"]
-            allmoney += attrb[qq]["money"]
+          for (let id of cults[cult].members) {
+            allcontr += players[id].contr
+            allmoney += players[id].money
           }
           cultinfo[cult] = [allcontr, allmoney]
         }
@@ -1503,17 +1578,15 @@ if (!ext) {
   cmdhappy.help = "指令：.逛逛";
   cmdhappy.solve = (ctx, msg, cmdArgs) => {
     let val = cmdArgs.getArgN(1);
-    const qq = seal.format(ctx, "{$t账号ID_RAW}")
-    const now = parseInt(seal.format(ctx, "{$tTimestamp}")) * 1000
-    let checkmsg = checkcmd(qq, now)
-    if (checkmsg !== ``) {
-      seal.replyToSender(ctx, msg, checkmsg)
-      return;
-    }
-    let interval = seal.ext.getConfig(ext, "指令间隔/s(逛逛)").value * 1000
-    if (now - attrb[qq]["happytime"] < interval) {
-      return;
-    }
+    const id = ctx.player.userId
+    const name = ctx.player.name
+    const now = parseInt(seal.format(ctx, "{$tTimestamp}"))
+    ckId(id, name)
+    if (players[id].ckCmd(ctx, msg)) return
+
+    let interval = seal.ext.getIntConfig(ext, "指令间隔/s(逛逛)")
+    if (now - players[id].time.strollTime < interval) return;
+
     switch (val) {
       case "help": {
         const ret = seal.ext.newCmdExecuteResult(true);
@@ -1521,55 +1594,9 @@ if (!ext) {
         return ret;
       }
       default: {
-        attrb[qq]["happytime"] = now
-        let place = attrb[qq]["place"]
-        let ran = Math.random()
-        let milu = ``
-        //迷路————
-        if (Math.random() <= 0.2) {
-          let newplace = allplaces[Math.floor(Math.random() * allplaces.length)]
-          while (newplace == place) {
-            newplace = allplaces[Math.floor(Math.random() * allplaces.length)]
-          }
-          attrb[qq]["place"] = newplace;
-
-          milu = `<${attrb[qq]["name"]}>迷路了！走着走着竟然来到了${newplace}！\n`
-        }
-
-        //神话生物！
-        if (ran <= 0.6) {
-          let lostsan = Math.floor(Math.random() * 6) + 1
-          let myth = myths[Math.floor(Math.random() * myths.length)]
-          let mythword = mythwords[Math.floor(Math.random() * mythwords.length)]
-          attrb[qq]["san"] -= lostsan;
-
-          seal.replyToSender(ctx, msg, milu + `<${attrb[qq]["name"]}>遇到了${mythword}${myth}！san-${lostsan}。` + `\n当前san值为${attrb[qq]["san"]}` + checksan(qq, now))
-          updating(false, true)
-          return;
-        }
-        //警察！！！
-        if (ran > 0.6 && ran <= 0.9) {
-          attrb[qq]["exp"] += 8
-          attrb[qq]["policetime"] = now
-          let goods = Object.keys(attrb[qq]["goods"])
-          let plccheck = ``
-          if (goods.length !== 0) {
-            plccheck = `因为检查出车上有${goods[Math.floor(Math.random() * goods.length)]}，`
-          }
-
-          seal.replyToSender(ctx, msg, milu + `<${attrb[qq]["name"]}>遇到了警察！${plccheck}被抓起来了！但作为${attrb[qq]["belong"]}的资深教徒，越狱只需要三分钟！\n落魄值+8=${attrb[qq]["exp"]}`)
-          updating(false, true)
-          return;
-        }
-        //看风景~
-        if (ran > 0.9) {
-          let sanup = Math.floor(Math.random() * 6) + 1
-          attrb[qq]["san"] += sanup
-
-          seal.replyToSender(ctx, msg, milu + `${place}风景宜人，<${attrb[qq]["name"]}>的san值恢复了${sanup}！` + `\n当前san值为${attrb[qq]["san"]}`)
-          updating(false, true)
-          return;
-        }
+        players[id].time.strollTime = now
+        seal.replyToSender(ctx, msg, players[id].ckMiss('不存在') + players[id].meet(now, ctx, msg))
+        return;
       }
     }
   }
@@ -1580,20 +1607,22 @@ if (!ext) {
   cmdRob.allowDelegate = true;
   cmdRob.solve = (ctx, msg, cmdArgs) => {
     let val = cmdArgs.getArgN(1);
-    const qq = seal.format(ctx, "{$t账号ID_RAW}")
-    const now = parseInt(seal.format(ctx, "{$tTimestamp}")) * 1000
     const mctx = seal.getCtxProxyFirst(ctx, cmdArgs);
-    let anotherPeople = mctx.player.userId
-    let anotherqq = anotherPeople.replace(/\D+/g, "")
-    let checkmsg = checkcmd(qq, now, true, true, anotherqq)
-    if (checkmsg !== ``) {
-      seal.replyToSender(ctx, msg, checkmsg)
-      return;
-    }
-    let interval = seal.ext.getConfig(ext, "指令间隔/s(抢劫)").value * 1000
-    if (now - attrb[qq]["robtime"] < interval) {
-      return;
-    }
+    const id = ctx.player.userId
+    const name = ctx.player.name
+    const now = parseInt(seal.format(ctx, "{$tTimestamp}"))
+    ckId(id, name)
+    if (players[id].ckCmd(ctx, msg)) return
+
+    let altid = mctx.player.userId
+    let altname = mctx.player.name
+    ckId(altid, altname)
+    if (players[altid].ckCmd(ctx, msg)) return
+
+
+    let interval = seal.ext.getIntConfig(ext, "指令间隔/s(抢劫)")
+    if (now - players[id].time.robTime < interval) return;
+
     switch (val) {
       case "help": {
         const ret = seal.ext.newCmdExecuteResult(true);
@@ -1602,89 +1631,59 @@ if (!ext) {
       }
       default: {
         //随机选一个冤大头
-        if (qq == anotherqq) {
-          let place = attrb[qq]["place"]
+        if (id == altid) {
+          let place = players[id].place
+          let members = places[place].members
 
-          let members = places[place]["members"]
           if (members.length == 1) {
             seal.replyToSender(ctx, msg, `${place}似乎没有可以抢的目标呢。`)
             return;
-          }
-
-          anotherqq = members[Math.floor(Math.random() * members.length)]
-          while (anotherqq == qq) {
-            anotherqq = members[Math.floor(Math.random() * members.length)]
-          }
-          let checkmsg = checkcmd(qq, now, true, true, anotherqq)
-          if (checkmsg !== ``) {
-            seal.replyToSender(ctx, msg, checkmsg)
-            return;
+          } else {
+            do altid = members[Math.floor(Math.random() * members.length)]
+            while (altid == id)
+            if (players[altid].ckCmd(ctx, msg)) return
           }
         }
 
-        seal.replyToSender(ctx, msg, rob(qq, anotherqq, now) + checkachieve(qq, now))
-        updating(false, true)
+        seal.replyToSender(ctx, msg, players[id].rob(altid, now))
         return;
       }
     }
   }
 
-  //乱起个名字嘿嘿嘿
-  const cmdrbq = seal.ext.newCmdItemInfo();
-  cmdrbq.name = "翻垃圾";
-  cmdrbq.help = "指令：.翻垃圾（三连/十连）（每翻一次需要3点落魄值）";
-  cmdrbq.solve = (ctx, msg, cmdArgs) => {
+  //翻垃圾嘿嘿嘿
+  const cmdrub = seal.ext.newCmdItemInfo();
+  cmdrub.name = "翻垃圾";
+  cmdrub.help = "指令：.翻垃圾（三连/十连）（每翻一次需要3点落魄值）";
+  cmdrub.solve = (ctx, msg, cmdArgs) => {
     let val = cmdArgs.getArgN(1);
-    const qq = seal.format(ctx, "{$t账号ID_RAW}")
-    const now = parseInt(seal.format(ctx, "{$tTimestamp}")) * 1000
-    let checkmsg = checkcmd(qq, now)
-    if (checkmsg !== ``) {
-      seal.replyToSender(ctx, msg, checkmsg)
-      return;
-    }
-    let exp = attrb[qq]["exp"]
-    let replytext = `<${attrb[qq]["name"]}>在垃圾堆里面开始翻找，竟然找到了:\n`
+    const id = ctx.player.userId
+    const name = ctx.player.name
+    ckId(id, name)
+    if (players[id].ckCmd(ctx, msg)) return
+
     switch (val) {
       case "help": {
         const ret = seal.ext.newCmdExecuteResult(true);
         ret.showHelp = true;
         return ret;
       }
-      case "三连": {
-        if (exp < 9) {
-          seal.replyToSender(ctx, msg, `<${attrb[qq]["name"]}>你还没有落魄到要住在垃圾堆的程度——\n当前落魄值：${exp}`)
-          return;
-        }
-        for (let i = 0; i < 3; i++) {
-          replytext += rubbish(qq) + `\n`
-        }
-        replytext += `落魄值-9=${attrb[qq]["exp"]}`
-        seal.replyToSender(ctx, msg, replytext + checkachieve(qq, now))
-        updating()
-        return;
-      }
-      case "十连": {
-        if (exp < 30) {
-          seal.replyToSender(ctx, msg, `<${attrb[qq]["name"]}>你还没有落魄到要到垃圾堆进货的程度——\n当前落魄值：${exp}`)
-          return;
-        }
-        for (let i = 0; i < 10; i++) {
-          replytext += rubbish(qq) + `\n`
-        }
-        replytext += `落魄值-30=${attrb[qq]["exp"]}`
-        seal.replyToSender(ctx, msg, replytext + checkachieve(qq, now))
-        updating()
-        return;
-      }
       default: {
-        if (exp < 3) {
-          seal.replyToSender(ctx, msg, `<${attrb[qq]["name"]}>你还没有落魄到要翻垃圾的程度——\n当前落魄值：${exp}`)
+        let down = players[id].down
+        let replytext = `<${players[id].name}>在垃圾堆里面开始翻找，竟然找到了:\n`
+        let num = ckNum(val, 10)
+        if (num <= 0 || num > 10) {
+          seal.replyToSender(ctx, msg, `请输入1~10的数字！`)
           return;
         }
-        replytext += rubbish(qq) + `\n`
-        replytext += `落魄值-3=${attrb[qq]["exp"]}`
-        seal.replyToSender(ctx, msg, replytext + checkachieve(qq, now))
-        updating()
+
+        if (down < 3 * num) {
+          seal.replyToSender(ctx, msg, `<${players[id].name}>你还没有落魄到要到垃圾堆进货的程度——\n当前落魄值：${down}`)
+          return;
+        }
+        for (let i = 0; i < num; i++) replytext += players[id].rubbish() + `\n`
+        replytext += `落魄值-${3 * num}=>${players[id].down}`
+        seal.replyToSender(ctx, msg, replytext)
         return;
       }
     }
@@ -1697,20 +1696,15 @@ if (!ext) {
   cmdChart.solve = (ctx, msg, cmdArgs) => {
     let val = cmdArgs.getArgN(1);
     let val2 = cmdArgs.getArgN(2);
-    const qq = seal.format(ctx, "{$t账号ID_RAW}")
-    const now = parseInt(seal.format(ctx, "{$tTimestamp}")) * 1000
-    let checkmsg = checkcmd(qq, now, false, false)
-    if (checkmsg !== ``) {
-      seal.replyToSender(ctx, msg, checkmsg)
-      return;
-    }
+    const id = ctx.player.userId
+    const name = ctx.player.name
+    ckId(id, name)
+
     const mctx = seal.getCtxProxyFirst(ctx, cmdArgs);
-    let anotherPeople = mctx.player.userId
-    let anotherqq = anotherPeople.replace(/\D+/g, "")
-    if (!attrb.hasOwnProperty(anotherqq)) {
-      seal.replyToSender(ctx, msg, "对方还没有加入任何教团。")
-      return;
-    }
+    let altid = mctx.player.userId
+    let altname = mctx.player.name
+    ckId(altid, altname)
+
     switch (val) {
       case "help": {
         const ret = seal.ext.newCmdExecuteResult(true);
@@ -1720,27 +1714,49 @@ if (!ext) {
       //贡献排行榜
       case "贡献": {
         let contr = {}
-        for (let qq of Object.keys(attrb)) {
-          contr[qq] = attrb[qq]["contr"]
-        }
-        let arr1 = Object.keys(contr).sort(function (a, b) { return contr[b] - contr[a] })
-        if (anotherqq != qq) {
-          let index = arr1.indexOf(anotherqq)
-          seal.replyToSender(ctx, msg, `<${attrb[anotherqq]["name"]}>的贡献：${attrb[anotherqq]["contr"]}` + ` 第${index + 1}名`)
+        for (let id in playerlist) contr[id] = players[id].contr
+
+        let arr = Object.keys(contr).sort(function (a, b) { return contr[b] - contr[a] })
+
+        if (altid != id || val2 == "me") {
+          let index = arr.indexOf(altid)
+          seal.replyToSender(ctx, msg, `<${players[altid].name}>的贡献：${players[altid].contr} 第${index + 1}名`)
           return;
         }
-        let index = arr1.indexOf(qq)
-        if (val2 == "me") {
-          seal.replyToSender(ctx, msg, `我的贡献：${attrb[qq]["contr"]}` + ` 第${index + 1}名`)
-          return;
-        }
+
         let title = `贡献排行榜\n♚`
-        for (let i = 0; i < arr1.length; i++) {
-          if (i == 10) { break }
-          let qq = arr1[i]
-          title += `第${i + 1}名：\n<${attrb[qq]["name"]}>  ${attrb[qq]["belong"]}  \n${contr[qq]}\n`
+        for (let i = 0; i < arr.length && i < 10; i++) {
+          let id = arr[i]
+          title += `第${i + 1}名：\n<${players[id].name}>  ${players[id].cult}\n${contr[id]}\n`
         }
-        title += `我的贡献：${attrb[qq]["contr"]}` + ` 第${index + 1}名`
+
+        let index = arr.indexOf(id)
+        title += `我的贡献：${players[id].contr} 第${index + 1}名`
+
+        seal.replyToSender(ctx, msg, title)
+        return;
+      }
+      //经验排行榜
+      case "等级":{
+        let exp = {}
+        for (let id in playerlist) exp[id] = players[id].exp
+
+        let arr = Object.keys(exp).sort(function (a, b) { return exp[b] - exp[a] })
+
+        if (altid!= id || val2 == "me") {
+          let index = arr.indexOf(altid)
+          seal.replyToSender(ctx, msg, `<${players[altid].name}>的等级：Lv${players[altid].getLv()[0]}(${players[altid].exp}) 第${index + 1}名`)
+          return;
+        }
+
+        let title = `等级排行榜\n♚`
+        for (let i = 0; i < arr.length && i < 10; i++) {
+          let id = arr[i]
+          title += `第${i + 1}名：\n<${players[id].name}>  ${players[id].cult}\nLv${players[id].getLv()[0]}(${exp[id]})\n`
+        }
+
+        let index = arr.indexOf(id)
+        title += `我的等级：Lv${players[id].getLv()[0]}(${players[id].exp}) 第${index + 1}名`
 
         seal.replyToSender(ctx, msg, title)
         return;
@@ -1748,27 +1764,24 @@ if (!ext) {
       default: {
         //货币排行榜
         let money = {}
-        for (let qq of Object.keys(attrb)) {
-          money[qq] = attrb[qq]["money"]
-        }
+        for (let id in playerlist) money[id] = players[id].money
+
         let arr = Object.keys(money).sort(function (a, b) { return money[b] - money[a] })
-        if (anotherqq != qq) {
-          let index = arr.indexOf(anotherqq)
-          seal.replyToSender(ctx, msg, `<${attrb[anotherqq]["name"]}>的货币：$ ${attrb[anotherqq]["money"]}` + ` 第${index + 1}名`)
+
+        if (altid != id || val2 == "me") {
+          let index = arr.indexOf(altid)
+          seal.replyToSender(ctx, msg, `<${players[altid].name}>的货币：$ ${players[altid].money} 第${index + 1}名`)
           return;
         }
-        let index = arr.indexOf(qq)
-        if (val == "me") {
-          seal.replyToSender(ctx, msg, `我的货币：$ ${attrb[qq]["money"]}` + ` 第${index + 1}名`)
-          return;
-        }
+
         let title = `货币排行榜\n♚`
-        for (let i = 0; i < arr.length; i++) {
-          if (i == 10) { break }
-          let qq = arr[i]
-          title += `第${i + 1}名：\n<${attrb[qq]["name"]}>  ${attrb[qq]["belong"]}  \n$ ${money[qq]}\n`
+        for (let i = 0; i < arr.length && i < 10; i++) {
+          let id = arr[i]
+          title += `第${i + 1}名：\n<${players[id].name}>  ${players[id].cult}\n$ ${money[id]}\n`
         }
-        title += `我的货币：$ ${attrb[qq]["money"]}` + ` 第${index + 1}名`
+
+        let index = arr.indexOf(id)
+        title += `我的货币：$ ${players[id].money} 第${index + 1}名`
 
         seal.replyToSender(ctx, msg, title)
         return;
@@ -1781,13 +1794,11 @@ if (!ext) {
   cmditg.help = '指令：.情报（分布）（可以使用 .散播 散播情报）';
   cmditg.solve = (ctx, msg, cmdArgs) => {
     let val = cmdArgs.getArgN(1);
-    const qq = seal.format(ctx, "{$t账号ID_RAW}")
-    const now = parseInt(seal.format(ctx, "{$tTimestamp}")) * 1000
-    let checkmsg = checkcmd(qq, now)
-    if (checkmsg !== ``) {
-      seal.replyToSender(ctx, msg, checkmsg)
-      return;
-    }
+    const id = ctx.player.userId
+    const name = ctx.player.name
+    ckId(id, name)
+    if (players[id].ckCmd(ctx, msg)) return
+
     switch (val) {
       case 'help': {
         const ret = seal.ext.newCmdExecuteResult(true);
@@ -1799,15 +1810,15 @@ if (!ext) {
         let text = `分布如下：`
         let moneysum = 0
         for (let place of allplaces) {
-          let num = places[place]["members"].length
+          let num = places[place].members.length
           let money = 0
-          for (let qq of places[place]["members"]) {
-            money += attrb[qq]["money"]
-          }
+
+          for (let id of places[place].members) money += players[id].money
+
           moneysum += money
           text += `\n${place}:\n${num}人 $ ${money}`
         }
-        seal.replyToSender(ctx, msg, text + `\n总金额$ ${moneysum}`)
+        seal.replyToSender(ctx, msg, `${text}\n总金额$ ${moneysum}`)
         return;
       }
       default: {
@@ -1815,35 +1826,34 @@ if (!ext) {
         if (Math.random() <= 0.5) {
           let shuffledallplaces = shuffle(allplaces)
           for (let place of shuffledallplaces) {
-            let says = places[place]["says"]
+            let says = places[place].says
+
             if (says.length !== 0) {
               let index = Math.floor(Math.random() * says.length)
               let say = says[index]
-              says.splice(index, 1)
-              places[place]["says"] = says
 
+              places[place].says.splice(index, 1)
 
-              seal.replyToSender(ctx, msg, `<${attrb[qq]["name"]}>从${place}的一名流浪汉口中得知${say}`)
-              updating()
-              return seal.ext.newCmdExecuteResult(true);
+              seal.replyToSender(ctx, msg, `<${players[id].name}>从${place}的一名流浪汉口中得知${say}`)
+              return;
             }
           }
         }
 
-        let qqlst = Object.keys(attrb)
-        let anotherqq = qqlst[Math.floor(Math.random() * qqlst.length)]
-        let place = attrb[qq]["place"]
-        let goodsnum = 0
-        for (let good in attrb[anotherqq]["goods"]) {
-          goodsnum += attrb[anotherqq]["goods"][good]
-        }
+        let idlst = Object.keys(playerlist)
+        let altid = idlst[Math.floor(Math.random() * idlst.length)]
+        let place = players[id].place
 
-        if (anotherqq == qq) {
-          seal.replyToSender(ctx, msg, `<${attrb[qq]["name"]}>从${place}的一名流浪汉口中得知<${attrb[anotherqq]["name"]}>身怀$ ${attrb[anotherqq]["money"]}、带着${goodsnum}件货物在${attrb[anotherqq]["place"]}附近。这不是你自己吗？`)
-          return seal.ext.newCmdExecuteResult(true);
+        let goodsnum = 0
+        for (let good in players[altid].goods) goodsnum += players[altid].goods[good]
+
+        if (altid == id) {
+          seal.replyToSender(ctx, msg, `<${players[id].name}>从${place}的一名流浪汉口中得知<${players[altid].name}>身怀$ ${players[altid].money}、带着${goodsnum}件货物在${players[altid].place}附近。这不是你自己吗？`)
+          return;
+        } else {
+          seal.replyToSender(ctx, msg, `<${players[id].name}>从${place}的一名流浪汉口中得知<${players[altid].name}>身怀$ ${players[altid].money}、带着${goodsnum}件货物在${players[altid].place}附近。要不要去碰碰运气？`)
+          return;
         }
-        seal.replyToSender(ctx, msg, `<${attrb[qq]["name"]}>从${place}的一名流浪汉口中得知<${attrb[anotherqq]["name"]}>身怀$ ${attrb[anotherqq]["money"]}、带着${goodsnum}件货物在${attrb[anotherqq]["place"]}附近。要不要去碰碰运气？`)
-        return seal.ext.newCmdExecuteResult(true);
       }
     }
   };
@@ -1853,22 +1863,21 @@ if (!ext) {
   cmdesc.help = '指令：.强行越狱';
   cmdesc.solve = (ctx, msg, cmdArgs) => {
     let val = cmdArgs.getArgN(1);
-    const qq = seal.format(ctx, "{$t账号ID_RAW}")
-    const now = parseInt(seal.format(ctx, "{$tTimestamp}")) * 1000
-    let checkmsg = checkcmd(qq, now, true, false)
-    if (checkmsg !== ``) {
-      seal.replyToSender(ctx, msg, checkmsg)
-      return;
-    }
-    if (now - attrb[qq]["policetime"] >= 180 * 1000) {
-      seal.replyToSender(ctx, msg, `小菜一碟，<${attrb[qq]["name"]}>早已经逃出来了`)
+    const now = parseInt(seal.format(ctx, "{$tTimestamp}"))
+    const id = ctx.player.userId
+    const name = ctx.player.name
+    ckId(id, name)
+
+    let arrestInterval = seal.ext.getIntConfig(ext, "逮捕时间/s")
+
+    if (now - players[id].time.arrestTime >= arrestInterval) {
+      seal.replyToSender(ctx, msg, `小菜一碟，<${players[id].name}>早已经逃出来了`)
       return;
     }
 
-    let interval = seal.ext.getConfig(ext, "指令间隔/s(强行越狱)").value * 1000
-    if (now - attrb[qq]["esctime"] < interval) {
-      return;
-    }
+    let interval = seal.ext.getIntConfig(ext, "指令间隔/s(强行越狱)")
+    if (now - players[id].time.escTime < interval) return;
+
     switch (val) {
       case 'help': {
         const ret = seal.ext.newCmdExecuteResult(true);
@@ -1876,29 +1885,28 @@ if (!ext) {
         return ret;
       }
       default: {
-        attrb[qq]["esctime"] = now
-        ran = Math.random()
-        //成功
-        if (ran <= 0.5) {
-          attrb[qq]["policetime"] -= 180 * 1000
-          if (now - attrb[qq]["policetime"] >= 180 * 1000) {
+        players[id].time.escTime = now
 
-            seal.replyToSender(ctx, msg, `<${attrb[qq]["name"]}>用${attrb[qq]["weapon"]}强行放倒了几名狱警然后扬长而去。` + checkachieve(qq, now, true))
-            updating()
+        //成功
+        if (Math.random() * 100 <= seal.ext.getIntConfig(ext, "越狱概率%")) {
+          players[id].time.arrestTime -= arrestInterval
+
+          if (now - players[id].time.arrestTime >= arrestInterval) {
+            players[id].exp += 5
+            seal.replyToSender(ctx, msg, `<${players[id].name}>用${players[id].weapon}强行放倒了几名狱警然后扬长而去。`)
             return;
           }
-          let t = now / 1000 - attrb[qq]["policetime"] / 1000
 
-          seal.replyToSender(ctx, msg, `<${attrb[qq]["name"]}>的动作加快了几分，还要${180 - t}秒就能逃出来！`)
-          updating()
+          let t = now - players[id].time.arrestTime
+
+          seal.replyToSender(ctx, msg, `<${players[id].name}>的动作加快了几分，还要${arrestInterval - t}秒就能逃出来！`)
           return;
         }
         //失败
         else {
-          attrb[qq]["policetime"] += 180 * 1000
+          players[id].time.arrestTime += arrestInterval
 
-          seal.replyToSender(ctx, msg, `<${attrb[qq]["name"]}>引来了几名狱警的注意，看来还需要再多三分钟。` + checkachieve(qq, now))
-          updating()
+          seal.replyToSender(ctx, msg, `<${players[id].name}>引来了几名狱警的注意，看来还需要再多${arrestInterval}秒。`)
           return;
         }
       }
@@ -1910,125 +1918,123 @@ if (!ext) {
   cmdmkt.help = '指令：.行情 商品名称/最高价/最低价/差价/利润/地点';
   cmdmkt.solve = (ctx, msg, cmdArgs) => {
     let val = cmdArgs.getArgN(1);
-    const qq = seal.format(ctx, "{$t账号ID_RAW}")
-    if (!attrb.hasOwnProperty(qq)) {
-      seal.replyToSender(ctx, msg, "你还没有加入任何教团。")
-      return;
-    }
+    const id = ctx.player.userId
+    const name = ctx.player.name
+    ckId(id, name)
+
     const date = seal.format(ctx, "{$tDate}")
-    let sign = false
     let allgoods = {}
     let text = `今日行情如下:`
+
     //获取当日所有商品和价格
     for (let place of allplaces) {
-      let kunkun = shop(date, place)
-      for (let good in places[place]["goods"]) {
-        if (!allgoods.hasOwnProperty(good)) {
-          allgoods[good] = [{ "place": place, "price": places[place]["goods"][good] }]
-        } else {
-          allgoods[good].push({ "place": place, "price": places[place]["goods"][good] })
-        }
+      places[place].getShop(date)
+
+      for (let good in places[place].shop) {
+        if (!allgoods.hasOwnProperty(good)) allgoods[good] = []
+        allgoods[good].push({
+          place: place,
+          price: places[place].shop[good]
+        })
       }
     }
+
     //计算所有商品的最大差价
     let prices = []
     for (let good in allgoods) {
-      allgoods[good].sort((a, b) => a["price"] - b["price"])
-      let maxgood = allgoods[good][allgoods[good].length - 1]
-      let mingood = allgoods[good][0]
-      if (maxgood != mingood) {
-        let dif = maxgood["price"] - mingood["price"]
-        let profit = Math.floor((dif / mingood["price"]) * 100)
-        let goodinfo = { "good": good, "dif": dif, "maxgood": maxgood, "mingood": mingood, "profit": profit }
-        prices.push(goodinfo)
+      if (allgoods[good].length > 1) {
+        allgoods[good].sort((a, b) => a.price - b.price)
+
+        let maxgood = allgoods[good][allgoods[good].length - 1]
+        let mingood = allgoods[good][0]
+        prices.push({
+          good: good,
+          dif: maxgood.price - mingood.price,
+          maxgood: maxgood,
+          mingood: mingood,
+          profit: Math.floor(((maxgood.price - mingood.price) / mingood.price) * 100)
+        })
       }
     }
+
     switch (val) {
-      case "":
+      case '':
       case 'help': {
         const ret = seal.ext.newCmdExecuteResult(true);
         ret.showHelp = true;
         return ret;
       }
       case "最高价": {
-        sign = true
-        prices.sort((a, b) => b["maxgood"]["price"] - a["maxgood"]["price"])
-        for (let i = 0; i < prices.length; i++) {
-          if (i == 5) { break }
-          text += `\n${i + 1}.${prices[i]["good"]} ${prices[i]["maxgood"]["place"]} \n$ ${prices[i]["maxgood"]["price"]}`
-        }
+        prices.sort((a, b) => b.maxgood.price - a.maxgood.price)
+        for (let i = 0; i < prices.length && i < 5; i++) text += `
+${i + 1}.${prices[i].good} ${prices[i].maxgood.place} 
+$ ${prices[i].maxgood.price}`
+        break;
       }
       case "最低价": {
-        sign = true
-        prices.sort((a, b) => a["mingood"]["price"] - b["mingood"]["price"])
-        for (let i = 0; i < prices.length; i++) {
-          if (i == 5) { break }
-          text += `\n${i + 1}.${prices[i]["good"]} ${prices[i]["mingood"]["place"]} \n$ ${prices[i]["mingood"]["price"]}`
-        }
+        prices.sort((a, b) => a.mingood.price - b.mingood.price)
+        for (let i = 0; i < prices.length && i < 5; i++) text += `
+${i + 1}.${prices[i].good} ${prices[i].mingood.place} 
+$ ${prices[i].mingood.price}`
+        break;
       }
       case "差价": {
-        sign = true
-        prices.sort((a, b) => b["dif"] - a["dif"])
-        for (let i = 0; i < prices.length; i++) {
-          if (i == 5) { break }
-          text += `\n${i + 1}.${prices[i]["good"]} $ ${prices[i]["dif"]}\n${prices[i]["mingood"]["place"]}——>${prices[i]["maxgood"]["place"]}\n$ ${prices[i]["mingood"]["price"]}          $ ${prices[i]["maxgood"]["price"]}`
-        }
+        prices.sort((a, b) => b.dif - a.dif)
+        for (let i = 0; i < prices.length && i < 5; i++) text += `
+${i + 1}.${prices[i].good} $ ${prices[i].dif}
+${prices[i].mingood.place}——>${prices[i].maxgood.place}
+$ ${prices[i].mingood.price}          $ ${prices[i].maxgood.price}`
+        break;
       }
       case "利润": {
-        sign = true
-        prices.sort((a, b) => b["profit"] - a["profit"])
-        for (let i = 0; i < prices.length; i++) {
-          if (i == 5) { break }
-          text += `\n${i + 1}.${prices[i]["good"]} ${prices[i]["profit"]}%\n${prices[i]["mingood"]["place"]}——>${prices[i]["maxgood"]["place"]}`
-        }
+        prices.sort((a, b) => b.profit - a.profit)
+        for (let i = 0; i < prices.length && i < 5; i++) text += `
+${i + 1}.${prices[i].good} ${prices[i].profit}%
+${prices[i].mingood.place}——>${prices[i].maxgood.place}`
+        break;
       }
       default: {
         //查询地点
         for (let place of allplaces) {
           if (val == place) {
-            sign = true
-            let placeprices = []
-            prices.sort((a, b) => b["profit"] - a["profit"])
-            for (let i = 0; i < prices.length; i++) {
-              if (prices[i]["mingood"]["place"] == place) {
-                placeprices.push(prices[i])
-              }
-            }
-            for (let i = 0; i < placeprices.length; i++) {
-              if (i == 5) { break }
-              text += `\n${i + 1}.${placeprices[i]["good"]} ${placeprices[i]["profit"]}%\n$ ${placeprices[i]["mingood"]["price"]}——>$ ${placeprices[i]["maxgood"]["price"]} ${placeprices[i]["maxgood"]["place"]}`
-            }
+            prices.sort((a, b) => b.profit - a.profit)
+            let placeprices = prices.filter(price => price.mingood.place == place)
+
+            for (let i = 0; i < placeprices.length && i < 5; i++) text += `
+${i + 1}.${placeprices[i].good} ${placeprices[i].profit}%
+$ ${placeprices[i].mingood.price}——>$ ${placeprices[i].maxgood.price} ${placeprices[i].maxgood.place}`
           }
         }
         //查询商品
-        for (let level in goods) {
-          for (let good of goods[level]) {
-            if (val == good) {
-              sign = true
-              for (let place of allplaces) {
-                if (!places[place]["goods"].hasOwnProperty(val)) { text += `\n${place}:暂无` } else { text += `\n${place}:$ ${places[place]["goods"][val]}` }
-              }
+        for (let good in allgoods) {
+          if (val == good) {
+            for (let place of allplaces) {
+              if (!places[place].shop.hasOwnProperty(val)) text += `\n${place}:暂无`
+              else text += `\n${place}:$ ${places[place].shop[val]}`
             }
           }
         }
-        if (!sign) { return; }
-
-        //推荐
-        let profits = []
-        for (let goodinfo of prices) {
-          let profitinfo = { "good": goodinfo["good"], "profit": goodinfo["dif"] * Math.floor(attrb[qq]["money"] / goodinfo["mingood"]["price"]), "dif": goodinfo["dif"], "maxgood": goodinfo["maxgood"], "mingood": goodinfo["mingood"] }
-          profits.push(profitinfo)
-        }
-        profits.sort((a, b) => b["profit"] - a["profit"])
-        let text1 = `\n为您推荐${profits[0]["mingood"]["place"]}的${profits[0]["good"]}`
-
-        //买不起是吧！
-        if (profits[0]["profit"] == 0) { text1 = `\n现在的你啥都买不起` }
-
-        seal.replyToSender(ctx, msg, text + `\n<${attrb[qq]["name"]}>目前有$ ${attrb[qq]["money"]}，位于${attrb[qq]["place"]}。` + text1)
-        return seal.ext.newCmdExecuteResult(true);
       }
     }
+    //推荐
+    let profits = []
+    for (let goodinfo of prices) {
+      profits.push({
+        good: goodinfo.good,
+        profit: goodinfo.dif * Math.floor(players[id].money / goodinfo.mingood.price),
+        dif: goodinfo.dif,
+        maxgood: goodinfo.maxgood,
+        mingood: goodinfo.mingood
+      })
+    }
+    profits.sort((a, b) => b.profit - a.profit)
+    let recommend = `\n为您推荐${profits[0].mingood.place}的${profits[0].good}，运至${profits[0].maxgood.place}`
+
+    //买不起是吧！
+    if (profits[0].profit == 0) recommend = `\n现在的你啥都买不起`
+
+    seal.replyToSender(ctx, msg, `${text}\n<${players[id].name}>目前有$ ${players[id].money}，位于${players[id].place}。${recommend}`)
+    return seal.ext.newCmdExecuteResult(true);
   };
 
   const cmdsay = seal.ext.newCmdItemInfo();
@@ -2036,13 +2042,12 @@ if (!ext) {
   cmdsay.help = '指令：.散播 你要散播的情报';
   cmdsay.solve = (ctx, msg, cmdArgs) => {
     let val = cmdArgs.getArgN(1);
-    const qq = seal.format(ctx, "{$t账号ID_RAW}")
-    const now = parseInt(seal.format(ctx, "{$tTimestamp}")) * 1000
-    let checkmsg = checkcmd(qq, now)
-    if (checkmsg !== ``) {
-      seal.replyToSender(ctx, msg, checkmsg)
-      return;
-    }
+    const id = ctx.player.userId
+    const name = ctx.player.name
+    ckId(id, name)
+    if (players[id].ckCmd(ctx, msg)) return
+
+
     switch (val) {
       case 'help': {
         const ret = seal.ext.newCmdExecuteResult(true);
@@ -2050,49 +2055,63 @@ if (!ext) {
         return ret;
       }
       default: {
-        if (typeof val !== 'string') {
-          seal.replyToSender(ctx, msg, `error`)
-          return;
-        }
         if (val.length > 60) {
           seal.replyToSender(ctx, msg, `长度超过60（${val.length}）`)
           return;
         }
 
-        let place = attrb[qq]["place"]
-        let say = `<${attrb[qq]["name"]}>说过：` + val
-        places[place]["says"].push(say)
+        let place = players[id].place
+        let say = `<${players[id].name}>说过：${val}`
+        places[place].says.push(say)
 
 
-        seal.replyToSender(ctx, msg, `<${attrb[qq]["name"]}>在${place}的一名流浪汉面前故意提起了……`)
-        updating()
+        seal.replyToSender(ctx, msg, `<${players[id].name}>在${place}的一名流浪汉面前故意提起了……`)
         return seal.ext.newCmdExecuteResult(true);
       }
     }
   };
 
   const cmddelbag = seal.ext.newCmdItemInfo();
-  cmddelbag.name = '清空背包';
-  cmddelbag.help = '指令：.清空背包（脏东西统统去死哇哇哇哇哇哇哇）';
+  cmddelbag.name = '丢弃';
+  cmddelbag.help = '指令：.丢弃 物品名称 数量';
   cmddelbag.solve = (ctx, msg, cmdArgs) => {
     let val = cmdArgs.getArgN(1);
-    const qq = seal.format(ctx, "{$t账号ID_RAW}")
-    const now = parseInt(seal.format(ctx, "{$tTimestamp}")) * 1000
-    let checkmsg = checkcmd(qq, now)
-    if (checkmsg !== ``) {
-      seal.replyToSender(ctx, msg, checkmsg)
-      return;
-    }
+    let val2 = cmdArgs.getArgN(2);
+    const id = ctx.player.userId
+    const name = ctx.player.name
+    ckId(id, name)
+    if (players[id].ckCmd(ctx, msg)) return
+
     switch (val) {
+      case '':
       case 'help': {
         const ret = seal.ext.newCmdExecuteResult(true);
         ret.showHelp = true;
         return ret;
       }
-      default: {
-        attrb[qq]["goods"] = {}
+      case 'all': {
+        players[id].goods = {}
         seal.replyToSender(ctx, msg, `你把车上的东西扔了个一干二净`)
-        updating()
+        return seal.ext.newCmdExecuteResult(true);
+      }
+      default: {
+        if (!players[id].goods.hasOwnProperty(val)) {
+          seal.replyToSender(ctx, msg, "库中没有此物品。")
+          return;
+        }
+
+        val2 = ckNum(val2, players[id].goods[val])
+        if (val2 <= 0) {
+          seal.replyToSender(ctx, msg, '请输入正确的数字！');
+          return;
+        }
+        if (players[id].goods[val] < val2) {
+          seal.replyToSender(ctx, msg, "库中物品数量不足！")
+          return;
+        }
+
+        players[id].takeGood(val, val2)
+        seal.replyToSender(ctx, msg, `${val}-${val2}`)
         return seal.ext.newCmdExecuteResult(true);
       }
     }
@@ -2102,14 +2121,11 @@ if (!ext) {
   cmdname.name = '改名';
   cmdname.help = '指令：.改名 新名字';
   cmdname.solve = (ctx, msg, cmdArgs) => {
-    let val = cmdArgs.getArgN(1);
-    const qq = seal.format(ctx, "{$t账号ID_RAW}")
-    const now = parseInt(seal.format(ctx, "{$tTimestamp}")) * 1000
-    let checkmsg = checkcmd(qq, now, false, false)
-    if (checkmsg !== ``) {
-      seal.replyToSender(ctx, msg, checkmsg)
-      return;
-    }
+    let val = cmdArgs.getRestArgsFrom(1)
+    const id = ctx.player.userId
+    const name = ctx.player.name
+    ckId(id, name)
+
     switch (val) {
       case '':
       case 'help': {
@@ -2118,9 +2134,9 @@ if (!ext) {
         return ret;
       }
       default: {
-        attrb[qq]["name"] = val
+        players[id].name = val
+        players[id].saveData()
         seal.replyToSender(ctx, msg, `改名成功！`)
-        updating()
         return seal.ext.newCmdExecuteResult(true);
       }
     }
@@ -2131,14 +2147,13 @@ if (!ext) {
   cmdscrf.help = '指令：.献祭 物品名称（数量/all）';
   cmdscrf.solve = (ctx, msg, cmdArgs) => {
     let val = cmdArgs.getArgN(1);
-    let val2 = parseInt(cmdArgs.getArgN(2));
-    const qq = seal.format(ctx, "{$t账号ID_RAW}")
-    const now = parseInt(seal.format(ctx, "{$tTimestamp}")) * 1000
-    let checkmsg = checkcmd(qq, now)
-    if (checkmsg !== ``) {
-      seal.replyToSender(ctx, msg, checkmsg)
-      return;
-    }
+    let val2 = cmdArgs.getArgN(2);
+    const now = parseInt(seal.format(ctx, "{$tTimestamp}"))
+    const id = ctx.player.userId
+    const name = ctx.player.name
+    ckId(id, name)
+    if (players[id].ckCmd(ctx, msg)) return
+
     switch (val) {
       case '':
       case 'help': {
@@ -2147,57 +2162,59 @@ if (!ext) {
         return ret;
       }
       default: {
-        if (!val2) { val2 = 1 }
-        if ((val2 !== "all" && isNaN(val2)) || val2 <= 0) {
-          const ret = seal.ext.newCmdExecuteResult(true);
-          ret.showHelp = true;
-          return ret;
-        }
-        if (!attrb[qq]["goods"].hasOwnProperty(val)) {
-          seal.replyToSender(ctx, msg, `你没有这件物品。还是说<${attrb[qq]["name"]}>你要献上自己呢？`)
+        if (!players[id].goods.hasOwnProperty(val)) {
+          seal.replyToSender(ctx, msg, `你没有这件物品。还是说<${players[id].name}>你要献上自己呢？`)
           return seal.ext.newCmdExecuteResult(true);
         }
-        if (val2 == "all") {
-          val2 = attrb[qq]["goods"][val]
+
+        val2 = ckNum(val2, players[id].goods[val])
+        if (val2 <= 0) {
+          seal.replyToSender(ctx, msg, `请输入正确的数字！`)
+          return
         }
-        if (attrb[qq]["goods"][val] < val2) {
-          seal.replyToSender(ctx, msg, `数量不够！<${attrb[qq]["name"]}>需要更多！更多！`)
+
+        if (players[id].goods[val] < val2) {
+          seal.replyToSender(ctx, msg, `数量不够！<${players[id].name}>需要更多！更多！`)
           return seal.ext.newCmdExecuteResult(true);
         }
+
         //扣除物品
-        attrb[qq]["goods"][val] -= val2
-        if (attrb[qq]["goods"][val] == 0) {
-          delete attrb[qq]["goods"][val];
-        }
-        let ran = Math.random()
-        let cult = attrb[qq]["belong"]
-        let gods = Object.keys(cults[cult]["seeing"])
+        players[id].takeGood(val, val2)
+
+        let cult = players[id].cult
+        let gods = Object.keys(cults[cult].ones)
         let god = gods[Math.floor(Math.random() * gods.length)]
 
-        attrb[qq]["san"] -= 10
-        let text = `你带领着信众向伟大的${god}举行了献祭仪式，${val}×${val2}逐渐溶解在了法阵里……\n`
-        if (ran <= 0.4) {
+        let text = `地点:${players[id].place}\n你带领着信众向伟大的${god}举行了献祭仪式\n祭品:${val}×${val2}\n`
+        if (Math.random() * 100 <= seal.ext.getIntConfig(ext, "献祭概率%")) {
+          text += `献祭成功！\n`
           let add = Math.ceil(Math.random() * 10) + 10
-          cults[cult]["seeing"][god] += add
-          //我在写什么？？？？？？？？？？？
-          if (cults[cult]["seeing"][god] >= 100) {
-            cults[cult]["seeing"][god] = 0
-            let gift = `${god}的眷顾`
-            let text1 = addgoodtoqq(qq, gift, 1)
+          cults[cult].ones[god] += add
+          players[id].exp += 10
+          text += `随后祂向你们降下了视线：\n`
 
-            seal.replyToSender(ctx, msg, text + `随后祂向你们降下了视线：\n${god}的注视值达到100！获得了${text1}。\nsan值-10=${attrb[qq]["san"]}` + checksan(qq, now))
-            updating()
-            return seal.ext.newCmdExecuteResult(true);
+          if (cults[cult].ones[god] >= 100) {
+            cults[cult].ones[god] = 0
+            let gift = `${god}的雕像`
+
+            let outnum = players[id].addGoodTo(gift, 1)
+            text = `${gift}×1`
+            text += `${god}的注视值达到100！获得了${gift}`
+            if (outnum > 0) text += `，溢出${outnum}件`
           }
+          else text += `${god}的注视值+${add}=>${cults[cult].ones[god]}`
+          cults[cult].saveData()
 
-          seal.replyToSender(ctx, msg, text + `随后祂向你们降下了视线：\n${god}的注视值+${add}=${cults[cult]["seeing"][god]}\nsan值-10=${attrb[qq]["san"]}` + checksan(qq, now))
-          updating()
+          //晋升
+          text += players[id].colorUp()
+
+          seal.replyToSender(ctx, msg, `${text}\n${players[id].stSan(now, -10)}`)
+          return seal.ext.newCmdExecuteResult(true);
+        } else {
+          text += `献祭失败！\n`
+          seal.replyToSender(ctx, msg, `${text}${players[id].stSan(now, -10)}`)
           return seal.ext.newCmdExecuteResult(true);
         }
-
-        seal.replyToSender(ctx, msg, text + `然后——就没了\nsan值-10=${attrb[qq]["san"]}` + checksan(qq, now))
-        updating()
-        return seal.ext.newCmdExecuteResult(true);
       }
     }
   };
@@ -2207,22 +2224,24 @@ if (!ext) {
   cmdgft.help = "指令：.送 物品名称 （数量） @要送的人";
   cmdgft.allowDelegate = true;
   cmdgft.solve = (ctx, msg, cmdArgs) => {
-    const mctx = seal.getCtxProxyFirst(ctx, cmdArgs);
     let val = cmdArgs.getArgN(1);
     let val2 = cmdArgs.getArgN(2);
-    const qq = seal.format(ctx, "{$t账号ID_RAW}")
-    const now = parseInt(seal.format(ctx, "{$tTimestamp}")) * 1000
-    let anotherPeople = mctx.player.userId
-    let anotherqq = anotherPeople.replace(/\D+/g, "")
-    let checkmsg = checkcmd(qq, now, true, true, anotherqq)
-    if (checkmsg !== ``) {
-      seal.replyToSender(ctx, msg, checkmsg)
-      return;
-    }
-    if (qq == anotherqq) {
+    const mctx = seal.getCtxProxyFirst(ctx, cmdArgs);
+    const id = ctx.player.userId
+    const name = ctx.player.name
+    ckId(id, name)
+    if (players[id].ckCmd(ctx, msg)) return
+
+    let altid = mctx.player.userId
+    let altname = mctx.player.name
+    ckId(altid, altname)
+    if (players[altid].ckCmd(ctx, msg)) return
+
+    if (id == altid) {
       seal.replyToSender(ctx, msg, `那么你送给了你自己。`)
       return;
     }
+
     switch (val) {
       case "":
       case "help": {
@@ -2231,80 +2250,64 @@ if (!ext) {
         return ret;
       }
       case "all": {
-        if (Object.keys(attrb[qq]["goods"]).length == 0) {
+        if (Object.keys(players[id].goods).length == 0) {
           seal.replyToSender(ctx, msg, "你的背包里一干二净。")
           return;
         }
-        let text = ``
+
+        let text = `<${players[id].name}>`
         let title = ``
-        if (attrb[qq]["place"] !== attrb[anotherqq]["place"]) {
-          title = `从${attrb[qq]["place"]}追到了${attrb[anotherqq]["place"]}，`
-          attrb[qq]["place"] = attrb[anotherqq]["place"]
+
+        if (players[id].place !== players[altid].place) {
+          text += `从${players[id].place}追到了${players[altid].place}，`
+          players[id].movPlace(players[altid].place)
         }
-        for (let good in attrb[qq]["goods"]) {
-          text += addgoodtoqq(anotherqq, good, attrb[qq]["goods"][good]) + `、`
+
+        text += `送给了<${players[altid].name}>`
+
+        for (let good in players[id].goods) {
+          let num = players[id].goods[good]
+          let outnum = players[altid].addGoodTo(good, num)
+
+          players[id].takeGood(good, num)
+          text += `${good}×${num}`
+          if (outnum > 0) text += `，溢出${outnum}件`
+          text += `、`
         }
-        attrb[qq]["goods"] = {}
-        seal.replyToSender(ctx, msg, `<${attrb[qq]["name"]}>` + title + `送给了<${attrb[anotherqq]["name"]}>` + text.slice(0, -1) + `！`)
-        updating()
+
+        seal.replyToSender(ctx, msg, `${text.slice(0, -1)}！`)
         return;
       }
       default: {
-        if (!val2) { val2 = 1 }
-        if ((val2 !== "all" && isNaN(val2)) || val2 <= 0) {
-          const ret = seal.ext.newCmdExecuteResult(true);
-          ret.showHelp = true;
-          return ret;
-        }
-        if (!attrb[qq]["goods"].hasOwnProperty(val)) {
+        if (!players[id].goods.hasOwnProperty(val)) {
           seal.replyToSender(ctx, msg, "库中没有此物品。")
           return;
         }
-        if (val2 == "all") {
-          val2 = attrb[qq]["goods"][val]
+
+        val2 = ckNum(val2, players[id].goods[val])
+        if (val2 <= 0) {
+          seal.replyToSender(ctx, msg, "请输入正确的数字！")
+          return;
         }
-        val2 = parseInt(val2)
-        if (attrb[qq]["goods"][val] < val2) {
+
+        if (players[id].goods[val] < val2) {
           seal.replyToSender(ctx, msg, "库中物品数量不足！")
           return;
         }
-        let text = addgoodtoqq(anotherqq, val, val2)
-        let title = ``
-        if (attrb[qq]["place"] !== attrb[anotherqq]["place"]) {
-          title = `从${attrb[qq]["place"]}追到了${attrb[anotherqq]["place"]}，`
-          attrb[qq]["place"] = attrb[anotherqq]["place"]
-        }
-        attrb[qq]["goods"][val] -= val2
-        if (attrb[qq]["goods"][val] == 0) {
-          delete attrb[qq]["goods"][val];
-        }
 
-        seal.replyToSender(ctx, msg, `<${attrb[qq]["name"]}>` + title + `送给了<${attrb[anotherqq]["name"]}>` + text + `！`)
-        updating()
-        return;
-      }
-    }
-  }
-  const cmdachv = seal.ext.newCmdItemInfo();
-  cmdachv.name = "成就";
-  cmdachv.help = "指令：.成就";
-  cmdachv.solve = (ctx, msg, cmdArgs) => {
-    let val = cmdArgs.getArgN(1);
-    const qq = seal.format(ctx, "{$t账号ID_RAW}")
-    if (!attrb.hasOwnProperty(qq)) {
-      seal.replyToSender(ctx, msg, "你还没有加入。")
-      return;
-    }
-    switch (val) {
-      case "help": {
-        const ret = seal.ext.newCmdExecuteResult(true);
-        ret.showHelp = true;
-        return ret;
-      }
-      default: {
-        let text = `<${attrb[qq]["name"]}>的成就列表如下：`
-        for (let achieve of attrb[qq]["achieves"]) {
-          text += `\n` + achieve
+        let text = ``
+        if (players[id].place !== players[altid].place) {
+          text = `从${players[id].place}追到了${players[altid].place}，`
+          players[id].movPlace(players[altid].place)
+        }
+        text += `<${players[id].name}>送给了<${players[altid].name}>`
+        players[id].takeGood(val, val2)
+        let outnum = players[altid].addGoodTo(val, val2)
+        text += `${val}×${val2}`
+        if (outnum > 0) text += `，溢出${outnum}件`
+
+        if (players[id].goods[val] == 0) {
+          delete players[id].goods[val];
         }
 
         seal.replyToSender(ctx, msg, text)
@@ -2319,13 +2322,12 @@ if (!ext) {
   cmduse.solve = (ctx, msg, cmdArgs) => {
     let val = cmdArgs.getArgN(1);
     let val2 = cmdArgs.getArgN(2);
-    const qq = seal.format(ctx, "{$t账号ID_RAW}")
-    const now = parseInt(seal.format(ctx, "{$tTimestamp}")) * 1000
-    let checkmsg = checkcmd(qq, now, true, false)
-    if (checkmsg !== ``) {
-      seal.replyToSender(ctx, msg, checkmsg)
-      return;
-    }
+    const now = parseInt(seal.format(ctx, "{$tTimestamp}"))
+    const id = ctx.player.userId
+    const name = ctx.player.name
+    ckId(id, name)
+    if (players[id].ckCmd(ctx, msg)) return
+
     switch (val) {
       case "help": {
         const ret = seal.ext.newCmdExecuteResult(true);
@@ -2333,38 +2335,23 @@ if (!ext) {
         return ret;
       }
       default: {
-        if (!val2) { val2 = 1 }
-        if ((val2 !== "all" && isNaN(val2)) || val2 <= 0) {
-          const ret = seal.ext.newCmdExecuteResult(true);
-          ret.showHelp = true;
-          return ret;
-        }
-        if (!attrb[qq]["goods"].hasOwnProperty(val)) {
+        if (!players[id].goods.hasOwnProperty(val)) {
           seal.replyToSender(ctx, msg, "库中没有此物品。")
           return;
         }
-        if (val2 == "all") {
-          val2 = attrb[qq]["goods"][val]
+
+        val2 = ckNum(val2, players[id].goods[val])
+        if (val2 <= 0) {
+          seal.replyToSender(ctx, msg, "请输入正确的数字！")
+          return;
         }
-        val2 = parseInt(val2)
-        if (attrb[qq]["goods"][val] < val2) {
+
+        if (players[id].goods[val] < val2) {
           seal.replyToSender(ctx, msg, "库中物品数量不足！")
           return;
         }
-        if (val == "生锈十字架" || val == "圣水") {
-          attrb[qq]["san"] += 10 * val2
 
-          attrb[qq]["goods"][val] -= val2
-          if (attrb[qq]["goods"][val] == 0) {
-            delete attrb[qq]["goods"][val];
-          }
-
-
-          seal.replyToSender(ctx, msg, `<${attrb[qq]["name"]}>使用了${val}×${val2}，san+${10 * val2}=${attrb[qq]["san"]}` + checksan(qq, now))
-          updating()
-          return;
-        }
-        seal.replyToSender(ctx, msg, `无法使用`)
+        seal.replyToSender(ctx, msg, seal.format(ctx, players[id].useGood(val, val2)))
         return;
       }
     }
@@ -2374,21 +2361,23 @@ if (!ext) {
   cmdtransfer.help = "指令：.转账 数额";
   cmdtransfer.allowDelegate = true;
   cmdtransfer.solve = (ctx, msg, cmdArgs) => {
-    const mctx = seal.getCtxProxyFirst(ctx, cmdArgs);
     let val = cmdArgs.getArgN(1);
-    const qq = seal.format(ctx, "{$t账号ID_RAW}")
-    const now = parseInt(seal.format(ctx, "{$tTimestamp}")) * 1000
-    let anotherPeople = mctx.player.userId
-    let anotherqq = anotherPeople.replace(/\D+/g, "")
-    let checkmsg = checkcmd(qq, now, true, true, anotherqq, false, false)
-    if (checkmsg !== ``) {
-      seal.replyToSender(ctx, msg, checkmsg)
-      return;
-    }
-    if (qq == anotherqq) {
+    const mctx = seal.getCtxProxyFirst(ctx, cmdArgs);
+    const id = ctx.player.userId
+    const name = ctx.player.name
+    ckId(id, name)
+    if (players[id].ckCmd(ctx, msg)) return
+
+    let altid = mctx.player.userId
+    let altname = mctx.player.name
+    ckId(altid, altname)
+    if (players[altid].ckCmd(ctx, msg)) return
+
+    if (id == altid) {
       seal.replyToSender(ctx, msg, `那么你转钱给了你自己。`)
       return;
     }
+
     switch (val) {
       case "":
       case "help": {
@@ -2396,24 +2385,20 @@ if (!ext) {
         ret.showHelp = true;
         return ret;
       }
-      case "all": {
-        if (attrb[qq]["money"] <= 0) {
-          seal.replyToSender(ctx, msg, "已经没钱啦——")
-          return;
-        }
-        val = attrb[qq]["money"]
-      }
       default: {
-        val = parseInt(val)
-        if (attrb[qq]["money"] < val) {
+        val = ckNum(val, players[id].money)
+        if (val <= 0) {
+          seal.replyToSender(ctx, msg, '请输入正确的数字！');
+        }
+
+        if (players[id].money < val) {
           seal.replyToSender(ctx, msg, "没有那么多钱呢——")
           return;
         }
-        attrb[anotherqq]["money"] += val
-        attrb[qq]["money"] -= val
+        players[altid].stMoney(val)
+        players[id].stMoney(-val)
 
-        seal.replyToSender(ctx, msg, `<${attrb[qq]["name"]}>成功把$ ${val}转给了<${attrb[anotherqq]["name"]}>！`)
-        updating()
+        seal.replyToSender(ctx, msg, `<${players[id].name}>成功把$ ${val}转给了<${players[altid].name}>！`)
         return;
       }
     }
@@ -2435,17 +2420,16 @@ if (!ext) {
   ext.cmdMap['教团信息'] = cmdcinfo;
   ext.cmdMap['逛逛'] = cmdhappy;
   ext.cmdMap['抢劫'] = cmdRob;
-  ext.cmdMap['翻垃圾'] = cmdrbq;
+  ext.cmdMap['翻垃圾'] = cmdrub;
   ext.cmdMap['排行榜'] = cmdChart;
   ext.cmdMap['情报'] = cmditg;
   ext.cmdMap['强行越狱'] = cmdesc;
   ext.cmdMap['行情'] = cmdmkt;
   ext.cmdMap['散播'] = cmdsay;
-  ext.cmdMap['清空背包'] = cmddelbag;
+  ext.cmdMap['丢弃'] = cmddelbag;
   ext.cmdMap['改名'] = cmdname;
   ext.cmdMap['献祭'] = cmdscrf;
   ext.cmdMap['送'] = cmdgft;
-  ext.cmdMap['成就'] = cmdachv;
   ext.cmdMap['使用'] = cmduse;
   ext.cmdMap['转账'] = cmdtransfer;
 }
