@@ -254,7 +254,7 @@ if (!ext) {
 
     //把钱从第一个人抢给第二个人，返回抢到的数字
     robMoneyTo(altid) {
-      let maxrob = seal.ext.getIntConfig(ext, "最大抢夺率%") /100
+      let maxrob = seal.ext.getIntConfig(ext, "最大抢夺率%") / 100
       let lostmoney = Math.ceil(Math.random() * this.money * maxrob)
 
       this.money -= lostmoney
@@ -361,7 +361,7 @@ ${weapon1}(${val1}) vs ${weapon2}(${val2})\n`
       }
 
       //赢
-      if (ran1 * val1 * lv1 >= ran2 * val2 * lv2) {
+      if ((ran1 + lv1 / 10) * val1 >= (ran2 + lv2 / 10) * val2) {
         this.exp += 5
         players[altid].exp += 1
 
@@ -1694,7 +1694,7 @@ san值:${player.san} | 落魄值:${player.down}
 
   const cmdChart = seal.ext.newCmdItemInfo();
   cmdChart.name = "排行榜";
-  cmdChart.help = "指令：.排行榜 (贡献/me/@另一个人)";
+  cmdChart.help = "指令：.排行榜 (贡献/等级) [me/@]";
   cmdChart.allowDelegate = true
   cmdChart.solve = (ctx, msg, cmdArgs) => {
     let val = cmdArgs.getArgN(1);
@@ -1740,13 +1740,13 @@ san值:${player.san} | 落魄值:${player.down}
         return;
       }
       //经验排行榜
-      case "等级":{
+      case "等级": {
         let exp = {}
         for (let id in playerlist) exp[id] = players[id].exp
 
         let arr = Object.keys(exp).sort(function (a, b) { return exp[b] - exp[a] })
 
-        if (altid!= id || val2 == "me") {
+        if (altid != id || val2 == "me") {
           let index = arr.indexOf(altid)
           seal.replyToSender(ctx, msg, `<${players[altid].name}>的等级：Lv${players[altid].getLv()[0]}(${players[altid].exp}) 第${index + 1}名`)
           return;
