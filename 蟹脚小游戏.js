@@ -98,11 +98,11 @@ if (!ext) {
     "11.2mm马格南左轮手枪": 45, "11.43mm左轮手枪": 35, "11.43mm自动手枪": 35, "IMI沙漠之鹰": 55, "14.7mm春田步枪": 45,
     "5.6mm栓式枪机步枪": 20, "7.62mm杠杆式枪机步枪": 30, "马提尼·亨利步枪": 50, "莫兰上校的气动步枪": 35, "加兰德M1步枪": 50, "加兰德M2步枪": 50,
     "SKS半自动步枪": 35, "7.7mm李·恩菲尔德": 50, "7.62mm栓式枪机步枪": 50, "7.62mm半自动步枪": 50, "11.28mm马林步枪": 60,
-    "猎象枪": 65, "20号霰弹枪": 30, "16号霰弹枪": 40, "12号霰弹枪": 60, "12号霰弹枪(泵动)": 60, "12号霰弹枪(半自动)": 60, "12号霰弹枪(锯短)": 60, "10号霰弹枪": 70,
+    "猎象枪": 65, "20号霰弹枪": 30, "16号霰弹枪": 40, "12号霰弹枪": 60, "12号霰弹枪": 60, "10号霰弹枪": 70,
     "12号贝里尼M3": 60, "12号SPAS": 60, "AKM": 35, "AK-74": 35, "巴雷特M82": 100,
     "FN-FAL": 80, "加利尔突击步枪": 60, "M16A2": 60, "M4": 60, "斯泰尔AUG": 60, "贝雷塔M70": 60, "MP18I": 25, "MP28II": 25, "MP5": 25, "MAC-11": 25,
     "蝎式冲锋枪": 20, "汤普森冲锋枪": 35, "乌兹微型冲锋枪": 25, "1882年式加特林": 80, "M1918式勃朗宁自动步枪": 80, "勃朗宁M1917A1": 80,
-    "布伦轻机枪": 80, "路易斯Ⅰ型机枪": 80, "GE-M134式7.62mm速射机枪": 80, "FN米尼米(5.56mm)": 60, "维克斯.303机枪": 80,
+    "布伦轻机枪": 80, "路易斯Ⅰ型机枪": 80, "GE-M134式7.62mm速射机枪": 80, "FN米尼米": 60, "维克斯.303机枪": 80,
     "莫洛托夫燃烧瓶": 65, "信号弹枪": 40, "M79-40mm榴弹发射器": 75,
     "81mm迫击炮": 150, "75mm野战火炮": 250, "120mm坦克炮": 250, "5英寸舰载炮": 375, "火焰喷射器": 65, "M72式单发轻型反坦克炮": 200
   }
@@ -343,12 +343,12 @@ if (!ext) {
       let altplace = players[altid].place
       let weapon1 = this.weapon
       let weapon2 = players[altid].weapon
-      let val1 = weaponlst[weapon1]
-      let val2 = weaponlst[weapon2]
+      let val1 = weaponlst[weapon1] / 5
+      let val2 = weaponlst[weapon2] / 5
       let lv1 = this.getLv()[0]
       let lv2 = players[altid].getLv()[0]
-      let ran1 = Math.random()
-      let ran2 = Math.random()
+      let ran1 = Math.floor(Math.random() * 100)
+      let ran2 = Math.floor(Math.random() * 100)
       let text = `地点:${players[altid].place}
 ${this.name}(Lv${lv1})=>${players[altid].name}(Lv${lv2})
 ${weapon1}(${val1}) vs ${weapon2}(${val2})\n`
@@ -361,8 +361,8 @@ ${weapon1}(${val1}) vs ${weapon2}(${val2})\n`
       }
 
       //赢
-      if ((ran1 + lv1 / 10) * val1 >= (ran2 + lv2 / 10) * val2) {
-        this.exp += 5
+      if (ran1 + lv1 + val1 >= ran2 + lv2 + val2) {
+        this.exp += 3
         players[altid].exp += 1
 
         let goodsnum = 0
@@ -458,7 +458,7 @@ ${weapon1}(${val1}) vs ${weapon2}(${val2})\n`
 
     //翻垃圾时间~翻一次、返回一段文本
     rubbish() {
-      this.down -= 3
+      this.down -= 6
       this.exp += 1
       let ran = Math.random()
       let text = ``
@@ -535,7 +535,7 @@ ${weapon1}(${val1}) vs ${weapon2}(${val2})\n`
       let viewword = viewwords[Math.floor(Math.random() * viewwords.length)]
       let myth = myths[Math.floor(Math.random() * myths.length)]
       let mythword = mythwords[Math.floor(Math.random() * mythwords.length)]
-      this.exp += 2
+      this.exp += 1
       return `地点:${this.place}，${viewword + view}\n<${this.name}>遇到了${mythword}${myth}！\n${this.stSan(now, -lostsan)}`
     }
 
@@ -547,12 +547,12 @@ ${weapon1}(${val1}) vs ${weapon2}(${val2})\n`
 
       if (players[altid].ckCmd(ctx, msg)) return;
 
-      return this.rob(altid, now)
+      return `遭遇了抢劫！\n${this.rob(altid, now)}`
     }
 
     meetPolice(now) {
       let arrestInterval = seal.ext.getIntConfig(ext, "逮捕时间/s")
-      this.down += 8
+      this.down += 10
       this.time.arrestTime = now
 
       let goods = Object.keys(this.goods)
@@ -567,7 +567,6 @@ ${weapon1}(${val1}) vs ${weapon2}(${val2})\n`
       let viewword = viewwords[Math.floor(Math.random() * viewwords.length)]
       let viewfound = viewfounds[Math.floor(Math.random() * viewfounds.length)]
       let viewfoundword = viewfoundwords[Math.floor(Math.random() * viewfoundwords.length)]
-      this.exp += 1
       return `地点:${this.place}，${viewword + view}\n<${this.name}>遇到了${viewfound.replace('{{word}}', viewfoundword)}\n${this.stSan(now, addsan)}`
     }
 
@@ -606,7 +605,7 @@ ${weapon1}(${val1}) vs ${weapon2}(${val2})\n`
     }
 
     /**使用货物，返回文本*/
-    useGood(good, num) {
+    useGood(good, num, now) {
       if (good == "圣水") {
         this.takeGood('圣水', num)
         return `<${this.name}>使用了${good}×${num}\n${this.stSan(now, 10 * num)}`
@@ -994,9 +993,13 @@ ${weapon1}(${val1}) vs ${weapon2}(${val2})\n`
   const cmdCancel = seal.ext.newCmdItemInfo();
   cmdCancel.name = "注销";
   cmdCancel.help = "指令：.注销（注销就是注销了）";
+  cmdCancel.allowDelegate = true;
   cmdCancel.solve = (ctx, msg, cmdArgs) => {
-    let val = cmdArgs.getArgN(1);
-    const id = ctx.player.userId
+    let val = cmdArgs.getRestArgsFrom(1)
+    const mctx = seal.getCtxProxyFirst(ctx, cmdArgs);
+    const id = mctx.player.userId
+    const name = mctx.player.name
+    ckId(id, name)
 
     switch (val) {
       case "help": {
@@ -1507,7 +1510,7 @@ san值:${player.san} | 贡献度:${player.contr}/${level[player.color]}
         players[id].money -= price
         cults[cult].weapons[val].rest -= 1
         players[id].addGoodTo(val, 1)
-        players[id].useGood(val, 1)
+        players[id].useGood(val, 1, now)
 
         seal.replyToSender(ctx, msg, `<${players[id].name}>花费了$ ${price}，购买到${val}。`)
         return;
@@ -1680,12 +1683,12 @@ san值:${player.san} | 贡献度:${player.contr}/${level[player.color]}
           return;
         }
 
-        if (down < 3 * num) {
+        if (down < 6 * num) {
           seal.replyToSender(ctx, msg, `<${players[id].name}>你还没有落魄到要到垃圾堆进货的程度——\n当前落魄值：${down}`)
           return;
         }
         for (let i = 0; i < num; i++) replytext += players[id].rubbish() + `\n`
-        replytext += `落魄值-${3 * num}=>${players[id].down}`
+        replytext += `落魄值-${6 * num}=>${players[id].down}`
         seal.replyToSender(ctx, msg, replytext)
         return;
       }
@@ -2093,7 +2096,10 @@ $ ${placeprices[i].mingood.price}——>$ ${placeprices[i].maxgood.price} ${plac
         return ret;
       }
       case 'all': {
+        for (let good in players[id].goods) players[id].down += players[id].goods[good] / 10
+        players[id].down = parseFloat(players[id].down.toFixed(1));
         players[id].goods = {}
+        players[id].saveData()
         seal.replyToSender(ctx, msg, `你把车上的东西扔了个一干二净`)
         return seal.ext.newCmdExecuteResult(true);
       }
@@ -2112,7 +2118,9 @@ $ ${placeprices[i].mingood.price}——>$ ${placeprices[i].maxgood.price} ${plac
           seal.replyToSender(ctx, msg, "库中物品数量不足！")
           return;
         }
-
+    
+        players[id].down += val2 / 10
+        players[id].down = parseFloat(players[id].down.toFixed(1));
         players[id].takeGood(val, val2)
         seal.replyToSender(ctx, msg, `${val}-${val2}`)
         return seal.ext.newCmdExecuteResult(true);
@@ -2200,7 +2208,7 @@ $ ${placeprices[i].mingood.price}——>$ ${placeprices[i].maxgood.price} ${plac
           text += `献祭成功！\n`
           let add = Math.ceil(Math.random() * 10) + 10
           cults[cult].ones[god] += add
-          players[id].exp += 10
+          players[id].exp += 5
           text += `随后祂向你们降下了视线：\n`
 
           if (cults[cult].ones[god] >= 100) {
@@ -2361,7 +2369,7 @@ $ ${placeprices[i].mingood.price}——>$ ${placeprices[i].maxgood.price} ${plac
           return;
         }
 
-        seal.replyToSender(ctx, msg, seal.format(ctx, players[id].useGood(val, val2)))
+        seal.replyToSender(ctx, msg, seal.format(ctx, players[id].useGood(val, val2, now)))
         return;
       }
     }
