@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         蟹脚小游戏
 // @author       错误
-// @version      2.0.1
+// @version      2.0.2
 // @description  发送 .加入 姓名 性别 教团 开始游戏，使用指令.cult查看游戏指引，使用指令.cult master查看骰主指令
 // @timestamp    1717065841
 // 2024-05-30 18:44:01
@@ -14,7 +14,7 @@
 let ext = seal.ext.find('蟹脚小游戏');
 if (!ext) {
   // 不存在，那么建立扩展
-  ext = seal.ext.new('蟹脚小游戏', '错误', '2.0.1');
+  ext = seal.ext.new('蟹脚小游戏', '错误', '2.0.2');
   // 注册扩展
   seal.ext.register(ext);
 
