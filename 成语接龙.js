@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         成语接龙
 // @author       错误
-// @version      1.0.0
+// @version      1.0.1
 // @description  嘻嘻，谢谢白鱼找到的api，帮助：\n【.成语接龙】随机起头\n【.成语接龙 成语】起头\n【.成语接龙 结束】结束游戏\n【.成语接龙 查询 成语】成语解释\n【接成语】进行接龙\n【接不了】给出提示
 // @timestamp    1726072304
 // 2024-09-05 15:43:43
@@ -13,7 +13,7 @@
 // 首先检查是否已经存在
 let ext = seal.ext.find('idiom');
 if (!ext) {
-    ext = seal.ext.new('idiom', '错误', '1.0.0');
+    ext = seal.ext.new('idiom', '错误', '1.0.1');
     seal.ext.register(ext);
 
     seal.ext.registerIntConfig(ext, "最大提示次数", 3)
