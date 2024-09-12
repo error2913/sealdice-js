@@ -28,6 +28,9 @@ if (!ext) {
   seal.ext.registerIntConfig(ext, "越狱概率%", 50)
   seal.ext.registerIntConfig(ext, "献祭概率%", 40)
   seal.ext.registerIntConfig(ext, "最大抢夺率%", 50)
+  seal.ext.registerIntConfig(ext, "罚款率%", 20)
+  seal.ext.registerStringConfig(ext, "教团列表(建议只添加，且修改后需重载插件)", "大衮密令教/黄印兄弟会/银色暮光密教/血腥之舌/不灭之炎的奴仆")
+  seal.ext.registerStringConfig(ext, "地点列表(建议只添加，且修改后需重载插件)", "阿卡姆/金斯波特/印斯茅斯/南极营地/拉莱耶/乌撒/无名之城")
 
   const lead = `游戏指引:
 今日商店、查看背包、个人信息、
@@ -42,9 +45,9 @@ if (!ext) {
   const playerlist = JSON.parse(ext.storageGet("playerlist") || '{}')
   const use = JSON.parse(ext.storageGet("use") || '{}')
 
-  //所有地点和教团的一个数组（都可以改、但最好使用指令 .写 del 清除下数据，不然可能会有bug（清除完最后重新装一次不然可能还会有bug
-  const allplaces = ["阿卡姆", "金斯波特", "印斯茅斯", "南极营地", "拉莱耶", "乌撒", "无名之城"]//乱写的
-  const allcults = ["大衮密令教", "黄印兄弟会", "银色暮光密教", "血腥之舌", "不灭之炎的奴仆"]
+  //所有地点和教团的一个数组
+  const allplaces = seal.ext.getStringConfig(ext, "地点列表(建议只添加，且修改后需重载插件)").split('/')
+  const allcults = seal.ext.getStringConfig(ext, "教团列表(建议只添加，且修改后需重载插件)").split('/')
   //教团对应的邪神
   const cultgods = {
     "大衮密令教": ["父神大衮", "母神海德拉", "天父克苏鲁"],
@@ -349,9 +352,9 @@ if (!ext) {
       let lv2 = players[altid].getLv()[0]
       let ran1 = Math.floor(Math.random() * 100)
       let ran2 = Math.floor(Math.random() * 100)
-      let text = `地点:${players[altid].place}
+      let text = `在${players[altid].place}
 ${this.name}(Lv${lv1})=>${players[altid].name}(Lv${lv2})
-${weapon1}(${val1}) vs ${weapon2}(${val2})\n`
+${weapon1}(${val1 * 5}) vs ${weapon2}(${val2 * 5})\n`
 
       //位置不对
       if (place !== altplace) {
@@ -362,7 +365,7 @@ ${weapon1}(${val1}) vs ${weapon2}(${val2})\n`
 
       //赢
       if (ran1 + lv1 + val1 >= ran2 + lv2 + val2) {
-        this.exp += 3
+        this.exp += Math.abs(lv1 - lv2) + 1
         players[altid].exp += 1
 
         let goodsnum = 0
@@ -536,7 +539,7 @@ ${weapon1}(${val1}) vs ${weapon2}(${val2})\n`
       let myth = myths[Math.floor(Math.random() * myths.length)]
       let mythword = mythwords[Math.floor(Math.random() * mythwords.length)]
       this.exp += 1
-      return `地点:${this.place}，${viewword + view}\n<${this.name}>遇到了${mythword}${myth}！\n${this.stSan(now, -lostsan)}`
+      return `在${this.place}，${viewword + view}\n<${this.name}>遇到了${mythword}${myth}！\n${this.stSan(now, -lostsan)}`
     }
 
     meetOther(now, ctx, msg) {
@@ -552,13 +555,27 @@ ${weapon1}(${val1}) vs ${weapon2}(${val2})\n`
 
     meetPolice(now) {
       let arrestInterval = seal.ext.getIntConfig(ext, "逮捕时间/s")
+      let fine_p = seal.ext.getIntConfig(ext, "罚款率%") / 100
+
+      let fine = Math.floor(this.money * fine_p)
+      let goods = Object.keys(this.goods)
+      let good = goods[Math.floor(Math.random() * goods.length)]
+      let num = Math.ceil(this.goods[good] * fine_p)
+
+
+      this.exp += 1
+      this.money -= fine
       this.down += 10
       this.time.arrestTime = now
+      this.takeGood(good, num)
 
-      let goods = Object.keys(this.goods)
-      let reason = goods.length > 0 ? `因为检查出车上有${goods[Math.floor(Math.random() * goods.length)]}，` : ``
+      let reason = goods.length > 0 ? `检查出车上有${good}，没收${good}×${num}！` : ``
 
-      return `<${this.name}>在${this.place}遇到了警察！${reason}被抓起来了！但作为${this.cult}的资深教徒，越狱只需要${arrestInterval}秒！\n落魄值+8=>${this.down}`
+      return `在${this.place}
+<${this.name}>遇到了警察，被抓起来了！但作为一名教徒，越狱只需${arrestInterval}秒！
+${reason}
+落魄值+10=>${this.down}
+货币-$ ${fine}`
     }
 
     meetView(now) {
@@ -567,7 +584,7 @@ ${weapon1}(${val1}) vs ${weapon2}(${val2})\n`
       let viewword = viewwords[Math.floor(Math.random() * viewwords.length)]
       let viewfound = viewfounds[Math.floor(Math.random() * viewfounds.length)]
       let viewfoundword = viewfoundwords[Math.floor(Math.random() * viewfoundwords.length)]
-      return `地点:${this.place}，${viewword + view}\n<${this.name}>遇到了${viewfound.replace('{{word}}', viewfoundword)}\n${this.stSan(now, addsan)}`
+      return `在${this.place}，${viewword + view}\n<${this.name}>遇到了${viewfound.replace('{{word}}', viewfoundword)}\n${this.stSan(now, addsan)}`
     }
 
     meet(now, ctx, msg) {
@@ -642,7 +659,7 @@ ${weapon1}(${val1}) vs ${weapon2}(${val2})\n`
       this.money += moneyincrease
 
       this.saveData()
-      return `地点:${this.place}\n<${this.name}>发展了${increase}个信众。\n贡献度=>${this.contr}\n货币+$ ${moneyincrease}=>$ ${this.money}`
+      return `在${this.place}\n<${this.name}>发展了${increase}个信众。\n贡献度=>${this.contr}\n货币+$ ${moneyincrease}=>$ ${this.money}`
     }
   }
 
@@ -833,6 +850,13 @@ ${weapon1}(${val1}) vs ${weapon2}(${val2})\n`
         return isNaN(val) ? 0 : val
       }
     }
+  }
+
+  function findPlayer(text) {
+    text = text.toLowerCase()
+    let lst = []
+    for (let id in players) if (players[id].name.includes(text)) lst.push(id)
+    return lst
   }
 
   const cmdadd = seal.ext.newCmdItemInfo();
@@ -1194,7 +1218,31 @@ ${weapon1}(${val1}) vs ${weapon2}(${val2})\n`
         return ret;
       }
       case 'master': {
-        seal.replyToSender(ctx, msg, "参数：add、del、upd、free、arrest、money、san、contr、down、exp、赏、赐、加时")
+        seal.replyToSender(ctx, msg, "参数：clr、find、add、del、upd、free、arrest、money、san、contr、down、exp、赏、赐、加时")
+        return;
+      }
+      case 'clr': {
+        for (let id in playerlist) if (playerlist.hasOwnProperty(id)) delete playerlist[id]
+        ext.storageSet('playerlist', JSON.stringify(playerlist))
+        seal.replyToSender(ctx, msg, `清除成功！`)
+        return;
+      }
+      case 'find': {
+        if (!val2) {
+          seal.replyToSender(ctx, msg, `参数2为名字。`)
+          return;
+        }
+
+        let lst = findPlayer(val2)
+        if (lst.length == 0) {
+          seal.replyToSender(ctx, msg, `没有找到${val2}。`)
+          return;
+        }
+
+        let text = '查询如下:'
+        for (let i = 0; i < lst.length; i++) text += `\n${players[lst[i]].name}(${lst[i]})`
+
+        seal.replyToSender(ctx, msg, text)
         return;
       }
       case 'upd': {
@@ -2203,7 +2251,7 @@ $ ${placeprices[i].mingood.price}——>$ ${placeprices[i].maxgood.price} ${plac
         let gods = Object.keys(cults[cult].ones)
         let god = gods[Math.floor(Math.random() * gods.length)]
 
-        let text = `地点:${players[id].place}\n你带领着信众向伟大的${god}举行了献祭仪式\n祭品:${val}×${val2}\n`
+        let text = `在${players[id].place}\n你带领着信众向伟大的${god}举行了献祭仪式\n祭品:${val}×${val2}\n`
         if (Math.random() * 100 <= seal.ext.getIntConfig(ext, "献祭概率%")) {
           text += `献祭成功！\n`
           let add = Math.ceil(Math.random() * 10) + 10
