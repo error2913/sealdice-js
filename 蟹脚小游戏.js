@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         蟹脚小游戏
 // @author       错误
-// @version      2.0.3
+// @version      2.0.4
 // @description  发送 .加入 姓名 性别 教团 开始游戏，使用指令.cult查看游戏指引，使用指令.cult master查看骰主指令
 // @timestamp    1717065841
 // 2024-05-30 18:44:01
@@ -14,7 +14,7 @@
 let ext = seal.ext.find('蟹脚小游戏');
 if (!ext) {
   // 不存在，那么建立扩展
-  ext = seal.ext.new('蟹脚小游戏', '错误', '2.0.3');
+  ext = seal.ext.new('蟹脚小游戏', '错误', '2.0.4');
   // 注册扩展
   seal.ext.register(ext);
 
@@ -733,6 +733,34 @@ ${reason}
       }
       return text
     }
+
+    /**动态调整售价，num为正，指售出的数量，num为负，指购入的数量 */
+    adjustPrice(good, num) {
+      let price = this.shop[good]
+      let maxprice, minprice
+      for (let i = 0; i < goodlst.length; i++) {
+        if (goodlst[i].lst.includes(good)) {
+          let prices = []
+          for (let place of allplaces) if (places[place].shop.hasOwnProperty(good)) prices.push(places[place].shop[good])
+          prices.sort((a, b) => b - a)
+          maxprice = prices[0]
+          minprice = prices[prices.length - 1]
+          break;
+        }
+      }
+      let dif = (maxprice - minprice) / 120
+
+      if (num > 0) {
+        price -= Math.floor(dif * num)
+        price = price < minprice? minprice : price
+      }
+      else {
+        price += Math.floor(dif * (-num))
+        price = price > maxprice? maxprice : price
+      }
+      this.shop[good] = price
+      this.saveData()
+    }
   }
 
   class Cult {
@@ -1084,6 +1112,7 @@ ${reason}
 
         let maxCost = Math.floor(money / places[place].shop[val])
         let ifAll = goodsnum + maxCost > space ? space - goodsnum : maxCost
+        ifAll = ifAll == 0 ? 1 : ifAll
         val2 = ckNum(val2, ifAll)
         if (val2 <= 0) {
           seal.replyToSender(ctx, msg, '请输入正确的数字！');
@@ -1104,6 +1133,7 @@ ${reason}
         }
 
         players[id].money -= price
+        places[place].adjustPrice(val, -val2)
         players[id].addGoodTo(val, val2)
 
         seal.replyToSender(ctx, msg, `<${players[id].name}>花费了$ ${price}，购买到${val}×${val2}。`)
@@ -1147,6 +1177,7 @@ ${reason}
             increase += price
             text += `\n${good}×${num}、`
             players[id].money += price
+            places[place].adjustPrice(good, num)
             players[id].takeGood(good, num)
           }
         }
@@ -1182,6 +1213,7 @@ ${reason}
         text = `${val}×${val2}、`
 
         players[id].money += increase
+        places[place].adjustPrice(val, val2)
         players[id].takeGood(val, val2)
 
         break;
