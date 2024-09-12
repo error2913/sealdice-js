@@ -462,6 +462,7 @@ ${weapon1}(${val1 * 5}) vs ${weapon2}(${val2 * 5})\n`
     //翻垃圾时间~翻一次、返回一段文本
     rubbish() {
       this.down -= 6
+      this.down = parseFloat(this.down.toFixed(1));
       this.exp += 1
       let ran = Math.random()
       let text = ``
