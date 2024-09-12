@@ -56,8 +56,9 @@ if (!ext) {
 
             if (idiom == '不了') {
                 if (this.hintNum >= seal.ext.getIntConfig(ext, "最大提示次数")) {
+                    let num = Math.floor((this.lst.length - this.hintNum) / 2)
                     delete data[id]
-                    seal.replyToSender(ctx, msg, `你输了，该局游戏一共接了${this.lst.length}个成语，提示次数为${this.hintNum}`);
+                    seal.replyToSender(ctx, msg, `你输了，该局游戏一共接了${this.lst.length}个成语，你接了${num}个成语，提示次数为${this.hintNum}`);
                     return;
                 }
 
@@ -92,11 +93,18 @@ if (!ext) {
                         break;
                     }
                     case '无': {
+                        let num = Math.floor((this.lst.length - this.hintNum) / 2)
                         delete data[id]
-                        seal.replyToSender(ctx, msg, `你赢了，该局游戏一共接了${this.lst.length}个成语，提示次数为${this.hintNum}`);
+                        seal.replyToSender(ctx, msg, `你赢了，该局游戏一共接了${this.lst.length}个成语，你接了${num}个成语，提示次数为${this.hintNum}`);
                         break;
                     }
                     default: {
+                        if (this.lst.includes(text) && !seal.ext.getBoolConfig(ext, "能否重复")) {
+                            let num = Math.floor((this.lst.length - this.hintNum) / 2)
+                            delete data[id]
+                            seal.replyToSender(ctx, msg, `你赢了，该局游戏一共接了${this.lst.length}个成语，你接了${num}个成语，提示次数为${this.hintNum}`);
+                            return;
+                        }
                         this.lst.push(idiom);
                         this.lst.push(text);
                         seal.replyToSender(ctx, msg, `接${text}`);
@@ -168,7 +176,7 @@ if (!ext) {
                     seal.replyToSender(ctx, msg, '请输入成语！');
                     return;
                 }
-                await findIdiom(val2)
+                seal.replyToSender(ctx, msg, (await findIdiom(val2)).replace(/r/g,'n'));
                 return;
             }
             case '结束': {
@@ -176,8 +184,9 @@ if (!ext) {
                     seal.replyToSender(ctx, msg, `没有正在进行的游戏！`);
                     return;
                 }
+                let num = Math.floor((data[id].lst.length - data[id].hintNum) / 2)
 
-                seal.replyToSender(ctx, msg, `该局游戏一共接了${data[id].lst.length}个成语，提示次数为${data[id].hintNum}`);
+                seal.replyToSender(ctx, msg, `该局游戏一共接了${data[id].lst.length}个成语，你接了${num}个成语，提示次数为${data[id].hintNum}`);
                 delete data[id]
                 return;
             }
