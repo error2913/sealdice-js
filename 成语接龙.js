@@ -109,6 +109,8 @@ if (!ext) {
         }
 
         async ckIdiom(idiom) {
+            if (this.lst.length == 0) return true;
+
             try {
                 // 使用fetch发送GET请求
                 const response = await fetch(`${apiUrl}?fs=4&shou=${this.lst[this.lst.length - 1]}&nr=${idiom}`);
@@ -158,9 +160,8 @@ if (!ext) {
         let id = ctx.isPrivate? ctx.player.userId : ctx.group.groupId;
         switch (val) {
             case 'help': {
-                const ret = seal.ext.newCmdExecuteResult(true);
-                ret.showHelp = true;
-                return ret;
+                seal.replyToSender(ctx, msg, `帮助\n【.成语接龙】随机起头\n【.成语接龙 成语】起头\n【.成语接龙 结束】结束游戏\n【.成语接龙 查询 成语】成语解释\n【接成语】进行接龙\n【接不了】给出提示`);
+                return;
             }
             case '查询': {
                 if (!val2) {
@@ -187,8 +188,9 @@ if (!ext) {
                     return;
                 }
 
-                let game = new Game()
+
                 if (!val) {
+                    let game = new Game()
                     await game.getRandom(ctx, msg)
                     data[id] = game
                     return;
@@ -197,6 +199,7 @@ if (!ext) {
                         seal.replyToSender(ctx, msg, `${val} 不是一个成语，换一个吧`);
                         return;
                     }
+                    let game = new Game()
                     await game.getNext(ctx, msg, val)
                     data[id] = game
                     return;
