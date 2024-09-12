@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         蟹脚小游戏
 // @author       错误
-// @version      2.0.2
+// @version      2.0.3
 // @description  发送 .加入 姓名 性别 教团 开始游戏，使用指令.cult查看游戏指引，使用指令.cult master查看骰主指令
 // @timestamp    1717065841
 // 2024-05-30 18:44:01
@@ -14,7 +14,7 @@
 let ext = seal.ext.find('蟹脚小游戏');
 if (!ext) {
   // 不存在，那么建立扩展
-  ext = seal.ext.new('蟹脚小游戏', '错误', '2.0.2');
+  ext = seal.ext.new('蟹脚小游戏', '错误', '2.0.3');
   // 注册扩展
   seal.ext.register(ext);
 
@@ -365,7 +365,7 @@ ${weapon1}(${val1 * 5}) vs ${weapon2}(${val2 * 5})\n`
 
       //赢
       if (ran1 + lv1 + val1 >= ran2 + lv2 + val2) {
-        this.exp += Math.abs(lv1 - lv2) + 1
+        this.exp += lv1 < lv2 ? lv2 - lv1 : 0
         players[altid].exp += 1
 
         let goodsnum = 0
@@ -380,8 +380,8 @@ ${weapon1}(${val1 * 5}) vs ${weapon2}(${val2 * 5})\n`
       }
       //输
       else {
+        players[altid].exp += lv1 > lv2 ? lv1 - lv2 : 0
         this.exp += 1
-        players[altid].exp += 5
 
         let goodsnum = 0
         for (let good in this.goods) goodsnum += this.goods[good]
@@ -2166,7 +2166,7 @@ $ ${placeprices[i].mingood.price}——>$ ${placeprices[i].maxgood.price} ${plac
           seal.replyToSender(ctx, msg, "库中物品数量不足！")
           return;
         }
-    
+
         players[id].down += val2 / 10
         players[id].down = parseFloat(players[id].down.toFixed(1));
         players[id].takeGood(val, val2)
