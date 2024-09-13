@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         成语接龙
 // @author       错误
-// @version      1.0.2
-// @description  嘻嘻，谢谢白鱼找到的api，帮助：\n【.成语接龙】随机起头\n【.成语接龙 成语】起头\n【.成语接龙 结束】结束游戏\n【.成语接龙 查询 成语】成语解释\n【接成语】进行接龙\n【接不了】给出提示
+// @version      1.1.0
+// @description  嘻嘻，谢谢白鱼找到的api，帮助：\n【.成语接龙】随机起头\n【.成语接龙 成语】起头\n【.成语接龙 结束】结束游戏\n【.成语接龙 查询 成语】成语解释\n【.成语接龙 排行榜】\n【接成语】进行接龙\n【接不了】给出提示
 // @timestamp    1726072304
 // 2024-09-05 15:43:43
 // @license      MIT
@@ -13,12 +13,15 @@
 // 首先检查是否已经存在
 let ext = seal.ext.find('idiom');
 if (!ext) {
-    ext = seal.ext.new('idiom', '错误', '1.0.2');
+    ext = seal.ext.new('idiom', '错误', '1.1.0');
     seal.ext.register(ext);
 
     seal.ext.registerIntConfig(ext, "最大提示次数", 3)
     seal.ext.registerBoolConfig(ext, "能否重复", false)
     //seal.ext.registerBoolConfig(ext, "是否开启计时器", true)
+
+    const chart = JSON.parse(ext.storageGet("chart") || '{}')
+    if (!chart.hasOwnProperty('lst')) chart.lst = []
 
     const data = {}
     const apiUrl = 'https://api.tangdouz.com/cy.php';
@@ -53,12 +56,11 @@ if (!ext) {
 
         async getNext(ctx, msg, idiom) {
             let id = ctx.isPrivate ? ctx.player.userId : ctx.group.groupId;
+            let name = ctx.isPrivate? ctx.player.name : ctx.group.groupName;
 
             if (idiom == '不了') {
                 if (this.hintNum >= seal.ext.getIntConfig(ext, "最大提示次数")) {
-                    let num = Math.floor((this.lst.length - this.hintNum) / 2)
-                    delete data[id]
-                    seal.replyToSender(ctx, msg, `你输了，该局游戏一共接了${this.lst.length}个成语，玩家接了${num}个成语，提示次数为${this.hintNum}`);
+                    seal.replyToSender(ctx, msg, `你输了，${this.end(id, name)}`);
                     return;
                 }
 
@@ -97,16 +99,12 @@ if (!ext) {
                         return
                     }
                     case '无': {
-                        let num = Math.floor((this.lst.length - this.hintNum) / 2)
-                        delete data[id]
-                        seal.replyToSender(ctx, msg, `你赢了，该局游戏一共接了${this.lst.length}个成语，玩家接了${num}个成语，提示次数为${this.hintNum}`);
+                        seal.replyToSender(ctx, msg, `你赢了，${this.end(id, name)}`);
                         return
                     }
                     default: {
                         if (this.lst.includes(text) && !seal.ext.getBoolConfig(ext, "能否重复")) {
-                            let num = Math.floor((this.lst.length - this.hintNum) / 2)
-                            delete data[id]
-                            seal.replyToSender(ctx, msg, `你赢了，该局游戏一共接了${this.lst.length}个成语，玩家接了${num}个成语，提示次数为${this.hintNum}`);
+                            seal.replyToSender(ctx, msg, `你赢了，${this.end(id, name)}`);
                             return;
                         }
                         this.lst.push(idiom);
@@ -135,12 +133,23 @@ if (!ext) {
                 const text = await response.text();
                 console.log(text)
 
-                return text == 'no'? false : true;
+                return text == 'no' ? false : true;
             } catch (error) {
                 // 处理错误
                 console.error('请求失败:', error);
                 return false;
             }
+        }
+
+        /**清除计时器，并设置新的 */
+        async stTimer() { }
+
+        /**结束游戏 */
+        end(id, name) {
+            let num = Math.floor((this.lst.length - this.hintNum) / 2)
+            delete data[id]
+            updChart(name, num)
+            return `该局游戏一共接了${this.lst.length}个成语，玩家接了${num}个成语，提示次数为${this.hintNum}`
         }
     }
 
@@ -163,35 +172,61 @@ if (!ext) {
         }
     }
 
+
+    /**更新排行榜 */
+    function updChart(name, num) {
+        let lst = chart.lst
+        let index = lst.findIndex(item => item.name == name)
+        if (index == -1) lst.push({ name: name, num: num })
+        else lst[index].num = Math.max(lst[index].num, num)
+        lst.sort((a, b) => b.num - a.num);
+        chart.lst = lst.slice(0, 10)
+        ext.storageSet("chart", JSON.stringify(chart))
+    }
+
     const cmdIdiom = seal.ext.newCmdItemInfo();
     cmdIdiom.name = '成语接龙'; // 指令名字，可用中文
-    cmdIdiom.help = `帮助\n【.成语接龙】随机起头\n【.成语接龙 成语】起头\n【.成语接龙 结束】结束游戏\n【.成语接龙 查询 成语】成语解释\n【接成语】进行接龙\n【接不了】给出提示`;
+    cmdIdiom.help = `帮助\n【.成语接龙】随机起头\n【.成语接龙 成语】起头\n【.成语接龙 结束】结束游戏\n【.成语接龙 查询 成语】成语解释\n【.成语接龙 排行榜】\n【接成语】进行接龙\n【接不了】给出提示`;
     cmdIdiom.solve = async (ctx, msg, cmdArgs) => {
         let val = cmdArgs.getArgN(1);
-        let val2 =cmdArgs.getArgN(2);
-        let id = ctx.isPrivate? ctx.player.userId : ctx.group.groupId;
+        let val2 = cmdArgs.getArgN(2);
+        let id = ctx.isPrivate ? ctx.player.userId : ctx.group.groupId;
+        let name = ctx.isPrivate? ctx.player.name : ctx.group.groupName;
         switch (val) {
             case 'help': {
-                seal.replyToSender(ctx, msg, `帮助\n【.成语接龙】随机起头\n【.成语接龙 成语】起头\n【.成语接龙 结束】结束游戏\n【.成语接龙 查询 成语】成语解释\n【接成语】进行接龙\n【接不了】给出提示`);
+                seal.replyToSender(ctx, msg, `帮助\n【.成语接龙】随机起头\n【.成语接龙 成语】起头\n【.成语接龙 结束】结束游戏\n【.成语接龙 查询 成语】成语解释\n【.成语接龙 排行榜】\n【接成语】进行接龙\n【接不了】给出提示`);
                 return;
             }
+            case 'find':
             case '查询': {
                 if (!val2) {
                     seal.replyToSender(ctx, msg, '请输入成语！');
                     return;
                 }
-                seal.replyToSender(ctx, msg, (await findIdiom(val2)).replace(/r/g,'n'));
+                seal.replyToSender(ctx, msg, (await findIdiom(val2)).replace(/r/g, 'n'));
                 return;
             }
+            case 'end':
             case '结束': {
                 if (!data.hasOwnProperty(id)) {
                     seal.replyToSender(ctx, msg, `没有正在进行的游戏！`);
                     return;
                 }
-                let num = Math.floor((data[id].lst.length - data[id].hintNum) / 2)
 
-                seal.replyToSender(ctx, msg, `该局游戏一共接了${data[id].lst.length}个成语，玩家接了${num}个成语，提示次数为${data[id].hintNum}`);
-                delete data[id]
+                seal.replyToSender(ctx, msg, data[id].end(id, name));
+                return;
+            }
+            case 'chart':
+            case '排行榜': {
+                if (chart.lst.length == 0) {
+                    seal.replyToSender(ctx, msg, '没有排行榜！');
+                    return;
+                }
+
+                let lst = chart.lst
+                let text = `成语接龙排行榜\n————————————\n♚`
+                for (let i = 0; i < lst.length; i++) text += `第 ${i + 1} 名: ${lst[i].name}\n${lst[i].num}接\n`
+                seal.replyToSender(ctx, msg, text);
                 return;
             }
             default: {
@@ -221,11 +256,12 @@ if (!ext) {
         }
     };
     // 将命令注册到扩展中
-    ext.cmdMap['成语接龙'] = cmdIdiom;   
+    ext.cmdMap['成语接龙'] = cmdIdiom;
+    ext.cmdMap['cyjl'] = cmdIdiom;
 
     ext.onNotCommandReceived = async (ctx, msg) => {
         if (msg.message.includes('接')) {
-            let id = ctx.isPrivate? ctx.player.userId : ctx.group.groupId;
+            let id = ctx.isPrivate ? ctx.player.userId : ctx.group.groupId;
             if (data.hasOwnProperty(id)) {
                 let match = msg.message.match(/^接(.*)/);
                 if (!match || !match[1]) return;
