@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         成语接龙
 // @author       错误
-// @version      1.0.1
+// @version      1.0.2
 // @description  嘻嘻，谢谢白鱼找到的api，帮助：\n【.成语接龙】随机起头\n【.成语接龙 成语】起头\n【.成语接龙 结束】结束游戏\n【.成语接龙 查询 成语】成语解释\n【接成语】进行接龙\n【接不了】给出提示
 // @timestamp    1726072304
 // 2024-09-05 15:43:43
@@ -13,7 +13,7 @@
 // 首先检查是否已经存在
 let ext = seal.ext.find('idiom');
 if (!ext) {
-    ext = seal.ext.new('idiom', '错误', '1.0.1');
+    ext = seal.ext.new('idiom', '错误', '1.0.2');
     seal.ext.register(ext);
 
     seal.ext.registerIntConfig(ext, "最大提示次数", 3)
@@ -58,7 +58,7 @@ if (!ext) {
                 if (this.hintNum >= seal.ext.getIntConfig(ext, "最大提示次数")) {
                     let num = Math.floor((this.lst.length - this.hintNum) / 2)
                     delete data[id]
-                    seal.replyToSender(ctx, msg, `你输了，该局游戏一共接了${this.lst.length}个成语，你接了${num}个成语，提示次数为${this.hintNum}`);
+                    seal.replyToSender(ctx, msg, `你输了，该局游戏一共接了${this.lst.length}个成语，玩家接了${num}个成语，提示次数为${this.hintNum}`);
                     return;
                 }
 
@@ -71,6 +71,10 @@ if (!ext) {
                     return;
                 }
                 if (!await this.ckIdiom(idiom)) {
+                    if (await findIdiom(idiom) == '不存在该成语') {
+                        seal.replyToSender(ctx, msg, `${idiom} 不是一个成语，换一个吧`);
+                        return;
+                    }
                     seal.replyToSender(ctx, msg, `这接不上 ${this.lst[this.lst.length - 1]}，换一个吧`)
                     return;
                 }
@@ -95,14 +99,14 @@ if (!ext) {
                     case '无': {
                         let num = Math.floor((this.lst.length - this.hintNum) / 2)
                         delete data[id]
-                        seal.replyToSender(ctx, msg, `你赢了，该局游戏一共接了${this.lst.length}个成语，你接了${num}个成语，提示次数为${this.hintNum}`);
+                        seal.replyToSender(ctx, msg, `你赢了，该局游戏一共接了${this.lst.length}个成语，玩家接了${num}个成语，提示次数为${this.hintNum}`);
                         return
                     }
                     default: {
                         if (this.lst.includes(text) && !seal.ext.getBoolConfig(ext, "能否重复")) {
                             let num = Math.floor((this.lst.length - this.hintNum) / 2)
                             delete data[id]
-                            seal.replyToSender(ctx, msg, `你赢了，该局游戏一共接了${this.lst.length}个成语，你接了${num}个成语，提示次数为${this.hintNum}`);
+                            seal.replyToSender(ctx, msg, `你赢了，该局游戏一共接了${this.lst.length}个成语，玩家接了${num}个成语，提示次数为${this.hintNum}`);
                             return;
                         }
                         this.lst.push(idiom);
@@ -186,7 +190,7 @@ if (!ext) {
                 }
                 let num = Math.floor((data[id].lst.length - data[id].hintNum) / 2)
 
-                seal.replyToSender(ctx, msg, `该局游戏一共接了${data[id].lst.length}个成语，你接了${num}个成语，提示次数为${data[id].hintNum}`);
+                seal.replyToSender(ctx, msg, `该局游戏一共接了${data[id].lst.length}个成语，玩家接了${num}个成语，提示次数为${data[id].hintNum}`);
                 delete data[id]
                 return;
             }
