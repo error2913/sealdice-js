@@ -45,7 +45,7 @@ if (!ext) {
   const cults = {}
   const playerlist = JSON.parse(ext.storageGet("playerlist") || '{}')
   const use = JSON.parse(ext.storageGet("use") || '{}')
-  const priceUpdCache = {place: '不知道', good: '不知道', price: 0}
+  const priceUpdCache = {}
 
   //所有地点和教团的一个数组
   const allplaces = seal.ext.getStringConfig(ext, "地点列表(建议只添加，且修改后需重载插件)").split('/')
@@ -740,10 +740,9 @@ ${reason}
     /**动态调整售价，num为正，指售出的数量，num为负，指购入的数量 */
     adjustPrice(good, num) {
       //先调整缓存的价格
-      if (allplaces.includes(priceUpdCache.place)) {
-        let place = priceUpdCache.place
-        let good = priceUpdCache.good
-        let price = priceUpdCache.price
+      if (priceUpdCache.hasOwnProperty(good)) {
+        let place = priceUpdCache[good].place
+        let price = priceUpdCache[good].price
 
         if (places[place].shop.hasOwnProperty(good)) {
           places[place].shop[good] = price
@@ -777,9 +776,10 @@ ${reason}
         price = Math.min(price, maxprice)
       }
 
-      priceUpdCache.place = this.name
-      priceUpdCache.good = good
-      priceUpdCache.price = price
+      priceUpdCache[good] = {
+        place: this.name,
+        price: price
+      }
     }
   }
 
