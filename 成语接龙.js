@@ -90,13 +90,13 @@ if (!ext) {
                 switch (text) {
                     case 'no': {
                         seal.replyToSender(ctx, msg, `这不是成语，换一个吧`);
-                        break;
+                        return
                     }
                     case '无': {
                         let num = Math.floor((this.lst.length - this.hintNum) / 2)
                         delete data[id]
                         seal.replyToSender(ctx, msg, `你赢了，该局游戏一共接了${this.lst.length}个成语，你接了${num}个成语，提示次数为${this.hintNum}`);
-                        break;
+                        return
                     }
                     default: {
                         if (this.lst.includes(text) && !seal.ext.getBoolConfig(ext, "能否重复")) {
