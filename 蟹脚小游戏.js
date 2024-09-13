@@ -764,7 +764,7 @@ ${reason}
         }
       }
       
-      let midprice = (maxprice + minprice) / 2
+      let midprice = Math.floor((maxprice + minprice) / 2)
       let profit = (maxprice - minprice) / minprice
       let adjustFactor = (maxprice - minprice) * (profit + 1) / factor
 
