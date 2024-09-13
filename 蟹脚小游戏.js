@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         蟹脚小游戏
 // @author       错误
-// @version      2.1.1
+// @version      2.1.2
 // @description  使用指令.cult查看游戏指引，使用指令.cult master查看骰主指令\n经验值获得：翻垃圾；遭遇警察，神话生物；强行越狱成功；献祭成功；还有抢劫，战胜等级高的对手可获得更多；\n贡献值：贡献值越高发展信众获得的货币就越高；达到一定上限，献祭成功后可晋升职位；\n职位：职位越高发展信众获得的贡献度越高\n抢劫：成败和等级，武器数值挂钩，同时具有随机性；\n市场目前在买卖多几次后，各地物价会逐渐持平
 // @timestamp    1717065841
 // 2024-05-30 18:44:01
@@ -14,7 +14,7 @@
 let ext = seal.ext.find('蟹脚小游戏');
 if (!ext) {
   // 不存在，那么建立扩展
-  ext = seal.ext.new('蟹脚小游戏', '错误', '2.1.1');
+  ext = seal.ext.new('蟹脚小游戏', '错误', '2.1.2');
   // 注册扩展
   seal.ext.register(ext);
 
@@ -186,8 +186,8 @@ if (!ext) {
       this.contr = 0;
       this.color = '无'
       this.exp = 0;
+      this.missionDate = '';
       this.time = {
-        adTime: 0,
         movTime: 0,
         strollTime: 0,
         healTime: 0,
@@ -213,6 +213,7 @@ if (!ext) {
         player.contr = idData.contr
         player.color = idData.color
         player.exp = idData.exp
+        player.missionDate = idData.missionDate
 
         players[id] = player
       } catch (error) {
@@ -645,20 +646,16 @@ ${reason}
     }
 
     /**发展信众 */
-    mission(now) {
+    mission(date) {
+      if (this.missionDate == date) return `<${this.name}>今天的传单已经派完了`
+
       let increase = Math.floor(Math.random() * (150 - 100 + 1)) + 100
-      let index = Object.keys(level).indexOf(this.color)
-      increase *= index + 1
-      let timestamp = this.time.adTime * 1000
-
-      if (new Date(timestamp).toDateString() === new Date().toDateString()) {
-        return `<${this.name}>今天的传单已经派完了`
-      }
-
-      this.time.adTime = now
-      this.contr += increase
-
+      increase *= Object.keys(level).indexOf(this.color) / 10 + 1
+      increase = Math.floor(increase)
       let moneyincrease = this.contr * (Math.floor(Math.random() * (15 - 5 + 1)) + 5)
+
+      this.missionDate = date
+      this.contr += increase
       this.money += moneyincrease
 
       this.saveData()
@@ -1631,9 +1628,10 @@ san值:${player.san} | 贡献度:${player.contr}/${level[player.color]}
     let val = cmdArgs.getArgN(1);
     const id = ctx.player.userId
     const name = ctx.player.name
-    const now = parseInt(seal.format(ctx, "{$tTimestamp}"))
     ckId(id, name)
     if (players[id].ckCmd(ctx, msg)) return
+
+    const date = seal.format(ctx, "{$tDate}")
 
     switch (val) {
       case "help": {
@@ -1642,7 +1640,7 @@ san值:${player.san} | 贡献度:${player.contr}/${level[player.color]}
         return ret;
       }
       default: {
-        seal.replyToSender(ctx, msg, players[id].mission(now))
+        seal.replyToSender(ctx, msg, players[id].mission(date))
         return;
       }
     }
