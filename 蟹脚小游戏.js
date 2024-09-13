@@ -88,10 +88,10 @@ if (!ext) {
   //货物列表
   const goodlst = [
     { p: 1, max: 13, min: 10, weight: 40, lst: ["手电筒", "提灯", "土豆", "皮下注射器", "阿司匹林", "女士内衣", "男士内裤", "婴儿奶嘴", "防水火柴", "致死镜", "米纳尔的星石", "羊皮纸"] },
-    { p: 1, max: 150, min: 100, weight: 35, lst: ["铅蓄电池", "留声机唱片", "胶卷", "警用手铐", "潜水服", "医用威士忌", "黄铜头像", "瑟德夫卡之像", "梦境结晶器", "书写专用血液"] },
-    { p: 0.9, max: 1314, min: 750, weight: 15, lst: ["灵魂精盐", "医用血包", "雷明顿牌打字机", "11.43mm自动手枪子弹", "雪茄", "翡翠小像", "盖尔之镜", "月之透镜"] },
-    { p: 0.5, max: 10000, min: 5000, weight: 2, lst: ["夏塔克鸟蛋", "缸中之脑", "黄金蜂蜜酒", "伊波恩戒指", "格拉基启示录残卷", "银之匙", "透特的匕首"] },
-    { p: 0.2, max: 93750, min: 31250, weight: 1, lst: ["不明的乳汁", "奇怪多面体", "阿尔哈兹莱德之灯", "光辉的偏方三八面体", "拉莱耶圆盘"] }
+    { p: 1, max: 140, min: 100, weight: 35, lst: ["铅蓄电池", "留声机唱片", "胶卷", "警用手铐", "潜水服", "医用威士忌", "黄铜头像", "瑟德夫卡之像", "梦境结晶器", "书写专用血液"] },
+    { p: 0.9, max: 1125, min: 750, weight: 15, lst: ["灵魂精盐", "医用血包", "雷明顿牌打字机", "11.43mm自动手枪子弹", "雪茄", "翡翠小像", "盖尔之镜", "月之透镜"] },
+    { p: 0.5, max: 8000, min: 5000, weight: 2, lst: ["夏塔克鸟蛋", "缸中之脑", "黄金蜂蜜酒", "伊波恩戒指", "格拉基启示录残卷", "银之匙", "透特的匕首"] },
+    { p: 0.2, max: 53125, min: 31250, weight: 1, lst: ["不明的乳汁", "奇怪多面体", "阿尔哈兹莱德之灯", "光辉的偏方三八面体", "拉莱耶圆盘"] }
   ]
   //武器列表
   const weaponlst = {
@@ -342,9 +342,7 @@ if (!ext) {
     }
 
     //抢劫：发起对另一个人的抢劫
-    rob(altid, now) {
-      this.time.robTime = now
-
+    rob(altid) {
       let place = this.place
       let altplace = players[altid].place
       let weapon1 = this.weapon
@@ -546,7 +544,7 @@ ${weapon1}(${val1 * 5}) vs ${weapon2}(${val2 * 5})\n`
       return `在${this.place}，${viewword + view}\n<${this.name}>遇到了${mythword}${myth}！\n${this.stSan(now, -lostsan)}`
     }
 
-    meetOther(now, ctx, msg) {
+    meetOther(ctx, msg) {
       let members = places[this.place].members
       let altid
       do altid = members[Math.floor(Math.random() * members.length)]
@@ -554,7 +552,7 @@ ${weapon1}(${val1 * 5}) vs ${weapon2}(${val2 * 5})\n`
 
       if (players[altid].ckCmd(ctx, msg)) return;
 
-      return `遭遇了抢劫！\n${this.rob(altid, now)}`
+      return `遭遇了抢劫！\n${this.rob(altid)}`
     }
 
     meetPolice(now) {
@@ -594,7 +592,7 @@ ${reason}
     meet(now, ctx, msg) {
       let members = places[this.place].members
       let ran = Math.random()
-      if (members.length > 1 && ran <= 0.3) return this.meetOther(now, ctx, msg)
+      if (members.length > 1 && ran <= 0.3) return this.meetOther(ctx, msg)
       else if (ran <= 0.6) return this.meetMyth(now)
       else if (ran <= 0.9) return this.meetPolice(now)
       else return this.meetView(now)
@@ -763,13 +761,14 @@ ${reason}
       
       let midprice = Math.floor((maxprice + minprice) / 2)
       let profit = (maxprice - minprice) / minprice
-      let adjustFactor = (maxprice - minprice) * (profit + 1) / factor
 
       if (num > 0) {
+        let adjustFactor = (maxprice - midprice) * (profit + 1) / factor
         price -= Math.floor(adjustFactor * num)
         price = Math.max(price, midprice)
       }
       else {
+        let adjustFactor = (midprice - minprice) * (profit + 1) / factor
         price += Math.floor(adjustFactor * (-num))
         price = Math.min(price, midprice)
       }
@@ -1755,7 +1754,8 @@ san值:${player.san} | 贡献度:${player.contr}/${level[player.color]}
           }
         }
 
-        seal.replyToSender(ctx, msg, players[id].rob(altid, now))
+        players[id].time.robTime = now
+        seal.replyToSender(ctx, msg, players[id].rob(altid))
         return;
       }
     }
