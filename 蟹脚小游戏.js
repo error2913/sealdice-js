@@ -1054,6 +1054,11 @@ ${reason}
     const name = mctx.player.name
     ckId(id, name)
 
+    if (ctx.player.userId !== mctx.player.userId && ctx.privilegeLevel < 100) {
+      seal.replyToSender(ctx, msg, seal.formatTmpl(ctx, "核心:提示_无权限"));
+      return;
+    }
+
     switch (val) {
       case "help": {
         const ret = seal.ext.newCmdExecuteResult(true);
