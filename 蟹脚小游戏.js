@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         蟹脚小游戏
 // @author       错误
-// @version      2.0.5
+// @version      2.1.1
 // @description  使用指令.cult查看游戏指引，使用指令.cult master查看骰主指令\n经验值获得：翻垃圾；遭遇警察，神话生物；强行越狱成功；献祭成功；还有抢劫，战胜等级高的对手可获得更多；\n贡献值：贡献值越高发展信众获得的货币就越高；达到一定上限，献祭成功后可晋升职位；\n职位：职位越高发展信众获得的贡献度越高\n抢劫：成败和等级，武器数值挂钩，同时具有随机性；\n市场目前在买卖多几次后，各地物价会逐渐持平
 // @timestamp    1717065841
 // 2024-05-30 18:44:01
@@ -14,7 +14,7 @@
 let ext = seal.ext.find('蟹脚小游戏');
 if (!ext) {
   // 不存在，那么建立扩展
-  ext = seal.ext.new('蟹脚小游戏', '错误', '2.0.5');
+  ext = seal.ext.new('蟹脚小游戏', '错误', '2.1.1');
   // 注册扩展
   seal.ext.register(ext);
 
@@ -29,6 +29,7 @@ if (!ext) {
   seal.ext.registerIntConfig(ext, "献祭概率%", 40)
   seal.ext.registerIntConfig(ext, "最大抢夺率%", 50)
   seal.ext.registerIntConfig(ext, "罚款率%", 20)
+  seal.ext.registerIntConfig(ext, "价格调整幅度因子", 100)
   seal.ext.registerStringConfig(ext, "教团列表(建议只添加，且修改后需重载插件)", "大衮密令教/黄印兄弟会/银色暮光密教/血腥之舌/不灭之炎的奴仆")
   seal.ext.registerStringConfig(ext, "地点列表(建议只添加，且修改后需重载插件)", "阿卡姆/金斯波特/印斯茅斯/南极营地/拉莱耶/乌撒/无名之城")
 
@@ -44,6 +45,7 @@ if (!ext) {
   const cults = {}
   const playerlist = JSON.parse(ext.storageGet("playerlist") || '{}')
   const use = JSON.parse(ext.storageGet("use") || '{}')
+  const priceUpdCache = {place: '不知道', good: '不知道', price: 0}
 
   //所有地点和教团的一个数组
   const allplaces = seal.ext.getStringConfig(ext, "地点列表(建议只添加，且修改后需重载插件)").split('/')
@@ -737,6 +739,19 @@ ${reason}
 
     /**动态调整售价，num为正，指售出的数量，num为负，指购入的数量 */
     adjustPrice(good, num) {
+      //先调整缓存的价格
+      if (allplaces.includes(priceUpdCache.place)) {
+        let place = priceUpdCache.place
+        let good = priceUpdCache.good
+        let price = priceUpdCache.price
+
+        if (places[place].shop.hasOwnProperty(good)) {
+          places[place].shop[good] = price
+          places[place].saveData()
+        }
+      }
+
+      let factor = seal.ext.getIntConfig(ext, "价格调整幅度因子")
       let price = this.shop[good]
       let maxprice, minprice
       for (let i = 0; i < goodlst.length; i++) {
@@ -749,18 +764,22 @@ ${reason}
           break;
         }
       }
-      let dif = (maxprice - minprice) / 120
+      
+      let profit = (maxprice - minprice) / minprice
+      let adjustFactor = (maxprice - minprice) * (profit + 1) / factor
 
       if (num > 0) {
-        price -= Math.floor(dif * num)
-        price = price < minprice? minprice : price
+        price -= Math.floor(adjustFactor * num)
+        price = Math.max(price, minprice)
       }
       else {
-        price += Math.floor(dif * (-num))
-        price = price > maxprice? maxprice : price
+        price += Math.floor(adjustFactor * (-num))
+        price = Math.min(price, maxprice)
       }
-      this.shop[good] = price
-      this.saveData()
+
+      priceUpdCache.place = this.name
+      priceUpdCache.good = good
+      priceUpdCache.price = price
     }
   }
 
