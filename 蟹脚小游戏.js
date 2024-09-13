@@ -764,16 +764,17 @@ ${reason}
         }
       }
       
+      let midprice = (maxprice + minprice) / 2
       let profit = (maxprice - minprice) / minprice
       let adjustFactor = (maxprice - minprice) * (profit + 1) / factor
 
       if (num > 0) {
         price -= Math.floor(adjustFactor * num)
-        price = Math.max(price, minprice)
+        price = Math.max(price, midprice)
       }
       else {
         price += Math.floor(adjustFactor * (-num))
-        price = Math.min(price, maxprice)
+        price = Math.min(price, midprice)
       }
 
       priceUpdCache[good] = {
