@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         蟹脚小游戏
 // @author       错误
-// @version      2.1.2
+// @version      2.2.0
 // @description  使用指令.cult查看游戏指引，使用指令.cult master查看骰主指令\n经验值获得：翻垃圾；遭遇警察，神话生物；强行越狱成功；献祭成功；还有抢劫，战胜等级高的对手可获得更多；\n贡献值：贡献值越高发展信众获得的货币就越高；达到一定上限，献祭成功后可晋升职位；\n职位：职位越高发展信众获得的贡献度越高\n抢劫：成败和等级，武器数值挂钩，同时具有随机性；\n市场目前在买卖多几次后，各地物价会逐渐持平
 // @timestamp    1717065841
 // 2024-05-30 18:44:01
@@ -14,7 +14,7 @@
 let ext = seal.ext.find('蟹脚小游戏');
 if (!ext) {
   // 不存在，那么建立扩展
-  ext = seal.ext.new('蟹脚小游戏', '错误', '2.1.2');
+  ext = seal.ext.new('蟹脚小游戏', '错误', '2.2.0');
   // 注册扩展
   seal.ext.register(ext);
 
@@ -30,7 +30,6 @@ if (!ext) {
   seal.ext.registerIntConfig(ext, "最大抢夺率%", 50)
   seal.ext.registerIntConfig(ext, "罚款率%", 20)
   seal.ext.registerIntConfig(ext, "价格调整幅度因子", 100)
-  seal.ext.registerStringConfig(ext, "教团列表(建议只添加，且修改后需重载插件)", "大衮密令教/黄印兄弟会/银色暮光密教/血腥之舌/不灭之炎的奴仆")
   seal.ext.registerStringConfig(ext, "地点列表(建议只添加，且修改后需重载插件)", "阿卡姆/金斯波特/印斯茅斯/南极营地/拉莱耶/乌撒/无名之城")
 
   const lead = `游戏指引:
@@ -48,8 +47,8 @@ if (!ext) {
   const priceUpdCache = {}
 
   //所有地点和教团的一个数组
-  const allplaces = seal.ext.getStringConfig(ext, "地点列表(建议只添加，且修改后需重载插件)").split('/')
-  const allcults = seal.ext.getStringConfig(ext, "教团列表(建议只添加，且修改后需重载插件)").split('/')
+  const placelist = seal.ext.getStringConfig(ext, "地点列表(建议只添加，且修改后需重载插件)").split('/')
+  const cultlist = ["大衮密令教", "黄印兄弟会", "银色暮光密教", "血腥之舌", "不灭之炎的奴仆"]
   //教团对应的邪神
   const cultgods = {
     "大衮密令教": ["父神大衮", "母神海德拉", "天父克苏鲁"],
@@ -68,26 +67,19 @@ if (!ext) {
     "白": 15000,
     "金": 20000
   }
-  //入教宣誓————懒了不搞了，先摆在这里
-  const cultpledge = {
-    "大衮密令教": 'Ia!Dagon!我，${players[id].name}，庄严宣誓，我不会妨碍或将深潜者的行动告知他人。我若离弃这誓言，就必被人所讳避，我将被判作不配得大衮宠爱之人，并接受所定的一切惩罚，即便是死。Ia!Dagon!',
-    "黄印兄弟会": ``,
-    "银色暮光密教": ``,
-    "血腥之舌": ``
-  }
 
   //一些文本
   let cultText = ""
-  for (let cult of allcults) { cultText += cult + "、" }
+  for (let cult of cultlist) { cultText += cult + "、" }
   cultText = cultText.slice(0, -1)
 
   let placeText = ""
-  for (let place of allplaces) { placeText += place + "、" }
+  for (let place of placelist) { placeText += place + "、" }
   placeText = placeText.slice(0, -1)
 
   //货物列表
   const goodlst = [
-    { p: 1, max: 11, min: 10, weight: 40, lst: ["手电筒", "提灯", "土豆", "皮下注射器", "阿司匹林", "女士内衣", "男士内裤", "婴儿奶嘴", "防水火柴", "致死镜", "米纳尔的星石", "羊皮纸"] },
+    { p: 1, max: 22, min: 20, weight: 40, lst: ["手电筒", "提灯", "土豆", "皮下注射器", "阿司匹林", "女士内衣", "男士内裤", "婴儿奶嘴", "防水火柴", "致死镜", "米纳尔的星石", "羊皮纸"] },
     { p: 1, max: 115, min: 100, weight: 35, lst: ["铅蓄电池", "留声机唱片", "胶卷", "警用手铐", "潜水服", "医用威士忌", "黄铜头像", "瑟德夫卡之像", "梦境结晶器", "书写专用血液"] },
     { p: 0.9, max: 900, min: 750, weight: 15, lst: ["灵魂精盐", "医用血包", "雷明顿牌打字机", "11.43mm自动手枪子弹", "雪茄", "翡翠小像", "盖尔之镜", "月之透镜"] },
     { p: 0.5, max: 6500, min: 5000, weight: 2, lst: ["夏塔克鸟蛋", "缸中之脑", "黄金蜂蜜酒", "伊波恩戒指", "格拉基启示录残卷", "银之匙", "透特的匕首"] },
@@ -176,8 +168,8 @@ if (!ext) {
     constructor(id, name) {
       this.id = id;
       this.name = name;
-      this.cult = allcults[Math.floor(Math.random() * allcults.length)];
-      this.place = allplaces[Math.floor(Math.random() * allplaces.length)];
+      this.cult = cultlist[Math.floor(Math.random() * cultlist.length)];
+      this.place = placelist[Math.floor(Math.random() * placelist.length)];
       this.car = '二手别克';
       this.weapon = '催泪瓦斯';
       this.goods = { "土豆": 20 };
@@ -367,7 +359,7 @@ ${weapon1}(${val1 * 5}) vs ${weapon2}(${val2 * 5})\n`
 
       //赢
       if (ran1 + lv1 + val1 >= ran2 + lv2 + val2) {
-        this.exp += lv1 < lv2 ? lv2 - lv1 : 0
+        this.exp += lv1 < lv2 ? lv2 - lv1 + 1 : 1
         players[altid].exp += 1
 
         let goodsnum = 0
@@ -382,7 +374,7 @@ ${weapon1}(${val1 * 5}) vs ${weapon2}(${val2 * 5})\n`
       }
       //输
       else {
-        players[altid].exp += lv1 > lv2 ? lv1 - lv2 : 0
+        players[altid].exp += lv1 > lv2 ? lv1 - lv2 + 1 : 1
         this.exp += 1
 
         let goodsnum = 0
@@ -526,7 +518,7 @@ ${weapon1}(${val1 * 5}) vs ${weapon2}(${val2 * 5})\n`
         let newplace
         let place = this.place
 
-        do newplace = allplaces[Math.floor(Math.random() * allplaces.length)]
+        do newplace = placelist[Math.floor(Math.random() * placelist.length)]
         while (newplace == place || newplace == altplace)
 
         this.movPlace(newplace)
@@ -567,18 +559,19 @@ ${weapon1}(${val1 * 5}) vs ${weapon2}(${val2 * 5})\n`
 
 
       this.exp += 1
-      this.money -= fine
+      this.money -= Math.max(fine, 0)
       this.down += 10
       this.time.arrestTime = now
       this.takeGood(good, num)
 
       let reason = goods.length > 0 ? `检查出车上有${good}，没收${good}×${num}！` : ``
+      let fineText = fine > 0 ? `货币-$ ${fine}` : ``
 
       return `在${this.place}
 <${this.name}>遇到了警察，被抓起来了！但作为一名教徒，越狱只需${arrestInterval}秒！
 ${reason}
 落魄值+10=>${this.down}
-货币-$ ${fine}`
+${fineText}`
     }
 
     meetView(now) {
@@ -659,6 +652,21 @@ ${reason}
 
       this.saveData()
       return `在${this.place}\n<${this.name}>发展了${increase}个信众。\n贡献度=>${this.contr}\n货币+$ ${moneyincrease}=>$ ${this.money}`
+    }
+
+    /**获取货物推荐 */
+    getRecommend(prices) {
+      let profits = []
+      for (let goodinfo of prices) {
+        profits.push({
+          good: goodinfo.good,
+          profit: goodinfo.dif * Math.floor(this.money / goodinfo.mingood.price),
+          maxplace: goodinfo.maxgood.place,
+          minplace: goodinfo.mingood.place
+        })
+      }
+      profits.sort((a, b) => b.profit - a.profit)
+      return profits[0]
     }
   }
 
@@ -752,14 +760,14 @@ ${reason}
       for (let i = 0; i < goodlst.length; i++) {
         if (goodlst[i].lst.includes(good)) {
           let prices = []
-          for (let place of allplaces) if (places[place].shop.hasOwnProperty(good)) prices.push(places[place].shop[good])
+          for (let place of placelist) if (places[place].shop.hasOwnProperty(good)) prices.push(places[place].shop[good])
           prices.sort((a, b) => b - a)
           maxprice = prices[0]
           minprice = prices[prices.length - 1]
           break;
         }
       }
-      
+
       let midprice = Math.floor((maxprice + minprice) / 2)
       let profit = (maxprice - minprice) / minprice
 
@@ -848,10 +856,11 @@ ${reason}
 
   //初始化————
   for (let id in playerlist) if (!players.hasOwnProperty(id)) Player.getData(id)
-  for (let place of allplaces) if (!places.hasOwnProperty(place)) Place.getData(place)
-  for (let cult of allcults) if (!cults.hasOwnProperty(cult)) {
+  for (let place of placelist) if (!places.hasOwnProperty(place)) Place.getData(place)
+  for (let cult of cultlist) if (!cults.hasOwnProperty(cult)) {
     Cult.getData(cult)
     if (cultgods.hasOwnProperty(cult)) cultgods[cult].forEach(god => { if (!cults[cult].ones.hasOwnProperty(god)) cults[cult].ones[god] = 0; })
+    else cults[cult].ones['未知'] = 0;
   }
 
   function getTime() {
@@ -881,6 +890,7 @@ ${reason}
       players[id] = player
       players[id].movPlace(players[id].place)
       players[id].movCult(players[id].cult)
+      players[id].saveData()
       playerlist[id] = getTime()
       ext.storageSet('playerlist', JSON.stringify(playerlist));
     }
@@ -905,6 +915,42 @@ ${reason}
     return lst
   }
 
+  function getPrices(date) {
+    let allgoods = {}
+
+    //获取当日所有商品和价格
+    for (let place of placelist) {
+      places[place].getShop(date)
+
+      for (let good in places[place].shop) {
+        if (!allgoods.hasOwnProperty(good)) allgoods[good] = []
+        allgoods[good].push({
+          place: place,
+          price: places[place].shop[good]
+        })
+      }
+    }
+
+    //计算所有商品的最大差价
+    let prices = []
+    for (let good in allgoods) {
+      if (allgoods[good].length > 1) {
+        allgoods[good].sort((a, b) => a.price - b.price)
+
+        let maxgood = allgoods[good][allgoods[good].length - 1]
+        let mingood = allgoods[good][0]
+        prices.push({
+          good: good,
+          dif: maxgood.price - mingood.price,
+          maxgood: maxgood,
+          mingood: mingood,
+          profit: Math.floor(((maxgood.price - mingood.price) / mingood.price) * 100)
+        })
+      }
+    }
+    return prices
+  }
+
   const cmdadd = seal.ext.newCmdItemInfo();
   cmdadd.name = "加入";
   cmdadd.help = "指令：.加入 教团（当前教团可用 .教团信息 查看），或者使用 .加入 随便";
@@ -922,13 +968,13 @@ ${reason}
         return ret;
       }
       case "随便": {
-        val = allcults[Math.floor(Math.random() * allcults.length)]
+        val = cultlist[Math.floor(Math.random() * cultlist.length)]
         break;
       }
     }
 
     //乱写是吧
-    if (!allcults.includes(val)) {
+    if (!cultlist.includes(val)) {
       seal.replyToSender(ctx, msg, `很抱歉，你不能自创教团。目前可加入的有${cultText}`)
       return;
     }
@@ -970,7 +1016,7 @@ ${reason}
       }
       default: {
         //又乱写是吧
-        if (!allplaces.includes(val)) {
+        if (!placelist.includes(val)) {
           seal.replyToSender(ctx, msg, `暂无此地。目前的地点有${placeText}`)
           return;
         }
@@ -1043,7 +1089,7 @@ ${reason}
       }
       default: {
         //又乱写是吧
-        if (!allplaces.includes(val)) {
+        if (!placelist.includes(val)) {
           seal.replyToSender(ctx, msg, `暂无此地。目前可去的地点有${placeText}`)
           return;
         }
@@ -1123,6 +1169,71 @@ ${reason}
         ret.showHelp = true;
         return ret;
       }
+      case '自动': {
+        let text = '正在开启自动模式……\n'
+        let space = carlst[players[id].car]
+        let goodsnum = 0
+        for (let good in players[id].goods) goodsnum += players[id].goods[good]
+
+        if (goodsnum == space) {
+          seal.replyToSender(ctx, msg, `<${players[id].name}>的车装不下啦！`)
+          return;
+        }
+
+        let profitinfo = players[id].getRecommend(getPrices(date))
+        let minplace = profitinfo.minplace
+        let maxplace = profitinfo.maxplace
+        let good = profitinfo.good
+
+        //钱不够的情况
+        if (players[id].money < places[minplace].shop[good]) {
+          seal.replyToSender(ctx, msg, `<${players[id].name}>看了看自己的钱包摇了摇头。`)
+          return;
+        }
+
+        //前往最小利润地
+        if (minplace != players[id].place) {
+          players[id].movPlace(minplace)
+          places[minplace].getShop(date)
+          text += `前往${minplace}\n`
+        }
+
+        //购买货物
+        let maxnum = Math.floor(money / places[minplace].shop[good])
+        let num = Math.min(space - goodsnum, maxnum)
+        let price = places[minplace].shop[good] * num
+
+        players[id].money -= price
+        places[minplace].adjustPrice(good, -num)
+        players[id].addGoodTo(good, num)
+
+        text += `${good}+${num}\n`
+
+        //前往最大利润地
+        if (maxplace != players[id].place) {
+          players[id].movPlace(maxplace)
+          places[maxplace].getShop(date)
+          text += players[id].meet(now, ctx, msg);
+          if (players[id].ckCmd(ctx, msg)) {
+            seal.replyToSender(ctx, msg, text)
+            return
+          }
+        }
+
+        //售出货物
+        num = players[id].goods[good]
+        let increase = places[maxplace].shop[good] * num
+
+        players[id].money += increase
+        places[maxplace].adjustPrice(good, num)
+        players[id].takeGood(good, num)
+
+        text += `\n${good}-${num}\n货币=>$ ${players[id].money}`
+
+        seal.replyToSender(ctx, msg, text)
+        return;
+
+      }
       default: {
         if (!places[place].shop.hasOwnProperty(val)) {
           seal.replyToSender(ctx, msg, `没有在售。<${players[id].name}>当前位于${players[id].place}`)
@@ -1133,8 +1244,8 @@ ${reason}
         let goodsnum = 0
         for (let good in players[id].goods) goodsnum += players[id].goods[good]
 
-        let maxCost = Math.floor(money / places[place].shop[val])
-        let ifAll = goodsnum + maxCost > space ? space - goodsnum : maxCost
+        let maxnum = Math.floor(money / places[place].shop[val])
+        let ifAll = Math.min(space - goodsnum, maxnum)
         ifAll = ifAll == 0 ? 1 : ifAll
         val2 = ckNum(val2, ifAll)
         if (val2 <= 0) {
@@ -1303,7 +1414,7 @@ ${reason}
       case 'upd': {
         switch (val2) {
           case 'shop': {
-            for (let place of allplaces) {
+            for (let place of placelist) {
               places[place].date = ''
               places[place].saveData()
             }
@@ -1311,7 +1422,7 @@ ${reason}
             return;
           }
           case 'weapon': {
-            for (let cult of allcults) {
+            for (let cult of cultlist) {
               cults[cult].date = ''
               cults[cult].saveData()
             }
@@ -1320,7 +1431,7 @@ ${reason}
           }
           case 'place': {
             for (let id in playerlist) {
-              let newplace = allplaces[Math.floor(Math.random() * allplaces.length)]
+              let newplace = placelist[Math.floor(Math.random() * placelist.length)]
               players[id].movPlace(newplace)
             }
             seal.replyToSender(ctx, msg, `玩家地点刷新成功！`)
@@ -1517,7 +1628,7 @@ ${reason}
 
         let qq = id.replace(/\D+/g, '')
 
-        title = `﹌﹌﹌﹌﹌﹌﹌﹌﹌﹌[CQ:image,file=http://q2.qlogo.cn/headimg_dl?dst_uin=${qq}&spec=5]昵称:<${player.name}>
+        let title = `﹌﹌﹌﹌﹌﹌﹌﹌﹌﹌[CQ:image,file=http://q2.qlogo.cn/headimg_dl?dst_uin=${qq}&spec=5]昵称:<${player.name}>
 所属:${player.cult}
 职位:${player.color}衣
 等级:${lv} (${player.exp}/${expLimit})
@@ -1661,7 +1772,7 @@ san值:${player.san} | 贡献度:${player.contr}/${level[player.color]}
         let text = `教团信息如下：`
         let cultinfo = {}
 
-        for (let cult of allcults) {
+        for (let cult of cultlist) {
           let allcontr = cults[cult].members.length;//加上玩家人数
           let allmoney = 0;
           for (let id of cults[cult].members) {
@@ -1920,7 +2031,7 @@ san值:${player.san} | 贡献度:${player.contr}/${level[player.color]}
       case "分布": {
         let text = `分布如下：`
         let moneysum = 0
-        for (let place of allplaces) {
+        for (let place of placelist) {
           let num = places[place].members.length
           let money = 0
 
@@ -1935,7 +2046,7 @@ san值:${player.san} | 贡献度:${player.contr}/${level[player.color]}
       default: {
         //抽取其他玩家的谣言
         if (Math.random() <= 0.5) {
-          let shuffledallplaces = shuffle(allplaces)
+          let shuffledallplaces = shuffle(placelist)
           for (let place of shuffledallplaces) {
             let says = places[place].says
 
@@ -2034,39 +2145,8 @@ san值:${player.san} | 贡献度:${player.contr}/${level[player.color]}
     ckId(id, name)
 
     const date = seal.format(ctx, "{$tDate}")
-    let allgoods = {}
+    let prices = getPrices(date)
     let text = `今日行情如下:`
-
-    //获取当日所有商品和价格
-    for (let place of allplaces) {
-      places[place].getShop(date)
-
-      for (let good in places[place].shop) {
-        if (!allgoods.hasOwnProperty(good)) allgoods[good] = []
-        allgoods[good].push({
-          place: place,
-          price: places[place].shop[good]
-        })
-      }
-    }
-
-    //计算所有商品的最大差价
-    let prices = []
-    for (let good in allgoods) {
-      if (allgoods[good].length > 1) {
-        allgoods[good].sort((a, b) => a.price - b.price)
-
-        let maxgood = allgoods[good][allgoods[good].length - 1]
-        let mingood = allgoods[good][0]
-        prices.push({
-          good: good,
-          dif: maxgood.price - mingood.price,
-          maxgood: maxgood,
-          mingood: mingood,
-          profit: Math.floor(((maxgood.price - mingood.price) / mingood.price) * 100)
-        })
-      }
-    }
 
     switch (val) {
       case '':
@@ -2106,7 +2186,7 @@ ${prices[i].mingood.place}——>${prices[i].maxgood.place}`
       }
       default: {
         //查询地点
-        for (let place of allplaces) {
+        for (let place of placelist) {
           if (val == place) {
             prices.sort((a, b) => b.profit - a.profit)
             let placeprices = prices.filter(price => price.mingood.place == place)
@@ -2114,35 +2194,24 @@ ${prices[i].mingood.place}——>${prices[i].maxgood.place}`
             for (let i = 0; i < placeprices.length && i < 5; i++) text += `
 ${i + 1}.${placeprices[i].good} ${placeprices[i].profit}%
 $ ${placeprices[i].mingood.price}——>$ ${placeprices[i].maxgood.price} ${placeprices[i].maxgood.place}`
+            break;
           }
         }
         //查询商品
-        for (let good in allgoods) {
-          if (val == good) {
-            for (let place of allplaces) {
+        for (let i = 0; i < goodlst.length; i++) {
+          if (goodlst[i].lst.includes(val)) {
+            for (let place of placelist) {
               if (!places[place].shop.hasOwnProperty(val)) text += `\n${place}:暂无`
               else text += `\n${place}:$ ${places[place].shop[val]}`
             }
+            break;
           }
         }
       }
     }
     //推荐
-    let profits = []
-    for (let goodinfo of prices) {
-      profits.push({
-        good: goodinfo.good,
-        profit: goodinfo.dif * Math.floor(players[id].money / goodinfo.mingood.price),
-        dif: goodinfo.dif,
-        maxgood: goodinfo.maxgood,
-        mingood: goodinfo.mingood
-      })
-    }
-    profits.sort((a, b) => b.profit - a.profit)
-    let recommend = `\n为您推荐${profits[0].mingood.place}的${profits[0].good}，运至${profits[0].maxgood.place}`
-
-    //买不起是吧！
-    if (profits[0].profit == 0) recommend = `\n现在的你啥都买不起`
+    let profitinfo = players[id].getRecommend(prices)
+    let recommend = profitinfo.profit == 0 ? `\n现在的你啥都买不起` : `\n为您推荐${profitinfo.minplace}的${profitinfo.good}，运至${profitinfo.maxplace}`
 
     seal.replyToSender(ctx, msg, `${text}\n<${players[id].name}>目前有$ ${players[id].money}，位于${players[id].place}。${recommend}`)
     return seal.ext.newCmdExecuteResult(true);
