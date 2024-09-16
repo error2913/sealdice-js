@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         蟹脚小游戏
 // @author       错误
-// @version      2.2.0
+// @version      2.2.1
 // @description  使用指令.cult查看游戏指引，使用指令.cult master查看骰主指令\n经验值获得：翻垃圾；遭遇警察，神话生物；强行越狱成功；献祭成功；还有抢劫，战胜等级高的对手可获得更多；\n贡献值：贡献值越高发展信众获得的货币就越高；达到一定上限，献祭成功后可晋升职位；\n职位：职位越高发展信众获得的贡献度越高\n抢劫：成败和等级，武器数值挂钩，同时具有随机性；\n市场目前在买卖多几次后，各地物价会逐渐持平
 // @timestamp    1717065841
 // 2024-05-30 18:44:01
@@ -14,7 +14,7 @@
 let ext = seal.ext.find('蟹脚小游戏');
 if (!ext) {
   // 不存在，那么建立扩展
-  ext = seal.ext.new('蟹脚小游戏', '错误', '2.2.0');
+  ext = seal.ext.new('蟹脚小游戏', '错误', '2.2.1');
   // 注册扩展
   seal.ext.register(ext);
 
@@ -22,6 +22,7 @@ if (!ext) {
   seal.ext.registerIntConfig(ext, "指令间隔/s(前往)", 30)
   seal.ext.registerIntConfig(ext, "指令间隔/s(逛逛)", 30)
   seal.ext.registerIntConfig(ext, "指令间隔/s(强行越狱)", 60)
+  seal.ext.registerIntConfig(ext, "指令间隔/s(交易)", 20)
   seal.ext.registerIntConfig(ext, "逮捕时间/s", 180)
   seal.ext.registerIntConfig(ext, "精神病院时间/s", 600)
   seal.ext.registerIntConfig(ext, "迷路概率%", 20)
@@ -30,7 +31,7 @@ if (!ext) {
   seal.ext.registerIntConfig(ext, "最大抢夺率%", 50)
   seal.ext.registerIntConfig(ext, "罚款率%", 20)
   seal.ext.registerIntConfig(ext, "价格调整幅度因子", 100)
-  seal.ext.registerStringConfig(ext, "地点列表(建议只添加，且修改后需重载插件)", "阿卡姆/金斯波特/印斯茅斯/南极营地/拉莱耶/乌撒/无名之城")
+  seal.ext.registerTemplateConfig(ext, "地点列表", ["阿卡姆", "金斯波特", "印斯茅斯", "南极营地", "拉莱耶", "乌撒", "无名之城"], '修改后请重载')
 
   const lead = `游戏指引:
 今日商店、查看背包、个人信息、
@@ -47,7 +48,7 @@ if (!ext) {
   const priceUpdCache = {}
 
   //所有地点和教团的一个数组
-  const placelist = seal.ext.getStringConfig(ext, "地点列表(建议只添加，且修改后需重载插件)").split('/')
+  const placelist = seal.ext.getTemplateConfig(ext, "地点列表")
   const cultlist = ["大衮密令教", "黄印兄弟会", "银色暮光密教", "血腥之舌", "不灭之炎的奴仆"]
   //教团对应的邪神
   const cultgods = {
@@ -186,7 +187,8 @@ if (!ext) {
         healTime: 0,
         robTime: 0,
         arrestTime: 0,
-        escTime: 0
+        escTime: 0,
+        tradeTime: 0
       };
     }
 
@@ -261,8 +263,8 @@ if (!ext) {
       return lostmoney;
     }
 
-    //将num数量的货物添加到背包，返回溢出数量
-    addGoodTo(good, num) {
+    /** 将num数量的货物添加到背包，返回溢出数量*/
+    addGood(good, num) {
       let space = carlst[this.car]
       let goodsnum = 0
       for (let good in this.goods) goodsnum += this.goods[good]
@@ -284,7 +286,7 @@ if (!ext) {
       return outnum;
     }
 
-    //把num数量的货物从背包去除，返回bool
+    /** 把num数量的货物从背包去除，返回bool*/
     takeGood(good, num) {
       if (!this.goods.hasOwnProperty(good) || this.goods[good] < num) return false;
 
@@ -323,15 +325,14 @@ if (!ext) {
       }
       //把货物加给第二个人并输出文本
       let text = ``
-      let outnum = 0
       for (let good in lostlst) {
-        text += `${good}×${lostlst[good]}、`
-        outnum += players[altid].addGoodTo(good, lostlst[good])
+        let outnum = players[altid].addGood(good, lostlst[good])
+        if (outnum > 0) this.addGood(good, outnum)
+        let num = lostlst[good] - outnum
+        text += num > 0 ? `${good}×${num}、` : ``
       }
-      text = text.slice(0, -1)
-
-      if (outnum > 0) text += `溢出${outnum}件`
-      return text;
+      if (!text) return `车装不下了`
+      return text.slice(0, -1);
     }
 
     //抢劫：发起对另一个人的抢劫
@@ -424,11 +425,6 @@ ${weapon1}(${val1 * 5}) vs ${weapon2}(${val2 * 5})\n`
       return text;
     }
 
-    stMoney(num) {
-      this.money += num
-      this.saveData()
-    }
-
     //检查指令，返回Bool
     ckCmd(ctx, msg, ckHeal = true, ckArrest = true) {
       const now = parseInt(seal.format(ctx, "{$tTimestamp}"))
@@ -480,18 +476,16 @@ ${weapon1}(${val1 * 5}) vs ${weapon2}(${val2 * 5})\n`
           }
         }
 
-        let outnum = this.addGoodTo(good, num)
-        text = `${good}×${num}`
-        if (outnum > 0) text += `，溢出${outnum}件`
+        let outnum = this.addGood(good, num)
+        text = `${good}×${num}${outnum > 0 ? `，溢出${outnum}件` : ``}`
       }
       //翻到回san道具
       else if (ran <= 0.95) {
         let good = '圣水'
         let num = 1
 
-        let outnum = this.addGoodTo(good, num)
-        text = `${good}×${num}`
-        if (outnum > 0) text += `，溢出${outnum}件`
+        let outnum = this.addGood(good, num)
+        text = `${good}×${num}${outnum > 0 ? `，溢出${outnum}件` : ``}`
       }
       //翻到车
       else {
@@ -584,6 +578,8 @@ ${fineText}`
     }
 
     meet(now, ctx, msg) {
+      if (!placelist.includes(this.place)) this.movPlace(placelist[Math.floor(Math.random() * placelist.length)])
+
       let members = places[this.place].members
       let ran = Math.random()
       if (members.length > 1 && ran <= 0.3) return this.meetOther(ctx, msg)
@@ -608,10 +604,10 @@ ${fineText}`
       if (this.contr >= level[color]) {
         let colors = Object.keys(level)
         let index = colors.indexOf(color)
-        if (index == colors.length - 1) text = `\n已达到最高位阶`
+        if (index == colors.length - 1) text = `已达到最高位阶\n`
         else {
           this.color = colors[index + 1]
-          text = `\n晋升至${this.color}衣`
+          text = `晋升至${this.color}衣\n`
         }
       }
       return text;
@@ -620,18 +616,18 @@ ${fineText}`
     /**使用货物，返回文本*/
     useGood(good, num, now) {
       if (good == "圣水") {
-        this.takeGood('圣水', num)
+        if (!this.takeGood('圣水', num)) return `没有此物品或物品数量不足`
         return `<${this.name}>使用了${good}×${num}\n${this.stSan(now, 10 * num)}`
       }
       if (Object.keys(weaponlst).includes(good)) {
         let formerweapon = this.weapon
         this.weapon = good
-        this.takeGood(good, 1)
-        this.addGoodTo(formerweapon, 1)
+        if (!this.takeGood(good, 1)) return `没有此物品或物品数量不足`
+        this.addGood(formerweapon, 1)
         return `<${this.name}>更换了武器\n${formerweapon}=>${good}`
       }
       if (Object.keys(use).includes(good)) {
-        this.takeGood(good, num)
+        if (!this.takeGood(good, num)) return `没有此物品或物品数量不足`
         return use[good]
       }
       return `无法使用${good}`
@@ -667,6 +663,62 @@ ${fineText}`
       }
       profits.sort((a, b) => b.profit - a.profit)
       return profits[0]
+    }
+
+    giveMoneyTo(altid, num) {
+      this.money -= num
+      this.saveData()
+      players[altid].money += num
+      players[altid].saveData()
+
+      return `<${this.name}>=><${players[altid].name}>\n$ ${num}`
+    }
+
+    transGoodto(altid, good, num) {
+      if (!this.takeGood(good, num)) return `没有此物品或物品数量不足`
+
+      let outnum = players[altid].addGood(good, num)
+
+      if (outnum > 0) {
+        this.addGood(good, outnum)
+        return `${good}×${num}，溢出${outnum}件`
+      }
+
+      return `${good}×${num}`
+    }
+
+    sacrfice(good, num, now) {
+      //扣除物品
+      if (!this.takeGood(good, num)) return `没有此物品或物品数量不足`
+
+      let cult = this.cult
+      if (!cultlist.includes(cult)) return `你还没有加入教团，无法献祭`
+      let gods = Object.keys(cults[cult].ones)
+      let god = gods[Math.floor(Math.random() * gods.length)]
+      let text = `在${this.place}\n<${this.name}>向伟大的${god}献上了祭品:${good}×${num}\n`
+
+      if (Math.random() * 100 <= seal.ext.getIntConfig(ext, "献祭概率%")) {
+        text += `献祭成功！\n`
+
+        let increase = Math.ceil(Math.random() * 10) + 10
+        cults[cult].ones[god] += increase
+        this.exp += 5
+
+        text += `${god}的注视值+${increase}=>${cults[cult].ones[god]}\n`
+        if (cults[cult].ones[god] >= 100) {
+          cults[cult].ones[god] = 0
+          let gift = `${god}的雕像`
+          let outnum = this.addGood(gift, 1)
+
+          text += `${god}的注视值达到100！获得了${gift}×1${outnum > 0 ? `，溢出${outnum}件` : ``}\n`
+        }
+
+        //晋升
+        text += this.colorUp()
+        cults[cult].saveData()
+      }
+      else text += `献祭失败！\n`
+      return `${text}${this.stSan(now, -10)}`
     }
   }
 
@@ -746,6 +798,11 @@ ${fineText}`
       //先调整缓存的价格
       if (priceUpdCache.hasOwnProperty(good)) {
         let place = priceUpdCache[good].place
+        if (!placelist.includes(place)) {
+          delete priceUpdCache[good]
+          return;
+        }
+
         let price = priceUpdCache[good].price
 
         if (places[place].shop.hasOwnProperty(good)) {
@@ -1159,8 +1216,15 @@ ${fineText}`
 
     let money = players[id].money
     let place = players[id].place
+    if (!placelist.includes(place)) {
+      seal.replyToSender(ctx, msg, `你不在任何地方`)
+      return;
+    }
     const date = seal.format(ctx, "{$tDate}")
     places[place].getShop(date)
+
+    let interval = seal.ext.getIntConfig(ext, "指令间隔/s(交易)")
+    if (now - players[id].time.tradeTime < interval) return;
 
     switch (val) {
       case "":
@@ -1191,6 +1255,8 @@ ${fineText}`
           return;
         }
 
+        players[id].time.tradeTime = now
+
         //前往最小利润地
         if (minplace != players[id].place) {
           players[id].movPlace(minplace)
@@ -1205,7 +1271,7 @@ ${fineText}`
 
         players[id].money -= price
         places[minplace].adjustPrice(good, -num)
-        players[id].addGoodTo(good, num)
+        players[id].addGood(good, num)
 
         text += `${good}+${num}\n`
 
@@ -1266,9 +1332,11 @@ ${fineText}`
           return;
         }
 
+        players[id].time.tradeTime = now
+
         players[id].money -= price
         places[place].adjustPrice(val, -val2)
-        players[id].addGoodTo(val, val2)
+        players[id].addGood(val, val2)
 
         seal.replyToSender(ctx, msg, `<${players[id].name}>花费了$ ${price}，购买到${val}×${val2}。`)
         return;
@@ -1282,6 +1350,7 @@ ${fineText}`
   cmdSell.solve = (ctx, msg, cmdArgs) => {
     let val = cmdArgs.getArgN(1);
     let val2 = cmdArgs.getArgN(2);
+    const now = parseInt(seal.format(ctx, "{$tTimestamp}"))
     const id = ctx.player.userId
     const name = ctx.player.name
     ckId(id, name)
@@ -1289,7 +1358,14 @@ ${fineText}`
 
     const date = seal.format(ctx, "{$tDate}")
     let place = players[id].place
+    if (!placelist.includes(place)) {
+      seal.replyToSender(ctx, msg, `你不在任何地方`)
+      return;
+    }
     places[place].getShop(date)
+
+    let interval = seal.ext.getIntConfig(ext, "指令间隔/s(交易)")
+    if (now - players[id].time.tradeTime < interval) return;
 
     let text = ``
     let increase = 0
@@ -1353,6 +1429,7 @@ ${fineText}`
         break;
       }
     }
+    players[id].time.tradeTime = now
     seal.replyToSender(ctx, msg, `<${players[id].name}>出售了${text.slice(0, -1)}\n货币+$ ${increase}=>$ ${players[id].money}。`)
     return;
   }
@@ -1542,7 +1619,7 @@ ${fineText}`
           seal.replyToSender(ctx, msg, `请输入大于0的数字`)
           return;
         }
-        for (let id in playerlist) players[id].addGoodTo(val2, num)
+        for (let id in playerlist) players[id].addGood(val2, num)
 
         seal.replyToSender(ctx, msg, `赐${val2}×${num}成功！`)
         return;
@@ -1662,6 +1739,10 @@ san值:${player.san} | 贡献度:${player.contr}/${level[player.color]}
       }
       default: {
         let cult = players[id].cult
+        if (!cultlist.includes(cult)) {
+          seal.replyToSender(ctx, msg, `你还没有加入任何教团`)
+          return;
+        }
         const date = seal.format(ctx, "{$tDate}")
 
         seal.replyToSender(ctx, msg, `${cults[cult].weaponShop(date)}\n<${players[id].name}>目前有$ ${players[id].money}。\n（指令：.买武器 武器名称）`)
@@ -1683,6 +1764,10 @@ san值:${player.san} | 贡献度:${player.contr}/${level[player.color]}
 
     const date = seal.format(ctx, "{$tDate}")
     const cult = players[id].cult
+    if (!cultlist.includes(cult)) {
+      seal.replyToSender(ctx, msg, `你还没有加入任何教团`)
+      return;
+    }
     let money = players[id].money
     cults[cult].weaponShop(date)
 
@@ -1723,7 +1808,7 @@ san值:${player.san} | 贡献度:${player.contr}/${level[player.color]}
 
         players[id].money -= price
         cults[cult].weapons[val].rest -= 1
-        players[id].addGoodTo(val, 1)
+        players[id].addGood(val, 1)
         players[id].useGood(val, 1, now)
 
         seal.replyToSender(ctx, msg, `<${players[id].name}>花费了$ ${price}，购买到${val}。`)
@@ -2241,6 +2326,11 @@ $ ${placeprices[i].mingood.price}——>$ ${placeprices[i].maxgood.price} ${plac
         }
 
         let place = players[id].place
+        if (!placelist.includes(place)) {
+          seal.replyToSender(ctx, msg, `你不在任何地方`)
+          return;
+        }
+
         let say = `<${players[id].name}>说过：${val}`
         places[place].says.push(say)
 
@@ -2288,14 +2378,14 @@ $ ${placeprices[i].mingood.price}——>$ ${placeprices[i].maxgood.price} ${plac
           seal.replyToSender(ctx, msg, '请输入正确的数字！');
           return;
         }
-        if (players[id].goods[val] < val2) {
-          seal.replyToSender(ctx, msg, "库中物品数量不足！")
+        if (players[id].takeGood(val, val2)) {
+          seal.replyToSender(ctx, msg, `没有此物品或物品数量不足`);
           return;
         }
 
         players[id].down += val2 / 10
         players[id].down = parseFloat(players[id].down.toFixed(1));
-        players[id].takeGood(val, val2)
+        players[id].saveData()
         seal.replyToSender(ctx, msg, `${val}-${val2}`)
         return seal.ext.newCmdExecuteResult(true);
       }
@@ -2365,48 +2455,8 @@ $ ${placeprices[i].mingood.price}——>$ ${placeprices[i].maxgood.price} ${plac
           return
         }
 
-        if (players[id].goods[val] < val2) {
-          seal.replyToSender(ctx, msg, `数量不够！<${players[id].name}>需要更多！更多！`)
-          return seal.ext.newCmdExecuteResult(true);
-        }
-
-        //扣除物品
-        players[id].takeGood(val, val2)
-
-        let cult = players[id].cult
-        let gods = Object.keys(cults[cult].ones)
-        let god = gods[Math.floor(Math.random() * gods.length)]
-
-        let text = `在${players[id].place}\n你带领着信众向伟大的${god}举行了献祭仪式\n祭品:${val}×${val2}\n`
-        if (Math.random() * 100 <= seal.ext.getIntConfig(ext, "献祭概率%")) {
-          text += `献祭成功！\n`
-          let add = Math.ceil(Math.random() * 10) + 10
-          cults[cult].ones[god] += add
-          players[id].exp += 5
-          text += `随后祂向你们降下了视线：\n`
-
-          if (cults[cult].ones[god] >= 100) {
-            cults[cult].ones[god] = 0
-            let gift = `${god}的雕像`
-
-            let outnum = players[id].addGoodTo(gift, 1)
-            text = `${gift}×1`
-            text += `${god}的注视值达到100！获得了${gift}`
-            if (outnum > 0) text += `，溢出${outnum}件`
-          }
-          else text += `${god}的注视值+${add}=>${cults[cult].ones[god]}`
-          cults[cult].saveData()
-
-          //晋升
-          text += players[id].colorUp()
-
-          seal.replyToSender(ctx, msg, `${text}\n${players[id].stSan(now, -10)}`)
-          return seal.ext.newCmdExecuteResult(true);
-        } else {
-          text += `献祭失败！\n`
-          seal.replyToSender(ctx, msg, `${text}${players[id].stSan(now, -10)}`)
-          return seal.ext.newCmdExecuteResult(true);
-        }
+        seal.replyToSender(ctx, msg, players[id].sacrfice(val, val2, now))
+        return seal.ext.newCmdExecuteResult(true);
       }
     }
   };
@@ -2434,6 +2484,13 @@ $ ${placeprices[i].mingood.price}——>$ ${placeprices[i].maxgood.price} ${plac
       return;
     }
 
+    function getPrefix() {
+      let text = `在${players[altid].place}\n`;
+      if (players[id].place !== players[altid].place) players[id].movPlace(players[altid].place);
+      text += `<${players[id].name}>=><${players[altid].name}>\n`;
+      return text;
+    }
+
     switch (val) {
       case "":
       case "help": {
@@ -2447,27 +2504,9 @@ $ ${placeprices[i].mingood.price}——>$ ${placeprices[i].maxgood.price} ${plac
           return;
         }
 
-        let text = `<${players[id].name}>`
-        let title = ``
-
-        if (players[id].place !== players[altid].place) {
-          text += `从${players[id].place}追到了${players[altid].place}，`
-          players[id].movPlace(players[altid].place)
-        }
-
-        text += `送给了<${players[altid].name}>`
-
-        for (let good in players[id].goods) {
-          let num = players[id].goods[good]
-          let outnum = players[altid].addGoodTo(good, num)
-
-          players[id].takeGood(good, num)
-          text += `${good}×${num}`
-          if (outnum > 0) text += `，溢出${outnum}件`
-          text += `、`
-        }
-
-        seal.replyToSender(ctx, msg, `${text.slice(0, -1)}！`)
+        let text = getPrefix();
+        for (let good in players[id].goods) text += players[id].transGoodto(altid, good, players[id].goods[good]) + `、`
+        seal.replyToSender(ctx, msg, text.slice(0, -1))
         return;
       }
       default: {
@@ -2482,27 +2521,9 @@ $ ${placeprices[i].mingood.price}——>$ ${placeprices[i].maxgood.price} ${plac
           return;
         }
 
-        if (players[id].goods[val] < val2) {
-          seal.replyToSender(ctx, msg, "库中物品数量不足！")
-          return;
-        }
-
-        let text = ``
-        if (players[id].place !== players[altid].place) {
-          text = `从${players[id].place}追到了${players[altid].place}，`
-          players[id].movPlace(players[altid].place)
-        }
-        text += `<${players[id].name}>送给了<${players[altid].name}>`
-        players[id].takeGood(val, val2)
-        let outnum = players[altid].addGoodTo(val, val2)
-        text += `${val}×${val2}`
-        if (outnum > 0) text += `，溢出${outnum}件`
-
-        if (players[id].goods[val] == 0) {
-          delete players[id].goods[val];
-        }
-
-        seal.replyToSender(ctx, msg, text)
+        let text = getPrefix();
+        text += players[id].transGoodto(altid, val, val2) + `、`
+        seal.replyToSender(ctx, msg, text.slice(0, -1))
         return;
       }
     }
@@ -2535,11 +2556,6 @@ $ ${placeprices[i].mingood.price}——>$ ${placeprices[i].maxgood.price} ${plac
         val2 = ckNum(val2, players[id].goods[val])
         if (val2 <= 0) {
           seal.replyToSender(ctx, msg, "请输入正确的数字！")
-          return;
-        }
-
-        if (players[id].goods[val] < val2) {
-          seal.replyToSender(ctx, msg, "库中物品数量不足！")
           return;
         }
 
@@ -2581,16 +2597,15 @@ $ ${placeprices[i].mingood.price}——>$ ${placeprices[i].maxgood.price} ${plac
         val = ckNum(val, players[id].money)
         if (val <= 0) {
           seal.replyToSender(ctx, msg, '请输入正确的数字！');
+          return;
         }
 
         if (players[id].money < val) {
           seal.replyToSender(ctx, msg, "没有那么多钱呢——")
           return;
         }
-        players[altid].stMoney(val)
-        players[id].stMoney(-val)
 
-        seal.replyToSender(ctx, msg, `<${players[id].name}>成功把$ ${val}转给了<${players[altid].name}>！`)
+        seal.replyToSender(ctx, msg, players[id].giveMoneyTo(altid, val))
         return;
       }
     }
