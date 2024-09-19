@@ -110,7 +110,7 @@ if (!ext) {
     cmdteam.name = 'team';
     cmdteam.help = `帮助：
 【.team new 队伍名字】新建一个队伍
-【.team del 队伍名字/now】删除该队伍
+【.team del 队伍名字/now/all】删除队伍
 【.team bind 队伍名字】绑定该队伍
 【.team lst】队伍列表
 【.team add (me)@xx@xxx...】添加若干成员
@@ -154,25 +154,37 @@ if (!ext) {
                 return seal.ext.newCmdExecuteResult(true);
             }
             case 'del': {
-                if (!val2) {
-                    seal.replyToSender(ctx, msg, "参数错误，【.team del 队伍名字/now】删除该队伍")
-                    return seal.ext.newCmdExecuteResult(true);
-                }
-                if (val2 == 'now') {
-                    if (!data[groupId].teams.hasOwnProperty(teamnow)) {
-                        seal.replyToSender(ctx, msg, "未绑定队伍")
+                switch (val2) {
+                    case '': {
+                        seal.replyToSender(ctx, msg, "参数错误，【.team del 队伍名字/now/all】删除队伍")
                         return seal.ext.newCmdExecuteResult(true);
                     }
-                    val2 = teamnow
+                    case 'all': {
+                        data[groupId].teams = { '默认队伍': [] }
+                        data[groupId].teamnow = '默认队伍'
+
+                        seal.replyToSender(ctx, msg, "所有队伍已删除")
+                        saveData(groupId)
+                        return seal.ext.newCmdExecuteResult(true);
+                    }
+                    case 'now': {
+                        if (!data[groupId].teams.hasOwnProperty(teamnow)) {
+                            seal.replyToSender(ctx, msg, "未绑定队伍")
+                            return seal.ext.newCmdExecuteResult(true);
+                        }
+                        val2 = teamnow
+                    }
+                    default: {
+                        if (!data[groupId].teams.hasOwnProperty(val2)) {
+                            seal.replyToSender(ctx, msg, "队伍不存在")
+                            return seal.ext.newCmdExecuteResult(true);
+                        }
+                        delete data[groupId].teams[val2]
+                        seal.replyToSender(ctx, msg, seal.ext.getStringConfig(ext, "删除队伍回复").replace('{{队伍名字}}', val2))
+                        saveData(groupId)
+                        return seal.ext.newCmdExecuteResult(true);
+                    }
                 }
-                if (!data[groupId].teams.hasOwnProperty(val2)) {
-                    seal.replyToSender(ctx, msg, "队伍不存在")
-                    return seal.ext.newCmdExecuteResult(true);
-                }
-                delete data[groupId].teams[val2]
-                seal.replyToSender(ctx, msg, seal.ext.getStringConfig(ext, "删除队伍回复").replace('{{队伍名字}}', val2))
-                saveData(groupId)
-                return seal.ext.newCmdExecuteResult(true);
             }
             case 'bind': {
                 if (!val2) {
