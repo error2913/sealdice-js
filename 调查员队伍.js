@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         team call
 // @author       错误
-// @version      2.0.2
+// @version      2.0.3
 // @description  .team 获取帮助。在其他框架看到类似的插件，找了一下发现海豹似乎没有，故自己写一个。使用.team获取帮助。非指令关键词部分请查看插件配置。
 // @timestamp    1724468302
 // 2024-08-24 10:58:22
@@ -13,7 +13,7 @@
 // 首先检查是否已经存在
 let ext = seal.ext.find('team call');
 if (!ext) {
-    ext = seal.ext.new('team call', '错误', '2.0.2');
+    ext = seal.ext.new('team call', '错误', '2.0.3');
     seal.ext.register(ext);
     const data = {}
 
@@ -32,9 +32,9 @@ if (!ext) {
 
     seal.ext.registerStringConfig(ext, '队伍为空', '队伍里没有成员。')
 
-    seal.ext.registerStringConfig(ext, '非指令呼叫全队', '开团了')
-    seal.ext.registerStringConfig(ext, '开始战斗轮排序', '（战斗轮开始）')
-    seal.ext.registerStringConfig(ext, '签到', '到')
+    seal.ext.registerTemplateConfig(ext, '呼叫全队关键词', ['开团了', '集合！'])
+    seal.ext.registerTemplateConfig(ext, '战斗轮排序关键词', ['（战斗轮开始）'])
+    seal.ext.registerTemplateConfig(ext, '签到关键词', ['到', '到！', '1'])
 
     function getCtxById(epId, groupId, guildId, senderId) {
         let eps = seal.getEndPoints();
@@ -73,6 +73,38 @@ if (!ext) {
     const saveData = (groupId) => {
         ext.storageSet(groupId, JSON.stringify(data[groupId]));
     };
+
+    function call(groupId, teamnow, ctx, msg) {
+        const timeLimit = seal.ext.getIntConfig(ext, "呼叫时间限制（s）")
+        const callPrefix = seal.ext.getStringConfig(ext, "呼叫队伍里所有成员前缀语")
+        let text = callPrefix.replace('{{时间限制}}', timeLimit);
+
+        for (let userId of data[groupId].teams[teamnow]) text += `\n[CQ:at,qq=${userId.replace(/\D+/g, "")}]`;
+        seal.replyToSender(ctx, msg, text);
+
+        data[groupId].call = data[groupId].teams[teamnow];
+        setTimeout(() => {
+            let text = seal.ext.getStringConfig(ext, "call结束前缀语");
+            text = text
+                .replace('{{当前人数}}', data[groupId].teams[teamnow].length)
+                .replace('{{签到人数}}', data[groupId].teams[teamnow].length - data[groupId].call.length)
+                .replace('{{咕咕人数}}', data[groupId].call.length);
+            for (let userId of data[groupId].call) text += `\n[CQ:at,qq=${userId.replace(/\D+/g, "")}]`;
+            seal.replyToSender(ctx, msg, text)
+        }, timeLimit * 1000);
+    }
+
+    function sortAttrb(groupId, teamnow, ctx, msg, attrb) {
+        const sortPrefix = seal.ext.getStringConfig(ext, "排序前缀语");
+
+        let text = sortPrefix
+        let ctxlst = data[groupId].teams[teamnow].map(userId => { return getCtxById(ctx.endPoint.userId, groupId, msg.guildId, userId); });
+    
+        ctxlst.sort(function (a, b) { return seal.vars.intGet(b, attrb)[0] - seal.vars.intGet(a, attrb)[0]; });
+        for (let ctx of ctxlst) text += `\n${ctx.player.name} ${attrb}${seal.vars.intGet(ctx, attrb)[0]}`;
+    
+        seal.replyToSender(ctx, msg, text);
+    }
 
     const cmdteam = seal.ext.newCmdItemInfo();
     cmdteam.name = 'team';
@@ -218,21 +250,7 @@ if (!ext) {
                     return seal.ext.newCmdExecuteResult(true);
                 }
 
-                let text = seal.ext.getStringConfig(ext, "呼叫队伍里所有成员前缀语")
-                text = text.replace('{{时间限制}}', seal.ext.getIntConfig(ext, "呼叫时间限制（s）"))
-                for (let userId of data[groupId].teams[teamnow]) text += `\n[CQ:at,qq=${userId.replace(/\D+/g, "")}]`;
-                seal.replyToSender(ctx, msg, text)
-
-                data[groupId].call = data[groupId].teams[teamnow]
-                setTimeout(() => {
-                    let text = seal.ext.getStringConfig(ext, "call结束前缀语")
-                    text = text.replace('{{当前人数}}', data[groupId].teams[teamnow].length)
-                    text = text.replace('{{签到人数}}', data[groupId].teams[teamnow].length - data[groupId].call.length)
-                    text = text.replace('{{咕咕人数}}', data[groupId].call.length)
-                    for (let userId of data[groupId].call) text += `\n[CQ:at,qq=${userId.replace(/\D+/g, "")}]`;
-                    seal.replyToSender(ctx, msg, text)
-                    return;
-                }, seal.ext.getIntConfig(ext, "呼叫时间限制（s）") * 1000)
+                call(groupId, teamnow, ctx, msg);
                 return seal.ext.newCmdExecuteResult(true);
             }
             case 'show': {
@@ -310,13 +328,7 @@ if (!ext) {
                     return seal.ext.newCmdExecuteResult(true);
                 }
 
-                let text = seal.ext.getStringConfig(ext, "排序前缀语");
-                let ctxlst = data[groupId].teams[teamnow].map(userId => { return getCtxById(ctx.endPoint.userId, groupId, msg.guildId, userId); });
-
-                ctxlst.sort(function (a, b) { return seal.vars.intGet(b, val2)[0] - seal.vars.intGet(a, val2)[0]; });
-                for (let ctx of ctxlst) text += `\n${ctx.player.name} ${val2}${seal.vars.intGet(ctx, val2)[0]}`;
-
-                seal.replyToSender(ctx, msg, text)
+                sortAttrb(groupId, teamnow, ctx, msg, val2);
                 return seal.ext.newCmdExecuteResult(true);
             }
             default: {
@@ -328,11 +340,15 @@ if (!ext) {
     };
 
     ext.onNotCommandReceived = (ctx, msg) => {
+        if (ctx.isPrivate) return;
         let message = msg.message
         let groupId = ctx.group.groupId
 
-        if (message == seal.ext.getStringConfig(ext, "非指令呼叫全队")) {
-            if (ctx.isPrivate) return;
+        const callWords = seal.ext.getTemplateConfig(ext, "呼叫全队关键词")
+        const sortWords = seal.ext.getTemplateConfig(ext, "战斗轮排序关键词")
+        const signWords = seal.ext.getTemplateConfig(ext, "签到关键词")
+
+        if (callWords.includes(message)) {
             if (!data.hasOwnProperty(groupId)) getData(groupId)
             let teamnow = data[groupId].teamnow
 
@@ -345,33 +361,17 @@ if (!ext) {
                 return seal.ext.newCmdExecuteResult(true);
             }
 
-            let text = seal.ext.getStringConfig(ext, "呼叫队伍里所有成员前缀语")
-            text = text.replace('{{时间限制}}', seal.ext.getIntConfig(ext, "呼叫时间限制（s）"))
-            for (let userId of data[groupId].teams[teamnow]) text += `\n[CQ:at,qq=${userId.replace(/\D+/g, "")}]`;
-            seal.replyToSender(ctx, msg, text)
-
-            data[groupId].call = data[groupId].teams[teamnow]
-            setTimeout(() => {
-                let text = seal.ext.getStringConfig(ext, "call结束前缀语")
-                text = text.replace('{{当前人数}}', data[groupId].teams[teamnow].length)
-                text = text.replace('{{签到人数}}', data[groupId].teams[teamnow].length - data[groupId].call.length)
-                text = text.replace('{{咕咕人数}}', data[groupId].call.length)
-                for (let userId of data[groupId].call) text += `\n[CQ:at,qq=${userId.replace(/\D+/g, "")}]`;
-                seal.replyToSender(ctx, msg, text)
-                return;
-            }, seal.ext.getIntConfig(ext, "呼叫时间限制（s）") * 1000)
+            call(groupId, teamnow, ctx, msg);
             return seal.ext.newCmdExecuteResult(true);
         }
-        if (message == seal.ext.getStringConfig(ext, "签到")) {
-            if (ctx.isPrivate) return;
+        if (signWords.includes(message)) {
             if (!data.hasOwnProperty(groupId)) getData(groupId)
             if (data[groupId].call.length == 0) return;
 
             data[groupId].call = data[groupId].call.filter(userId => userId != ctx.player.userId)
             return;
         }
-        if (message == seal.ext.getStringConfig(ext, "开始战斗轮排序")) {
-            if (ctx.isPrivate) return;
+        if (sortWords.includes(message)) {
             if (!data.hasOwnProperty(groupId)) getData(groupId)
             let teamnow = data[groupId].teamnow
 
@@ -384,13 +384,7 @@ if (!ext) {
                 return seal.ext.newCmdExecuteResult(true);
             }
 
-            let text = seal.ext.getStringConfig(ext, "排序前缀语");
-            let ctxlst = data[groupId].teams[teamnow].map(userId => { return getCtxById(ctx.endPoint.userId, groupId, msg.guildId, userId); });
-
-            ctxlst.sort(function (a, b) { return seal.vars.intGet(b, 'dex')[0] - seal.vars.intGet(a, 'dex')[0]; });
-            for (let ctx of ctxlst) text += `\n${ctx.player.name} dex${seal.vars.intGet(ctx, 'dex')[0]}`;
-
-            seal.replyToSender(ctx, msg, text)
+            sortAttrb(groupId, teamnow, ctx, msg, 'dex');
             return seal.ext.newCmdExecuteResult(true);
         }
     }
