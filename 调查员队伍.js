@@ -115,6 +115,7 @@ if (!ext) {
 
             let tmpl = seal.ext.getTemplateConfig(ext, "新建队伍")
             return tmpl[Math.floor(Math.random() * tmpl.length)]
+                .replace('{{队伍名字}}', name)
         }
     }
 
