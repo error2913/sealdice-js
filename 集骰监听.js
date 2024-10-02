@@ -15,7 +15,7 @@ if (!ext) {
     ext = seal.ext.new(('集骰监听'), '错误', '1.0.1');
     // 注册扩展
     seal.ext.register(ext);
-    seal.ext.registerIntConfig(ext, "集骰通知阈值", 3, "");
+    seal.ext.registerIntConfig(ext, "集骰通知阈值", 3, "包括自己");
     seal.ext.registerBoolConfig(ext, "是否监听全部指令", false, "");
     seal.ext.registerTemplateConfig(ext, "监听指令名称", ["bot", "r"], "");
     seal.ext.registerBoolConfig(ext, "是否计入全部消息", false, "");
