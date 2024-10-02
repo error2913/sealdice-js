@@ -2,7 +2,7 @@
 // @name         集骰监听
 // @author       错误
 // @version      1.0.0
-// @description  会通知疑似集骰的群聊，极大可能误报，仅作参考。白名单修改指令: .monitor
+// @description  会把疑似集骰的群号发给通知列表，极大可能误报，仅作参考。\n个性化设置请移步 插件设置。\n白名单修改指令: .monitor
 // @timestamp    1727866889
 // 2024-10-02 19:01:29
 // @license      MIT
