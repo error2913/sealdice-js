@@ -19,7 +19,7 @@ if (!ext) {
     seal.ext.registerBoolConfig(ext, "是否监听全部指令", false, "");
     seal.ext.registerTemplateConfig(ext, "监听指令名称", ["bot", "r"], "");
     seal.ext.registerBoolConfig(ext, "是否计入全部消息", false, "");
-    seal.ext.registerTemplateConfig(ext, "计入消息模版", ["SealDice", "Shiki", "AstralDice", "OlivaDice", "SitaNya", "D100", "D20", "D6"], "使用正则表达式");
+    seal.ext.registerTemplateConfig(ext, "计入消息模版", ["SealDice|Shiki|AstralDice|OlivaDice|SitaNya", "[Dd]\\d"], "使用正则表达式");
     seal.ext.registerIntConfig(ext, "指令后n秒内计入", 5, "");
     seal.ext.registerFloatConfig(ext, "暂时白名单时限/分钟", 720, "监听一次指令后会暂时加入白名单");
 
@@ -47,7 +47,7 @@ if (!ext) {
         const time = seal.ext.getIntConfig(ext, "指令后n秒内计入");
         const rawGroupId = ctx.group.groupId.replace(/\D+/g, "")
 
-        if ((isAllMsg || msgTemplate.some(template => msg.message.match(new RegExp(template.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))))) && whiteList[rawGroupId] && parseInt(msg.time) - whiteList[rawGroupId].time < time) {
+        if ((isAllMsg || msgTemplate.some(template => msg.message.match(template))) && whiteList[rawGroupId] && parseInt(msg.time) - whiteList[rawGroupId].time < time) {
             whiteList[rawGroupId].dices.push(ctx.player.userId);
             if (whiteList[rawGroupId].dices.length + 1 >= noticeLimit && !whiteList[rawGroupId].notice) {
                 ctx.notice(`疑似集骰警告:群号${rawGroupId}，请注意检查\n疑似骰子QQ号:\n${whiteList[rawGroupId].dices.join('\n')}`)
