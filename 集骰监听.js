@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         集骰监听
 // @author       错误
-// @version      1.0.0
+// @version      1.0.1
 // @description  会把疑似集骰的群号发给通知列表，极大可能误报，仅作参考。\n个性化设置请移步 插件设置。\n白名单修改指令: .monitor
 // @timestamp    1727866889
 // 2024-10-02 19:01:29
@@ -12,7 +12,7 @@
 // 首先检查是否已经存在
 let ext = seal.ext.find('集骰监听');
 if (!ext) {
-    ext = seal.ext.new(('集骰监听'), '错误', '1.0.0');
+    ext = seal.ext.new(('集骰监听'), '错误', '1.0.1');
     // 注册扩展
     seal.ext.register(ext);
     seal.ext.registerIntConfig(ext, "集骰通知阈值", 3, "");
@@ -72,12 +72,14 @@ if (!ext) {
         if (val == "add") {
             whiteList[val2] = { time: 2000000000, dices: [], notice: true };
             seal.replyToSender(ctx, msg, '添加成功');
+            ext.storageSet("whiteList", JSON.stringify(whiteList));
             return seal.ext.newCmdExecuteResult(true);
         }
         if (val == "del") {
             whiteList[val2] = { time: 2000000000, dices: [], notice: true };
             delete whiteList[val2]
             seal.replyToSender(ctx, msg, '删除成功');
+            ext.storageSet("whiteList", JSON.stringify(whiteList));
             return seal.ext.newCmdExecuteResult(true);
         }
     };
