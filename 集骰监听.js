@@ -48,7 +48,7 @@ if (!ext) {
         const rawGroupId = ctx.group.groupId.replace(/\D+/g, "")
 
         if ((isAllMsg || msgTemplate.some(template => msg.message.match(template))) && whiteList[rawGroupId] && parseInt(msg.time) - whiteList[rawGroupId].time < time) {
-            whiteList[rawGroupId].dices.push(ctx.player.userId);
+            if (!whiteList[rawGroupId].dices.includes(ctx.player.userId)) whiteList[rawGroupId].dices.push(ctx.player.userId);
             if (whiteList[rawGroupId].dices.length + 1 >= noticeLimit && !whiteList[rawGroupId].notice) {
                 ctx.notice(`疑似集骰警告:群号${rawGroupId}，请注意检查\n疑似骰子QQ号:\n${whiteList[rawGroupId].dices.join('\n')}`)
                 whiteList[rawGroupId].notice = true;
