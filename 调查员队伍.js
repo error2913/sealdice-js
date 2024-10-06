@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         team
 // @author       错误
-// @version      2.1.0
+// @version      2.1.1
 // @description  .team 获取帮助。在其他框架看到类似的插件，找了一下发现海豹似乎没有，故自己写一个。使用.team获取帮助。非指令关键词部分请查看插件配置。
 // @timestamp    1724468302
 // 2024-08-24 10:58:22
@@ -13,7 +13,7 @@
 // 首先检查是否已经存在
 let ext = seal.ext.find('team');
 if (!ext) {
-    ext = seal.ext.new('team', '错误', '2.1.0');
+    ext = seal.ext.new('team', '错误', '2.1.1');
     seal.ext.register(ext);
     const data = {}
 
@@ -24,6 +24,7 @@ if (!ext) {
 
     seal.ext.registerTemplateConfig(ext, '添加成员', ['成功添加{{被@的长度}}位调查员，当前队伍人数{{当前人数}}人。'])
     seal.ext.registerTemplateConfig(ext, '删除成员', ['成功删除{{被@的长度}}位调查员，当前队伍人数{{当前人数}}人。'])
+    seal.ext.registerTemplateConfig(ext, '抽取成员', ['抽到了：{{成员名称}}'])
 
     seal.ext.registerTemplateConfig(ext, '呼叫成员', ['下面的人来跑团啦！请在限定时间{{时间限制}}s内回复“到”：{{成员列表}}'])
     seal.ext.registerTemplateConfig(ext, '呼叫结束', ['应到{{当前人数}}人，实到{{签到人数}}人，未到{{咕咕人数}}人。未到如下：{{成员列表}}'])
@@ -201,6 +202,16 @@ if (!ext) {
             .replace('{{当前人数}}', data[groupId].team.members.length);
     }
 
+    function drawMember(groupId, ctx, msg) {
+        let members = data[groupId].team.members;
+        let userId = members[Math.floor(Math.random() * members.length)];
+        let mctx = getCtxById(ctx.endPoint.userId, groupId, msg.guildId, userId);
+        let name = mctx.player.name;
+
+        let tmpl = seal.ext.getTemplateConfig(ext, "抽取成员")
+        seal.replyToSender(ctx, msg, tmpl[Math.floor(Math.random() * tmpl.length)]
+            .replace('{{成员名称}}', name));
+    }
 
     function call(groupId, ctx, msg) {
         const timeLimit = seal.ext.getIntConfig(ext, "呼叫时间限制（s）")
@@ -296,6 +307,7 @@ if (!ext) {
 【.team add @xx@xxx...】添加若干成员
 【.team rm @xx@xxx...】删除若干成员
 【.team rm --all】删除所有成员
+【.team draw】随机抽取一个成员
 【.team call】调查员集结！
 【.team show (属性名)】查看属性
 【.team st <属性名><值/+-表达式>】修改属性
@@ -351,6 +363,16 @@ if (!ext) {
             }
             case 'rm': {
                 seal.replyToSender(ctx, msg, removeMembers(groupId, atlst, cmdArgs.kwargs))
+                return seal.ext.newCmdExecuteResult(true);
+            }
+            case 'draw': {
+                if (data[groupId].team.members.length == 0) {
+                    let tmpl = seal.ext.getTemplateConfig(ext, "提示队伍为空")
+                    seal.replyToSender(ctx, msg, tmpl[Math.floor(Math.random() * tmpl.length)])
+                    return seal.ext.newCmdExecuteResult(true);
+                }
+
+                drawMember(groupId, ctx, msg);
                 return seal.ext.newCmdExecuteResult(true);
             }
             case 'call': {
