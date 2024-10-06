@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         螺旋飞行海豹
 // @author       错误
-// @version      1.0.0
+// @version      1.0.1
 // @description  使用.fly让你的海豹起飞吧！使用.seal来查看信息！
 // @timestamp    1726307175
 // 2024-09-14 17:46:15
@@ -11,12 +11,19 @@
 
 let ext = seal.ext.find('flyseal');
 if (!ext) {
-    ext = seal.ext.new('flyseal', '错误', '1.0.0');
+    ext = seal.ext.new('flyseal', '错误', '1.0.1');
     // 注册扩展
     seal.ext.register(ext);
     seal.ext.registerIntConfig(ext, "初始耐力值", 20)
     const players = {}
     const playerlist = JSON.parse(ext.storageGet("playerlist") || '{}')
+
+    const textMap = {
+        "海面上一大片雾气": "meetFog",
+        "海面下有什么波动": "meetFish",
+        "一个巨大的恐怖漩涡！": "meetVortex",
+        "一座诱人的小岛": "meetIsland"
+    };
 
     class FlySeal {
         constructor(id, name) {
@@ -73,13 +80,6 @@ if (!ext) {
                 this.saveData()
                 return `<${this.name}豹>耐力值归零，螺旋结束了……本次螺旋记录:${spiral}`
             }
-
-            let textMap = {
-                "海面上一大片雾气": this.meetFog.bind(this),
-                "海面下有什么波动": this.meetFish.bind(this),
-                "一个巨大的恐怖漩涡！": this.meetVortex.bind(this),
-                "一座诱人的小岛": this.meetIsland.bind(this)
-            };
 
             let keys = Object.keys(textMap); // 先将键存储在一个数组中
 
@@ -290,7 +290,7 @@ if (!ext) {
                     return
                 }
 
-                seal.replyToSender(ctx, msg, players[id].meet[val]() + players[id].fly());
+                seal.replyToSender(ctx, msg, players[id][players[id].meet[val]]() + players[id].fly());
                 return
             }
         }
