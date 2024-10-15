@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         team
 // @author       错误
-// @version      3.1.0
+// @version      3.1.1
 // @description  这是一个海豹插件，它提供了一套完整的队伍管理功能，允许用户在 QQ 群组中创建和管理队伍。\n- 更多自定义配置请查看配置项（即插件设置部分）。\n - 如果你也是一名插件作者，你也可以通过globalThis.team.xxx在你的插件中来调用该插件的方法。具体方法请在该插件的源码中查看。\n- 若使用过程中遇到问题或BUG，请联系开发者。如果您有更好的想法，欢迎前往主页提交 Pull Request 或 Issue，共同完善该插件
 // @timestamp    1724468302
 // 2024-08-24 10:58:22
@@ -13,7 +13,7 @@
 // 首先检查是否已经存在
 let ext = seal.ext.find('team');
 if (!ext) {
-    ext = seal.ext.new('team', '错误', '3.1.0');
+    ext = seal.ext.new('team', '错误', '3.1.1');
     seal.ext.register(ext);
     const data = {}
 
@@ -301,7 +301,7 @@ if (!ext) {
                     .replace('{{成员列表}}', membersText.join('\n')));
             }, timeLimit * 1000);
 
-            let membersText = teams.members.map(userId => {
+            let membersText = team.members.map(userId => {
                 return `[CQ:at,qq=${userId.replace(/\D+/g, "")}]`;
             });
 
