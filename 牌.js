@@ -7,6 +7,7 @@
 // 2024-10-25 17:09:56
 // @license      MIT
 // @homepageURL  https://github.com/sealdice/javascript
+// @depends 错误:team:>=3.1.1
 // ==/UserScript==
 // 首先检查是否已经存在
 let ext = seal.ext.find('cardFramework');
@@ -14,11 +15,71 @@ if (!ext) {
     ext = seal.ext.new('cardFramework', '错误', '1.0.0');
     seal.ext.register(ext);
     const deckMap = {};
+    const data = {}
+
+    function getData(id) {
+        if (data[id]) {
+            return data[id];
+        }
+
+        let savedData = {}
+        try {
+            savedData = JSON.parse(ext.storageGet(`game_${id}`) || '{}');
+        } catch (error) {
+            console.error(`从数据库中获取game_${id}失败:`, error);
+        }
+
+        function getPlayerData(player) {
+            const newPlayer = new Player(player.id);
+
+            newPlayer.data = player.data || {};
+            newPlayer.hand = getDeckData(player.hand);
+            newPlayer.show = getDeckData(player.show)
+
+            return newPlayer
+        }
+
+        function getDeckData(deck) {
+            let newDeck;
+            const name = deck.name || '未知牌堆';
+
+            if (deckMap[name]) {
+                newDeck = deckMap[name];
+            } else {
+                newDeck = new Deck(name, deck.desc || '');
+            }
+            
+            newDeck.data = deck.data || {};
+            newDeck.cards = deck.cards || [];
+
+            return newDeck;
+        }
+
+        const game = new Game(id);
+        game.players = (savedData.players || []).map(player => getPlayerData(player));
+        game.order = (savedData.order || []).map(player => getPlayerData(player));
+        game.round = savedData.round || 0;
+        game.turn = savedData.turn || 0;
+        game.currentPlayer = savedData.currentPlayer ? getPlayerData(savedData.currentPlayer) : null;
+        game.currentDeck = savedData.currentDeck ? getDeckData(savedData.currentDeck) : null;
+        game.mainDeck = savedData.mainDeck ? getDeckData(savedData.mainDeck) : deckMap['主牌堆'];
+        game.discardDeck = savedData.discardDeck ? getDeckData(savedData.discardDeck) : deckMap['弃牌堆'];
+
+        data[id] = game;
+
+        return data[id];
+    }
+
+    function saveData(id) {
+        if (data[id]) {
+            ext.storageSet(`game_${id}`, JSON.stringify(data[id]));
+        }
+    }
 
     class Deck {
-        constructor(name, description = '') {
+        constructor(name, desc = '') {
             this.name = name;
-            this.description = description;
+            this.desc = desc;
             this.data = {}
             this.cards = [];
             this.solve = (ctx, msg, game, player) => {}
@@ -70,6 +131,8 @@ if (!ext) {
 
         start() {
             this.end();
+            const team = globalThis.team.getBindData(this.id);
+            this.players = team.members.map(id => new Player(id));
             this.startRound();
         }
 
@@ -143,7 +206,42 @@ if (!ext) {
     }
     deckMap['弃牌堆'] = deckDiscard;
 
-    /* 示例：
+    const cmdPlay = seal.ext.newCmdItemInfo();
+    cmdPlay.name = 'play'; // 指令名字，可用中文
+    cmdPlay.help = `帮助：`;
+    cmdPlay.disabledInPrivate = true;// 不允许私聊
+    cmdPlay.solve = (ctx, msg, cmdArgs) => {
+        let val = cmdArgs.getArgN(1);
+        const id = ctx.group.groupId;
+        switch (val) {
+            case 'start': {
+                const game = new Game(id);
+                data[id] = game;
+                game.start();
+                saveData(id);
+            }
+            case 'end': {
+                const game = getData(id);
+                game.end();
+                saveData(id);
+            }
+            case 'play': {
+                const game = getData(id);
+                const name = cmdArgs.getRestArgsFrom(2);
+                game.play(ctx, msg, name)
+                saveData(id)
+            }
+            case 'help':
+            default: {
+                const ret = seal.ext.newCmdExecuteResult(true);
+                ret.showHelp = true;
+                return ret;
+            }
+        }
+    };
+    ext.cmdMap['play'] = cmdPlay;
+
+    /* 示例模板：
     const deck = new Deck('')
     deck.cards = []
     deck.solve = (ctx, msg, game, player) => {
@@ -153,7 +251,7 @@ if (!ext) {
 
     const cmd = seal.ext.newCmdItemInfo();
     cmd.name = ''; // 指令名字，可用中文
-    cmd.help = '';
+    cmd.help = ``;
     cmd.solve = (ctx, msg, cmdArgs) => {
         let val = cmdArgs.getArgN(1);
         switch (val) {
