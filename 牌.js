@@ -63,6 +63,7 @@ if (!ext) {
             this.round = 0;
             this.turn = 0;
             this.currentPlayer = null;
+            this.currentDeck = null;
             this.mainDeck = deckMap['主牌堆'];
             this.discardDeck = deckMap['弃牌堆'];
         }
@@ -77,6 +78,7 @@ if (!ext) {
             this.round = 0;
             this.turn = 0;
             this.currentPlayer = null;
+            this.currentDeck = null;
         }
 
         startRound() {
@@ -111,8 +113,9 @@ if (!ext) {
             }
 
             if (deckMap[name]) {
-                const deck = deckMap[name]
-                deck.solve(ctx, msg, this, this.currentPlayer)
+                const deck = deckMap[name];
+                this.currentDeck = deck;
+                deck.solve(ctx, msg, this, this.currentPlayer);
             }
         }
     }
