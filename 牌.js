@@ -34,7 +34,8 @@ if (!ext) {
 
             newPlayer.data = player.data || {};
             newPlayer.hand = getDeckData(player.hand);
-            newPlayer.show = getDeckData(player.show)
+            newPlayer.show = getDeckData(player.show);
+            newPlayer.hide = getDeckData(player.hide);
 
             return newPlayer
         }
@@ -191,6 +192,7 @@ if (!ext) {
             this.data = {}
             this.hand = new Deck('手牌');
             this.show = new Deck('明牌');
+            this.hide = new Deck('暗牌');
         }
     }
 
