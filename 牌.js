@@ -56,6 +56,7 @@ if (!ext) {
         }
 
         const game = new Game(id);
+        game.data = savedData.data || {};
         game.players = (savedData.players || []).map(player => getPlayerData(player));
         game.order = (savedData.order || []).map(player => getPlayerData(player));
         game.round = savedData.round || 0;
@@ -119,6 +120,7 @@ if (!ext) {
     class Game {
         constructor(id) {
             this.id = id
+            this.data = {}
             this.players = [];
             this.order = [];
             this.round = 0;
