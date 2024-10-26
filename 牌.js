@@ -49,8 +49,9 @@ if (!ext) {
             } else {
                 newDeck = new Deck(name, deck.desc || '');
             }
-            
+
             newDeck.data = deck.data || {};
+            newDeck.type = deck.type || '';
             newDeck.cards = deck.cards || [];
 
             return newDeck;
@@ -78,13 +79,33 @@ if (!ext) {
         }
     }
 
+    function getMsg(groupId, guildId, senderId) {
+        let msg = seal.newMessage();
+        msg.messageType = "group";
+        msg.groupId = groupId;
+        msg.guildId = guildId;
+        msg.sender.userId = senderId;
+        return msg;
+    }
+
+    function getCtx(epId, msg) {
+        let eps = seal.getEndPoints();
+        for (let i = 0; i < eps.length; i++) {
+            if (eps[i].userId === epId) {
+                return seal.createTempCtx(eps[i], msg);
+            }
+        }
+        return undefined;
+    }
+
     class Deck {
         constructor(name, desc = '') {
             this.name = name;
             this.desc = desc;
-            this.data = {}
+            this.data = {};
+            this.type = '';
             this.cards = [];
-            this.solve = (ctx, msg, game, player) => {}
+            this.solve = (ctx, msg, game, player) => { }
         }
 
         shuffle() {
@@ -196,15 +217,17 @@ if (!ext) {
         }
     }
 
-    const deckMain = new Deck('主牌堆')
-    deckMain.cards = []
+    const deckMain = new Deck('主牌堆');
+    deckMain.type = 'public';
+    deckMain.cards = [];
     deckMain.solve = (ctx, msg, game, player) => {
 
     }
     deckMap['主牌堆'] = deckMain;
 
-    const deckDiscard = new Deck('弃牌堆')
-    deckDiscard.cards = []
+    const deckDiscard = new Deck('弃牌堆');
+    deckDiscard.type = 'public';
+    deckDiscard.cards = [];
     deckDiscard.solve = (ctx, msg, game, player) => {
 
     }
@@ -222,18 +245,23 @@ if (!ext) {
                 const game = new Game(id);
                 data[id] = game;
                 game.start();
+                seal.replyToSender(ctx, msg, '游戏开始');
                 saveData(id);
+                return;
             }
             case 'end': {
                 const game = getData(id);
                 game.end();
+                seal.replyToSender(ctx, msg, '游戏结束');
                 saveData(id);
+                return;
             }
             case 'play': {
                 const game = getData(id);
                 const name = cmdArgs.getRestArgsFrom(2);
                 game.play(ctx, msg, name)
                 saveData(id)
+                return;
             }
             case 'help':
             default: {
@@ -246,8 +274,9 @@ if (!ext) {
     ext.cmdMap['play'] = cmdPlay;
 
     /* 示例模板：
-    const deck = new Deck('')
-    deck.cards = []
+    const deck = new Deck('');
+    deck.type = '';
+    deck.cards = [];
     deck.solve = (ctx, msg, game, player) => {
 
     }
@@ -271,6 +300,6 @@ if (!ext) {
         }
     };
     ext.cmdMap[''] = cmd;
-    */ 
+    */
 
 }
