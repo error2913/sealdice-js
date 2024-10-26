@@ -258,29 +258,23 @@ if (!ext) {
 
             //发牌等逻辑
             this.mainDeck.shuffle();
-            const num = Math.floor(this.mainDeck.cards.length / this.players.length);
-            for (let i = 0; i < this.players.length - 1; i++) {
+            let num = Math.floor(this.mainDeck.cards.length / this.players.length);
+            for (let i = 0; i < this.players.length; i++) {
+                if (i == this.players.length - 1) {
+                    num = this.mainDeck.cards.length
+                }
+                
                 const cards = this.mainDeck.cards.splice(0, num);
-                this.players[i].hand.add(cards);
+                const player = this.players[i];
+                player.hand.add(cards);
                 const pairs = getPairs(cards);
                 if (pairs.length !== 0) {
                     pairs.forEach(pair => {
-                        this.players[i].hand.remove(pair);
+                        player.hand.remove(pair);
                     });
                 }
-                replyPrivate(ctx, msg, this.players[i].hand.cards.join('\n'), this.players[i].id);
+                replyPrivate(ctx, msg, player.hand.cards.join('\n'), player.id);
             }
-
-            //最后一个人的牌
-            const cards = this.mainDeck.cards.splice(0, this.mainDeck.cards.length)
-            this.players[this.players.length - 1].hand.add(cards);
-            const pairs = getPairs(cards);
-            if (pairs.length !== 0) {
-                pairs.forEach(pair => {
-                    this.players[this.players.length - 1].hand.remove(pair);
-                });
-            }
-            replyPrivate(ctx, msg, this.players[this.players.length - 1].hand.cards.join('\n'), this.players[this.players.length - 1].id);
 
             seal.replyToSender(ctx, msg, '游戏开始');
             this.nextRound(ctx, msg);
@@ -343,6 +337,7 @@ if (!ext) {
 
             const card1 = cards[0];
             replyPrivate(ctx, msg, `你抽到了${card1}`);
+            replyPrivate(ctx, msg, `你被抽走了${card1}`, anotherPlayer.id);
 
             const cardIndex = this.currentPlayer.hand.cards.findIndex(item => deckMap[item].data.value === deckMap[card1].data.value);
             if (cardIndex === -1) {
