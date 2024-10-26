@@ -79,11 +79,14 @@ if (!ext) {
         }
     }
 
-    function getMsg(groupId, guildId, senderId) {
+    function getMsg(messageType, senderId, groupId = '', guildId = '') {
         let msg = seal.newMessage();
-        msg.messageType = "group";
-        msg.groupId = groupId;
-        msg.guildId = guildId;
+        if (messageType == 'group') {
+            msg.groupId = groupId;
+            msg.guildId = guildId;
+        }
+
+        msg.messageType = messageType;
         msg.sender.userId = senderId;
         return msg;
     }
@@ -96,6 +99,12 @@ if (!ext) {
             }
         }
         return undefined;
+    }
+
+    function replyPrivate(ctx, msg, text) {
+        const mmsg = getMsg('private', ctx.player.userId, ctx.group.groupId, msg.guildId);
+        const mctx = getCtx(ctx.endPoint.userId, mmsg);
+        seal.replyToSender(mctx, mmsg, text);
     }
 
     class Deck {
