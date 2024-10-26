@@ -59,6 +59,7 @@ if (!ext) {
 
         const game = new Game(id);
         game.data = savedData.data || {};
+        game.status = savedData.status || false;
         game.players = (savedData.players || []).map(player => getPlayerData(player));
         game.order = (savedData.order || []).map(player => getPlayerData(player));
         game.round = savedData.round || 0;
@@ -146,12 +147,32 @@ if (!ext) {
 
             return this.cards.splice(position, count, cards);
         }
+
+        check(cards) {
+            let available = this.cards.slice();
+            let isValid = true;
+
+            for (let i = 0; i < cards.length; i++) {
+                const card = cards[i];
+                const index = available.indexOf(card);
+
+                if (index!== -1) {
+                    available.splice(index, 1);
+                } else {
+                    isValid = false;
+                    break;
+                }
+            }
+
+            return isValid;
+        }
     }
 
     class Game {
         constructor(id) {
             this.id = id
-            this.data = {}
+            this.data = {};
+            this.status = false;
             this.players = [];
             this.order = [];
             this.round = 0;
@@ -164,17 +185,25 @@ if (!ext) {
 
         start() {
             this.end();
+            this.status = true;
             const team = globalThis.team.getBindData(this.id);
             this.players = team.members.map(id => new Player(id));
+
+            //发牌等逻辑
+
             this.startRound();
         }
 
         end() {
+            this.status = false;
+            this.players = [];
             this.order = [];
             this.round = 0;
             this.turn = 0;
             this.currentPlayer = null;
             this.currentDeck = null;
+            this.mainDeck = deckMap['主牌堆'];
+            this.discardDeck = deckMap['弃牌堆'];
         }
 
         startRound() {
@@ -205,14 +234,23 @@ if (!ext) {
 
         play(ctx, msg, name) {
             if (ctx.player.uerId !== this.currentPlayer.id) {
+                seal.replyToSender(ctx, msg, '不是当前玩家');
                 return;
             }
 
-            if (deckMap[name]) {
-                const deck = deckMap[name];
-                this.currentDeck = deck;
-                deck.solve(ctx, msg, this, this.currentPlayer);
+            if (!deckMap[name]) {
+                seal.replyToSender(ctx, msg, '未注册牌组');
+                return;
             }
+
+            const deck = deckMap[name];
+            if (!this.currentPlayer.hand.check(deck.cards)) {
+                seal.replyToSender(ctx, msg, '手牌不足');
+                return;
+            }
+            
+            this.currentDeck = deck;
+            deck.solve(ctx, msg, this, this.currentPlayer);
         }
     }
 
@@ -251,8 +289,7 @@ if (!ext) {
         const id = ctx.group.groupId;
         switch (val) {
             case 'start': {
-                const game = new Game(id);
-                data[id] = game;
+                const game = getData(id);
                 game.start();
                 seal.replyToSender(ctx, msg, '游戏开始');
                 saveData(id);
