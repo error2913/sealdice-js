@@ -106,8 +106,8 @@ if (!ext) {
         return mctx.player.name;
     }
 
-    function replyPrivate(ctx, msg, text) {
-        const mmsg = getMsg('private', ctx.player.userId, ctx.group.groupId, msg.guildId);
+    function replyPrivate(ctx, msg, text, id = '') {
+        const mmsg = getMsg('private', id || ctx.player.userId, ctx.group.groupId, msg.guildId);
         const mctx = getCtx(ctx.endPoint.userId, mmsg);
         seal.replyToSender(mctx, mmsg, text);
     }
@@ -238,6 +238,8 @@ if (!ext) {
         }
 
         end(ctx, msg) {
+            seal.replyToSender(ctx, msg, '游戏结束');
+            
             this.status = false;
             this.players = [];
             this.round = 0;
@@ -246,8 +248,6 @@ if (!ext) {
             this.currentDeck = null;
             this.mainDeck = deckMap['主牌堆'].clone();
             this.discardDeck = deckMap['弃牌堆'].clone();
-
-            seal.replyToSender(ctx, msg, '游戏结束');
         }
 
         nextRound(ctx, msg) {
