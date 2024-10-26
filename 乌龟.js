@@ -2,7 +2,7 @@
 // @name         抽乌龟
 // @author       错误
 // @version      1.0.0
-// @description  待完善
+// @description  指令.turtle/tl
 // @timestamp    1729847396
 // 2024-10-25 17:09:56
 // @license      MIT
@@ -216,12 +216,12 @@ if (!ext) {
             deck.data = JSON.parse(JSON.stringify(this.data)); // 深拷贝data对象
             deck.type = this.type;
             deck.cards = this.cards.slice(); // 复制cards数组，确保独立副本
-        
+
             // 如果solve方法依赖于Deck实例的状态，确保正确复制或绑定
             if (typeof this.solve === 'function') {
                 deck.solve = this.solve.bind(deck); // 绑定新实例到方法
             }
-        
+
             return deck;
         }
     }
@@ -263,7 +263,7 @@ if (!ext) {
                 if (i == this.players.length - 1) {
                     num = this.mainDeck.cards.length
                 }
-                
+
                 const cards = this.mainDeck.cards.splice(0, num);
                 const player = this.players[i];
                 player.hand.add(cards);
@@ -276,7 +276,8 @@ if (!ext) {
                 replyPrivate(ctx, msg, player.hand.cards.join('\n'), player.id);
             }
 
-            seal.replyToSender(ctx, msg, '游戏开始');
+            const name = getName(ctx, msg, this.players[0].id)
+            seal.replyToSender(ctx, msg, `游戏开始，从${name}开始`);
             this.nextRound(ctx, msg);
         }
 
@@ -311,7 +312,7 @@ if (!ext) {
 
                 this.currentPlayer = this.players[index + 1];
             }
-            
+
             this.turn++;
         }
 
@@ -321,34 +322,39 @@ if (!ext) {
                 return;
             }
 
-            const playerIndex = this.players.findIndex(player => player.id === this.currentPlayer.id);
-            const anotherPlayer = this.players[playerIndex + 1] || this.players[0];
+            const index = this.players.findIndex(player => player.id === this.currentPlayer.id);
             const name = getName(ctx, msg, this.currentPlayer.id)
-            const anotherName = getName(ctx, msg, anotherPlayer.id)
+
+            let anotherIndex = index < this.players.length - 1 ? (index + 1) : 0;
+            let anotherPlayer = this.players[anotherIndex];
+            let anotherName = getName(ctx, msg, anotherPlayer.id);
+
+            let text = `${name}(${this.currentPlayer.hand.cards.length})抽了${anotherName}(${anotherPlayer.hand.cards.length})一张牌\n`
             const cards = anotherPlayer.hand.draw(position);
-            let text = `${name}抽${anotherName}\n`
-
-            if (anotherPlayer.hand.cards.length === 0) {
-                const index = this.players.findIndex(player => player.id === anotherPlayer.id);
-                this.players.splice(index, 1);
-
-                text += `${anotherName}没有牌了，退出游戏\n`
-            }
-
             const card1 = cards[0];
             replyPrivate(ctx, msg, `你抽到了${card1}`);
             replyPrivate(ctx, msg, `你被抽走了${card1}`, anotherPlayer.id);
 
+            if (anotherPlayer.hand.cards.length === 0) {
+                this.players.splice(anotherIndex, 1);
+
+                text += `${anotherName}没有牌了，退出游戏\n`
+
+                anotherIndex = anotherIndex < this.players.length - 1 ? (anotherIndex + 1) : 0;
+                anotherPlayer = this.players[anotherIndex];
+                anotherName = getName(ctx, msg, anotherPlayer.id);
+            }
+
             const cardIndex = this.currentPlayer.hand.cards.findIndex(item => deckMap[item].data.value === deckMap[card1].data.value);
             if (cardIndex === -1) {
                 this.currentPlayer.hand.add(cards);
-                text += `${name}抽了一张牌，什么都没发生\n`;
+                text += `什么都没发生\n`;
             } else {
                 const card2 = this.currentPlayer.hand.cards.splice(cardIndex, 1)[0];
                 text += `${name}打出了${card1}、${card2}\n`
 
                 if (this.currentPlayer.hand.cards.length === 0) {
-                    this.players.splice(playerIndex, 1);
+                    this.players.splice(index, 1);
                     text += `${name}没有牌了，退出游戏\n`
                 }
             }
@@ -360,6 +366,8 @@ if (!ext) {
                 this.end(ctx, msg)
                 return;
             }
+
+            text += `下一位是${anotherName}`
 
             seal.replyToSender(ctx, msg, text);
             this.nextTurn(ctx, msg);
@@ -387,10 +395,7 @@ if (!ext) {
             const deck = new Deck(card);
             deck.type = 'single';
             deck.cards = [card];
-            deck.solve = (ctx, msg, game, player) => {
-
-
-            }
+            deck.solve = (ctx, msg, game, player) => {}
             deck.data = {
                 suit: suit,
                 value: value
@@ -402,10 +407,7 @@ if (!ext) {
     const deckTurtle = new Deck('乌龟');
     deckTurtle.type = 'single';
     deckTurtle.cards = ['乌龟'];
-    deckTurtle.solve = (ctx, msg, game, player) => {
-
-
-    }
+    deckTurtle.solve = (ctx, msg, game, player) => {}
     deckTurtle.data = {
         suit: '乌龟',
         value: '乌龟'
