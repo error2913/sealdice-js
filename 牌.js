@@ -17,6 +17,7 @@ if (!ext) {
     const deckMap = {};
     const data = {}
 
+    // 获取并解析game对象的数据
     function getData(id) {
         if (data[id]) {
             return data[id];
@@ -29,6 +30,7 @@ if (!ext) {
             console.error(`从数据库中获取game_${id}失败:`, error);
         }
 
+        //获取并解析player对象的数据
         function getPlayerData(player) {
             const newPlayer = new Player(player.id);
 
@@ -40,6 +42,7 @@ if (!ext) {
             return newPlayer
         }
 
+        //获取并解析deck对象的数据
         function getDeckData(deck) {
             let newDeck;
             const name = deck.name || '未知牌堆';
@@ -73,12 +76,15 @@ if (!ext) {
         return data[id];
     }
 
+
+    //保存数据
     function saveData(id) {
         if (data[id]) {
             ext.storageSet(`game_${id}`, JSON.stringify(data[id]));
         }
     }
 
+    // 获取一个msg对象
     function getMsg(messageType, senderId, groupId = '', guildId = '') {
         let msg = seal.newMessage();
         if (messageType == 'group') {
@@ -91,6 +97,7 @@ if (!ext) {
         return msg;
     }
 
+    // 获取一个ctx对象
     function getCtx(epId, msg) {
         let eps = seal.getEndPoints();
         for (let i = 0; i < eps.length; i++) {
@@ -101,11 +108,14 @@ if (!ext) {
         return undefined;
     }
 
+    // 获取玩家的名字
     function getName(ctx, msg, id) {
-        const mctx = getCtx(ctx.endPoint.userId, msg);
+        const mmsg = getMsg('group', id, ctx.group.groupId, msg.guildId);
+        const mctx = getCtx(ctx.endPoint.userId, mmsg);
         return mctx.player.name;
     }
 
+    //回复私聊消息
     function replyPrivate(ctx, msg, text, id = '') {
         const mmsg = getMsg('private', id || ctx.player.userId, ctx.group.groupId, msg.guildId);
         const mctx = getCtx(ctx.endPoint.userId, mmsg);
@@ -114,14 +124,15 @@ if (!ext) {
 
     class Deck {
         constructor(name, desc = '') {
-            this.name = name;
-            this.desc = desc;
-            this.data = {};
-            this.type = '';
-            this.cards = [];
-            this.solve = (ctx, msg, game, player) => { }
+            this.name = name;//名字
+            this.desc = desc;//描述
+            this.data = {};//数据
+            this.type = '';//种类
+            this.cards = [];//包含的卡牌
+            this.solve = (ctx, msg, game, player) => { }//方法
         }
 
+        //洗牌
         shuffle() {
             for (let i = this.cards.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -129,6 +140,7 @@ if (!ext) {
             }
         }
 
+        //不放回地抽出牌
         draw(position = -1, num = 1) {
             const cards = [];
 
@@ -144,6 +156,7 @@ if (!ext) {
             return cards;
         }
 
+        //加入卡牌
         add(cards, position = -1, count = 0) {
             if (position === -1) {
                 position = Math.floor(Math.random() * (this.cards.length + 1));
@@ -152,6 +165,7 @@ if (!ext) {
             return this.cards.splice(position, count, ...cards);
         }
 
+        //移除指定卡牌
         remove(cards) {
             if (cards.length === 0 || this.cards.length === 0 || !this.check(cards)) {
                 return;
@@ -167,6 +181,7 @@ if (!ext) {
             }
         }
 
+        //检查是否包含指定卡牌
         check(cards) {
             let available = this.cards.slice();
             let isValid = true;
@@ -186,6 +201,7 @@ if (!ext) {
             return isValid;
         }
 
+        //复制这个牌组
         clone() {
             const deck = new Deck(this.name, this.desc); // 复制构造函数中的参数
             deck.data = JSON.parse(JSON.stringify(this.data)); // 深拷贝data对象
@@ -203,24 +219,26 @@ if (!ext) {
 
     class Game {
         constructor(id) {
-            this.id = id
-            this.data = {};
-            this.status = false;
-            this.players = [];
-            this.round = 0;
-            this.turn = 0;
-            this.currentPlayer = null;
-            this.currentDeck = null;
-            this.mainDeck = deckMap['主牌堆'].clone();
-            this.discardDeck = deckMap['弃牌堆'].clone();
+            this.id = id//一般是群号
+            this.data = {};//数据
+            this.status = false;//游戏状态
+            this.players = [];//玩家对象的数组
+            this.round = 0;//回合数
+            this.turn = 0;//一个回合内的轮次数
+            this.currentPlayer = null;//当前需要做出动作的玩家
+            this.currentDeck = null;//当前场上的牌组，进入弃牌堆的缓冲区
+            this.mainDeck = deckMap['主牌堆'].clone();//包含所有卡牌的牌组
+            this.discardDeck = deckMap['弃牌堆'].clone();//丢弃的卡牌
         }
 
+        //游戏初始化
         start(ctx, msg) {
             if (this.status) {
                 seal.replyToSender(ctx, msg, '游戏已开始');
                 return;
             }
 
+            //初始化玩家
             const team = globalThis.team.getBindData(this.id);
             this.players = team.members.map(id => new Player(id));
 
@@ -231,12 +249,13 @@ if (!ext) {
 
             this.status = true;
 
-            //发牌等逻辑
+            //发牌等游戏开始前的逻辑
 
             seal.replyToSender(ctx, msg, '游戏开始');
-            this.nextRound(ctx, msg);
+            this.nextRound(ctx, msg);//开始第一回合
         }
 
+        //结束游戏
         end(ctx, msg) {
             seal.replyToSender(ctx, msg, '游戏结束');
             
@@ -250,12 +269,14 @@ if (!ext) {
             this.discardDeck = deckMap['弃牌堆'].clone();
         }
 
+        //进入下一回合
         nextRound(ctx, msg) {
             this.turn = 0;
             this.round++;
             this.nextTurn(ctx, msg);
         }
 
+        //进入下一轮
         nextTurn(ctx, msg) {
             if (this.turn == 0) {
                 this.currentPlayer = this.players[0];
@@ -272,6 +293,7 @@ if (!ext) {
             this.turn++;
         }
 
+        //打出某张牌的方法
         play(ctx, msg, name) {
             if (ctx.player.uerId !== this.currentPlayer.id) {
                 seal.replyToSender(ctx, msg, '不是当前玩家');
@@ -292,37 +314,38 @@ if (!ext) {
             this.currentPlayer.hand.remove(deck.cards);
             this.discardDeck.add(this.currentDeck.cards);
             this.currentDeck = deck;
+
             deck.solve(ctx, msg, this, this.currentPlayer);
-            this.nextTurn(ctx, msg);
+            this.nextTurn(ctx, msg);//进入下一轮
+            return;
         }
     }
 
     class Player {
         constructor(id) {
-            this.id = id;
-            this.data = {}
-            this.hand = new Deck('手牌');
-            this.show = new Deck('明牌');
-            this.hide = new Deck('暗牌');
+            this.id = id;//一般是QQ号
+            this.data = {}//数据
+            this.hand = new Deck('手牌');//当前的手牌
+            this.show = new Deck('明牌');//展示给别人看的牌
+            this.hide = new Deck('暗牌');//自己也不能看的牌
         }
     }
 
+    //注册主牌堆
     const deckMain = new Deck('主牌堆');
     deckMain.type = 'public';
     deckMain.cards = [];
-    deckMain.solve = (ctx, msg, game, player) => {
-
-    }
+    deckMain.solve = (ctx, msg, game, player) => {}
     deckMap['主牌堆'] = deckMain;
 
+    //注册弃牌堆
     const deckDiscard = new Deck('弃牌堆');
     deckDiscard.type = 'public';
     deckDiscard.cards = [];
-    deckDiscard.solve = (ctx, msg, game, player) => {
-
-    }
+    deckDiscard.solve = (ctx, msg, game, player) => {}
     deckMap['弃牌堆'] = deckDiscard;
 
+    //注册指令
     const cmdPlay = seal.ext.newCmdItemInfo();
     cmdPlay.name = 'play'; // 指令名字，可用中文
     cmdPlay.help = `帮助：`;
