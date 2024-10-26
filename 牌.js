@@ -45,7 +45,7 @@ if (!ext) {
             const name = deck.name || '未知牌堆';
 
             if (deckMap[name]) {
-                newDeck = deckMap[name];
+                newDeck = deckMap[name].clone();
             } else {
                 newDeck = new Deck(name, deck.desc || '');
             }
@@ -61,13 +61,12 @@ if (!ext) {
         game.data = savedData.data || {};
         game.status = savedData.status || false;
         game.players = (savedData.players || []).map(player => getPlayerData(player));
-        game.order = (savedData.order || []).map(player => getPlayerData(player));
         game.round = savedData.round || 0;
         game.turn = savedData.turn || 0;
         game.currentPlayer = savedData.currentPlayer ? getPlayerData(savedData.currentPlayer) : null;
         game.currentDeck = savedData.currentDeck ? getDeckData(savedData.currentDeck) : null;
-        game.mainDeck = savedData.mainDeck ? getDeckData(savedData.mainDeck) : deckMap['主牌堆'];
-        game.discardDeck = savedData.discardDeck ? getDeckData(savedData.discardDeck) : deckMap['弃牌堆'];
+        game.mainDeck = savedData.mainDeck ? getDeckData(savedData.mainDeck) : deckMap['主牌堆'].clone();
+        game.discardDeck = savedData.discardDeck ? getDeckData(savedData.discardDeck) : deckMap['弃牌堆'].clone();
 
         data[id] = game;
 
@@ -100,6 +99,11 @@ if (!ext) {
             }
         }
         return undefined;
+    }
+
+    function getName(ctx, msg, id) {
+        const mctx = getCtx(ctx.endPoint.userId, msg);
+        return mctx.player.name;
     }
 
     function replyPrivate(ctx, msg, text) {
@@ -145,7 +149,7 @@ if (!ext) {
                 position = Math.floor(Math.random() * (this.cards.length + 1));
             }
 
-            return this.cards.splice(position, count, cards);
+            return this.cards.splice(position, count, ...cards);
         }
 
         remove(cards) {
@@ -181,6 +185,20 @@ if (!ext) {
 
             return isValid;
         }
+
+        clone() {
+            const deck = new Deck(this.name, this.desc); // 复制构造函数中的参数
+            deck.data = JSON.parse(JSON.stringify(this.data)); // 深拷贝data对象
+            deck.type = this.type;
+            deck.cards = this.cards.slice(); // 复制cards数组，确保独立副本
+        
+            // 如果solve方法依赖于Deck实例的状态，确保正确复制或绑定
+            if (typeof this.solve === 'function') {
+                deck.solve = this.solve.bind(deck); // 绑定新实例到方法
+            }
+        
+            return deck;
+        }
     }
 
     class Game {
@@ -189,13 +207,12 @@ if (!ext) {
             this.data = {};
             this.status = false;
             this.players = [];
-            this.order = [];
             this.round = 0;
             this.turn = 0;
             this.currentPlayer = null;
             this.currentDeck = null;
-            this.mainDeck = deckMap['主牌堆'];
-            this.discardDeck = deckMap['弃牌堆'];
+            this.mainDeck = deckMap['主牌堆'].clone();
+            this.discardDeck = deckMap['弃牌堆'].clone();
         }
 
         start(ctx, msg) {
@@ -204,54 +221,55 @@ if (!ext) {
                 return;
             }
 
-            this.status = true;
             const team = globalThis.team.getBindData(this.id);
             this.players = team.members.map(id => new Player(id));
+
+            if (this.players.length < 2 || this.players.length > 4) {
+                seal.replyToSender(ctx, msg, '玩家数量错误');
+                return;
+            }
+
+            this.status = true;
 
             //发牌等逻辑
 
             seal.replyToSender(ctx, msg, '游戏开始');
-            this.startRound(ctx, msg);
+            this.nextRound(ctx, msg);
         }
 
         end(ctx, msg) {
             this.status = false;
             this.players = [];
-            this.order = [];
             this.round = 0;
             this.turn = 0;
             this.currentPlayer = null;
             this.currentDeck = null;
-            this.mainDeck = deckMap['主牌堆'];
-            this.discardDeck = deckMap['弃牌堆'];
+            this.mainDeck = deckMap['主牌堆'].clone();
+            this.discardDeck = deckMap['弃牌堆'].clone();
 
             seal.replyToSender(ctx, msg, '游戏结束');
         }
 
-        startRound(ctx, msg) {
-            this.round++;
-            this.order = this.players.slice();
-            this.startTurn(ctx, msg);
-        }
-
-        endRound(ctx, msg) {
-            this.order = [];
+        nextRound(ctx, msg) {
             this.turn = 0;
-            this.currentPlayer = null;
-            this.startRound(ctx, msg);
+            this.round++;
+            this.nextTurn(ctx, msg);
         }
 
-        startTurn(ctx, msg) {
-            if (this.order.length === 0) {
-                this.endRound(ctx, msg);
+        nextTurn(ctx, msg) {
+            if (this.turn == 0) {
+                this.currentPlayer = this.players[0];
+            } else {
+                const index = this.players.findIndex(player => player.id === this.currentPlayer.id);
+                if (index == this.players.length - 1) {
+                    this.nextRound(ctx, msg);
+                    return;
+                }
+
+                this.currentPlayer = this.players[index + 1];
             }
-
+            
             this.turn++;
-            this.currentPlayer = this.order.splice(0, 1);
-        }
-
-        endTurn(ctx, msg) {
-            this.startTurn(ctx, msg);
         }
 
         play(ctx, msg, name) {
@@ -265,7 +283,7 @@ if (!ext) {
                 return;
             }
 
-            const deck = deckMap[name];
+            const deck = deckMap[name].clone();
             if (!this.currentPlayer.hand.check(deck.cards)) {
                 seal.replyToSender(ctx, msg, '手牌不足');
                 return;
@@ -275,6 +293,7 @@ if (!ext) {
             this.discardDeck.add(this.currentDeck.cards);
             this.currentDeck = deck;
             deck.solve(ctx, msg, this, this.currentPlayer);
+            this.nextTurn(ctx, msg);
         }
     }
 
