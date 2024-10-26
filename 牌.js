@@ -148,6 +148,21 @@ if (!ext) {
             return this.cards.splice(position, count, cards);
         }
 
+        remove(cards) {
+            if (cards.length === 0 || this.cards.length === 0 || !this.check(cards)) {
+                return;
+            }
+
+            for (let i = 0; i < cards.length; i++) {
+                const card = cards[i];
+                const index = this.cards.indexOf(card);
+
+                if (index!== -1) {
+                    this.cards.splice(index, 1);
+                }
+            }
+        }
+
         check(cards) {
             let available = this.cards.slice();
             let isValid = true;
@@ -183,18 +198,23 @@ if (!ext) {
             this.discardDeck = deckMap['弃牌堆'];
         }
 
-        start() {
-            this.end();
+        start(ctx, msg) {
+            if (this.status) {
+                seal.replyToSender(ctx, msg, '游戏已开始');
+                return;
+            }
+
             this.status = true;
             const team = globalThis.team.getBindData(this.id);
             this.players = team.members.map(id => new Player(id));
 
             //发牌等逻辑
 
-            this.startRound();
+            seal.replyToSender(ctx, msg, '游戏开始');
+            this.startRound(ctx, msg);
         }
 
-        end() {
+        end(ctx, msg) {
             this.status = false;
             this.players = [];
             this.order = [];
@@ -204,32 +224,34 @@ if (!ext) {
             this.currentDeck = null;
             this.mainDeck = deckMap['主牌堆'];
             this.discardDeck = deckMap['弃牌堆'];
+
+            seal.replyToSender(ctx, msg, '游戏结束');
         }
 
-        startRound() {
+        startRound(ctx, msg) {
             this.round++;
             this.order = this.players.slice();
-            this.startTurn();
+            this.startTurn(ctx, msg);
         }
 
-        endRound() {
+        endRound(ctx, msg) {
             this.order = [];
             this.turn = 0;
             this.currentPlayer = null;
-            this.startRound();
+            this.startRound(ctx, msg);
         }
 
-        startTurn() {
+        startTurn(ctx, msg) {
             if (this.order.length === 0) {
-                this.endRound();
+                this.endRound(ctx, msg);
             }
 
             this.turn++;
             this.currentPlayer = this.order.splice(0, 1);
         }
 
-        endTurn() {
-            this.startTurn();
+        endTurn(ctx, msg) {
+            this.startTurn(ctx, msg);
         }
 
         play(ctx, msg, name) {
@@ -248,7 +270,9 @@ if (!ext) {
                 seal.replyToSender(ctx, msg, '手牌不足');
                 return;
             }
-            
+
+            this.currentPlayer.hand.remove(deck.cards);
+            this.discardDeck.add(this.currentDeck.cards);
             this.currentDeck = deck;
             deck.solve(ctx, msg, this, this.currentPlayer);
         }
@@ -290,15 +314,13 @@ if (!ext) {
         switch (val) {
             case 'start': {
                 const game = getData(id);
-                game.start();
-                seal.replyToSender(ctx, msg, '游戏开始');
+                game.start(ctx, msg);
                 saveData(id);
                 return;
             }
             case 'end': {
                 const game = getData(id);
-                game.end();
-                seal.replyToSender(ctx, msg, '游戏结束');
+                game.end(ctx, msg);
                 saveData(id);
                 return;
             }
