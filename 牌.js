@@ -66,8 +66,8 @@ if (!ext) {
         game.players = (savedData.players || []).map(player => getPlayerData(player));
         game.round = savedData.round || 0;
         game.turn = savedData.turn || 0;
-        game.currentPlayer = savedData.currentPlayer ? getPlayerData(savedData.currentPlayer) : null;
-        game.currentDeck = savedData.currentDeck ? getDeckData(savedData.currentDeck) : null;
+        game.currentPlayerId = savedData.currentPlayerId || '';
+        game.currentDeckName = savedData.currentDeckName || '';
         game.mainDeck = savedData.mainDeck ? getDeckData(savedData.mainDeck) : deckMap['主牌堆'].clone();
         game.discardDeck = savedData.discardDeck ? getDeckData(savedData.discardDeck) : deckMap['弃牌堆'].clone();
 
@@ -225,8 +225,8 @@ if (!ext) {
             this.players = [];//玩家对象的数组
             this.round = 0;//回合数
             this.turn = 0;//一个回合内的轮次数
-            this.currentPlayer = null;//当前需要做出动作的玩家
-            this.currentDeck = null;//当前场上的牌组，进入弃牌堆的缓冲区
+            this.currentPlayerId = '';//当前需要做出动作的玩家
+            this.currentDeckName = '';//当前场上的牌组，进入弃牌堆的缓冲区
             this.mainDeck = deckMap['主牌堆'].clone();//包含所有卡牌的牌组
             this.discardDeck = deckMap['弃牌堆'].clone();//丢弃的卡牌
         }
@@ -263,8 +263,8 @@ if (!ext) {
             this.players = [];
             this.round = 0;
             this.turn = 0;
-            this.currentPlayer = null;
-            this.currentDeck = null;
+            this.currentPlayerId = '';
+            this.currentDeckName = '';
             this.mainDeck = deckMap['主牌堆'].clone();
             this.discardDeck = deckMap['弃牌堆'].clone();
         }
@@ -279,15 +279,15 @@ if (!ext) {
         //进入下一轮
         nextTurn(ctx, msg) {
             if (this.turn == 0) {
-                this.currentPlayer = this.players[0];
+                this.currentPlayerId = this.players[0].id;
             } else {
-                const index = this.players.findIndex(player => player.id === this.currentPlayer.id);
+                const index = this.players.findIndex(player => player.id === this.currentPlayerId);
                 if (index == this.players.length - 1) {
                     this.nextRound(ctx, msg);
                     return;
                 }
 
-                this.currentPlayer = this.players[index + 1];
+                this.currentPlayerId = this.players[index + 1].id;
             }
             
             this.turn++;
@@ -295,7 +295,7 @@ if (!ext) {
 
         //打出某张牌的方法
         play(ctx, msg, name) {
-            if (ctx.player.uerId !== this.currentPlayer.id) {
+            if (ctx.player.userId !== this.currentPlayerId) {
                 seal.replyToSender(ctx, msg, '不是当前玩家');
                 return;
             }
@@ -305,17 +305,19 @@ if (!ext) {
                 return;
             }
 
+            const index = this.players.findIndex(player => player.id === this.currentPlayerId);
+            const player = this.players[index];
             const deck = deckMap[name].clone();
-            if (!this.currentPlayer.hand.check(deck.cards)) {
+            if (!player.hand.check(deck.cards)) {
                 seal.replyToSender(ctx, msg, '手牌不足');
                 return;
             }
 
-            this.currentPlayer.hand.remove(deck.cards);
-            this.discardDeck.add(this.currentDeck.cards);
-            this.currentDeck = deck;
+            player.hand.remove(deck.cards);
+            this.discardDeck.add(deck.cards);
+            this.currentDeckName = deck.name;
 
-            deck.solve(ctx, msg, this, this.currentPlayer);
+            deck.solve(ctx, msg, this, player);
             this.nextTurn(ctx, msg);//进入下一轮
             return;
         }
