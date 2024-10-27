@@ -224,6 +224,18 @@ if (!ext) {
 
             return deck;
         }
+
+        //按照rank排序
+        sort() {
+            const ranks = ['3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', '2', '小王', '大王'];
+
+            // 使用 sort 方法和比较函数进行排序
+            this.cards.sort((a, b) => {
+                const indexA = ranks.indexOf(a);
+                const indexB = ranks.indexOf(b);
+                return indexA - indexB;
+            });
+        }
     }
 
     class Game {
@@ -312,7 +324,7 @@ if (!ext) {
 
                 this.currentPlayerId = this.players[index + 1].id;
             }
-            
+
             this.turn++;
         }
 
@@ -396,7 +408,7 @@ if (!ext) {
             const deck = new Deck(card);
             deck.type = 'single';
             deck.cards = [card];
-            deck.solve = (ctx, msg, game, player) => {}
+            deck.solve = (ctx, msg, game, player) => { }
             deck.data = {
                 suit: suit,
                 value: value
@@ -408,7 +420,7 @@ if (!ext) {
     const deckTurtle = new Deck('乌龟');
     deckTurtle.type = 'single';
     deckTurtle.cards = ['乌龟'];
-    deckTurtle.solve = (ctx, msg, game, player) => {}
+    deckTurtle.solve = (ctx, msg, game, player) => { }
     deckTurtle.data = {
         suit: '乌龟',
         value: '乌龟'
