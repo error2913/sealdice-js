@@ -175,7 +175,7 @@ if (!ext) {
                 const card = cards[i];
                 const index = this.cards.indexOf(card);
 
-                if (index!== -1) {
+                if (index !== -1) {
                     this.cards.splice(index, 1);
                 }
             }
@@ -190,7 +190,7 @@ if (!ext) {
                 const card = cards[i];
                 const index = available.indexOf(card);
 
-                if (index!== -1) {
+                if (index !== -1) {
                     available.splice(index, 1);
                 } else {
                     isValid = false;
@@ -207,13 +207,25 @@ if (!ext) {
             deck.data = JSON.parse(JSON.stringify(this.data)); // 深拷贝data对象
             deck.type = this.type;
             deck.cards = this.cards.slice(); // 复制cards数组，确保独立副本
-        
+
             // 如果solve方法依赖于Deck实例的状态，确保正确复制或绑定
             if (typeof this.solve === 'function') {
                 deck.solve = this.solve.bind(deck); // 绑定新实例到方法
             }
-        
+
             return deck;
+        }
+
+        //按照rank排序
+        sort() {
+            const ranks = ['3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', '2', '小王', '大王'];
+
+            // 使用 sort 方法和比较函数进行排序
+            this.cards.sort((a, b) => {
+                const indexA = ranks.indexOf(a);
+                const indexB = ranks.indexOf(b);
+                return indexA - indexB;
+            });
         }
     }
 
@@ -258,7 +270,7 @@ if (!ext) {
         //结束游戏
         end(ctx, msg) {
             seal.replyToSender(ctx, msg, '游戏结束');
-            
+
             this.status = false;
             this.players = [];
             this.round = 0;
@@ -289,7 +301,7 @@ if (!ext) {
 
                 this.currentPlayerId = this.players[index + 1].id;
             }
-            
+
             this.turn++;
         }
 
@@ -337,14 +349,14 @@ if (!ext) {
     const deckMain = new Deck('主牌堆');
     deckMain.type = 'public';
     deckMain.cards = [];
-    deckMain.solve = (ctx, msg, game, player) => {}
+    deckMain.solve = (ctx, msg, game, player) => { }
     deckMap['主牌堆'] = deckMain;
 
     //注册弃牌堆
     const deckDiscard = new Deck('弃牌堆');
     deckDiscard.type = 'public';
     deckDiscard.cards = [];
-    deckDiscard.solve = (ctx, msg, game, player) => {}
+    deckDiscard.solve = (ctx, msg, game, player) => { }
     deckMap['弃牌堆'] = deckDiscard;
 
     //注册指令
