@@ -87,8 +87,8 @@ if (!ext) {
         game.players = (savedData.players || []).map(player => getPlayerData(player));
         game.round = savedData.round || 0;
         game.turn = savedData.turn || 0;
-        game.currentPlayer = savedData.currentPlayer ? getPlayerData(savedData.currentPlayer) : null;
-        game.currentDeck = savedData.currentDeck ? getDeckData(savedData.currentDeck) : null;
+        game.currentPlayerId = savedData.currentPlayerId || '';
+        game.currentDeckName = savedData.currentDeckName || '';
         game.mainDeck = savedData.mainDeck ? getDeckData(savedData.mainDeck) : deckMap['主牌堆'].clone();
         game.discardDeck = savedData.discardDeck ? getDeckData(savedData.discardDeck) : deckMap['弃牌堆'].clone();
 
@@ -234,8 +234,8 @@ if (!ext) {
             this.players = [];
             this.round = 0;
             this.turn = 0;
-            this.currentPlayer = null;
-            this.currentDeck = null;
+            this.currentPlayerId = '';//当前需要做出动作的玩家
+            this.currentDeckName = '';//当前场上的牌组，进入弃牌堆的缓冲区
             this.mainDeck = deckMap['主牌堆'].clone();
             this.discardDeck = deckMap['弃牌堆'].clone();
         }
@@ -288,8 +288,8 @@ if (!ext) {
             this.players = [];
             this.round = 0;
             this.turn = 0;
-            this.currentPlayer = null;
-            this.currentDeck = null;
+            this.currentPlayerId = '';
+            this.currentDeckName = '';
             this.mainDeck = deckMap['主牌堆'].clone();
             this.discardDeck = deckMap['弃牌堆'].clone();
         }
@@ -302,34 +302,35 @@ if (!ext) {
 
         nextTurn(ctx, msg) {
             if (this.turn == 0) {
-                this.currentPlayer = this.players[0];
+                this.currentPlayerId = this.players[0].id;
             } else {
-                const index = this.players.findIndex(player => player.id === this.currentPlayer.id);
+                const index = this.players.findIndex(player => player.id === this.currentPlayerId);
                 if (index == this.players.length - 1) {
                     this.nextRound(ctx, msg);
                     return;
                 }
 
-                this.currentPlayer = this.players[index + 1];
+                this.currentPlayerId = this.players[index + 1].id;
             }
-
+            
             this.turn++;
         }
 
         play(ctx, msg, position = -1) {
-            if (ctx.player.userId !== this.currentPlayer.id) {
+            if (ctx.player.userId !== this.currentPlayerId) {
                 seal.replyToSender(ctx, msg, '不是当前玩家');
                 return;
             }
 
-            const index = this.players.findIndex(player => player.id === this.currentPlayer.id);
-            const name = getName(ctx, msg, this.currentPlayer.id)
+            const index = this.players.findIndex(player => player.id === this.currentPlayerId);
+            const player = this.players[index];
+            const name = getName(ctx, msg, player.id)
 
             let anotherIndex = index < this.players.length - 1 ? (index + 1) : 0;
             let anotherPlayer = this.players[anotherIndex];
             let anotherName = getName(ctx, msg, anotherPlayer.id);
 
-            let text = `${name}(${this.currentPlayer.hand.cards.length})抽了${anotherName}(${anotherPlayer.hand.cards.length})一张牌\n`
+            let text = `${name}(${player.hand.cards.length})抽了${anotherName}(${anotherPlayer.hand.cards.length})一张牌\n`
             const cards = anotherPlayer.hand.draw(position);
             const card1 = cards[0];
             replyPrivate(ctx, msg, `你抽到了${card1}`);
@@ -345,15 +346,15 @@ if (!ext) {
                 anotherName = getName(ctx, msg, anotherPlayer.id);
             }
 
-            const cardIndex = this.currentPlayer.hand.cards.findIndex(item => deckMap[item].data.value === deckMap[card1].data.value);
+            const cardIndex = player.hand.cards.findIndex(item => deckMap[item].data.value === deckMap[card1].data.value);
             if (cardIndex === -1) {
-                this.currentPlayer.hand.add(cards);
+                player.hand.add(cards);
                 text += `什么都没发生\n`;
             } else {
-                const card2 = this.currentPlayer.hand.cards.splice(cardIndex, 1)[0];
+                const card2 = player.hand.cards.splice(cardIndex, 1)[0];
                 text += `${name}打出了${card1}、${card2}\n`
 
-                if (this.currentPlayer.hand.cards.length === 0) {
+                if (player.hand.cards.length === 0) {
                     this.players.splice(index, 1);
                     text += `${name}没有牌了，退出游戏\n`
                 }
@@ -386,7 +387,7 @@ if (!ext) {
     }
 
 
-    const suits = ['黑桃', '红桃', '梅花', '方片'];
+    const suits = ['♠', '♥', '♣', '♦'];
     const values = ['A', 'K', 'Q', 'J', '10', '9', '8', '7', '6', '5', '4', '3', '2'];
 
     suits.forEach(suit => {
@@ -416,19 +417,19 @@ if (!ext) {
 
     const cards = [
         '乌龟',
-        '黑桃A', '红桃A', '梅花A', '方片A',
-        '黑桃K', '红桃K', '梅花K', '方片K',
-        '黑桃Q', '红桃Q', '梅花Q', '方片Q',
-        '黑桃J', '红桃J', '梅花J', '方片J',
-        '黑桃10', '红桃10', '梅花10', '方片10',
-        '黑桃9', '红桃9', '梅花9', '方片9',
-        '黑桃8', '红桃8', '梅花8', '方片8',
-        '黑桃7', '红桃7', '梅花7', '方片7',
-        '黑桃6', '红桃6', '梅花6', '方片6',
-        '黑桃5', '红桃5', '梅花5', '方片5',
-        '黑桃4', '红桃4', '梅花4', '方片4',
-        '黑桃3', '红桃3', '梅花3', '方片3',
-        '黑桃2', '红桃2', '梅花2', '方片2'
+        '♠A', '♥A', '♣A', '♦A',
+        '♠K', '♥K', '♣K', '♦K',
+        '♠Q', '♥Q', '♣Q', '♦Q',
+        '♠J', '♥J', '♣J', '♦J',
+        '♠10', '♥10', '♣10', '♦10',
+        '♠9', '♥9', '♣9', '♦9',
+        '♠8', '♥8', '♣8', '♦8',
+        '♠7', '♥7', '♣7', '♦7',
+        '♠6', '♥6', '♣6', '♦6',
+        '♠5', '♥5', '♣5', '♦5',
+        '♠4', '♥4', '♣4', '♦4',
+        '♠3', '♥3', '♣3', '♦3',
+        '♠2', '♥2', '♣2', '♦2'
     ]
 
     const deckMain = new Deck('主牌堆');
