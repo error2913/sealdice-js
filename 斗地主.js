@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         斗地主
 // @author       错误
-// @version      1.0.0
+// @version      1.0.1
 // @description  指令 .ddz help 获取帮助。依赖于错误:team:>=3.1.1
 // @timestamp    1729847396
 // 2024-10-25 17:09:56
@@ -12,10 +12,11 @@
 // 首先检查是否已经存在
 let ext = seal.ext.find('FightWithLandlord');
 if (!ext) {
-    ext = seal.ext.new('FightWithLandlord', '错误', '1.0.0');
+    ext = seal.ext.new('FightWithLandlord', '错误', '1.0.1');
     seal.ext.register(ext);
     const deckMap = {};
     const data = {}
+    let loaded = false;
 
     // 获取并解析game对象的数据
     function getData(id) {
@@ -410,261 +411,6 @@ if (!ext) {
         }
     }
 
-    //              0    1    2    3    4    5    6    7     8    9   10    11   12    13     14
-    const ranks = ['3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', '2', '小王', '大王'];
-
-    function getC(n, selected = [], index = 0) {
-        const result = [];
-        if (selected.length === n) {
-            result.push([...selected]);
-        } else {
-            for (let i = index; i < ranks.length; i++) {
-                selected.push(ranks[i]);
-                result.push(...getC(n, selected, i));
-                selected.pop();
-            }
-        }
-        return result;
-    }
-
-    const cMap = {
-        2: getC(2),
-        3: getC(3),
-        4: getC(4),
-        5: getC(5)
-    }
-
-    const deckBomb = new Deck(`王炸`);
-    deckBomb.type = 'bomb';
-    deckBomb.cards = ['大王', '小王'];
-    deckBomb.solve = (ctx, msg, game, player) => { }
-    deckBomb.data = {
-        value: 13
-    }
-    deckMap[`小王大王`] = deckBomb;
-    deckMap[`王炸`] = deckBomb;
-
-    for (let value = 0; value < ranks.length; value++) {
-        const card = ranks[value];
-
-        const deck = new Deck(card);
-        deck.type = 'single';
-        deck.cards = [card];
-        deck.solve = (ctx, msg, game, player) => { }
-        deck.data = {
-            value: value
-        }
-        deckMap[card] = deck;
-        deckMap[`单${card}`] = deck;
-
-        if (value > 12) {
-            continue;
-        }
-
-        const deckPair = new Deck(`${card}${card}`);
-        deckPair.type = 'pair';
-        deckPair.cards = [card, card];
-        deckPair.solve = (ctx, msg, game, player) => { }
-        deckPair.data = {
-            value: value
-        }
-        deckMap[`${card}${card}`] = deckPair;
-        deckMap[`对${card}`] = deckPair;
-
-        const deckTriple = new Deck(`${card}${card}${card}`);
-        deckTriple.type = 'triple';
-        deckTriple.cards = [card, card, card];
-        deckTriple.solve = (ctx, msg, game, player) => { }
-        deckTriple.data = {
-            value: value
-        }
-        deckMap[`${card}${card}${card}`] = deckTriple;
-        deckMap[`三个${card}`] = deckTriple;
-        deckMap[`三${card}`] = deckTriple;
-
-        for (let i = 0; i < ranks.length; i++) {
-            if (ranks[i] == card) {
-                continue;
-            }
-
-            const card2 = ranks[i];
-
-            const cards1 = [card, card, card, card2];
-            const deck1 = new Deck(cards1.join(''));
-            deck1.type = 'triple1';
-            deck1.cards = cards1;
-            deck1.solve = (ctx, msg, game, player) => { }
-            deck1.data = {
-                value: value
-            }
-            deckMap[cards1.join('')] = deck1;
-            deckMap[`三${card}带${card2}`] = deck1;
-
-            if (i > 12) {
-                continue;
-            }
-
-            const cards2 = [card, card, card, card2, card2];
-            const deck2 = new Deck(cards2.join(''));
-            deck2.type = 'triple2';
-            deck2.cards = cards2;
-            deck2.solve = (ctx, msg, game, player) => { }
-            deck2.data = {
-                value: value
-            }
-            deckMap[cards2.join('')] = deck2;
-            deckMap[`三${card}带对${card2}`] = deck2;
-        }
-
-        const deckBomb = new Deck(`${card}${card}${card}${card}`);
-        deckBomb.type = 'bomb';
-        deckBomb.cards = [card, card, card, card];
-        deckBomb.solve = (ctx, msg, game, player) => { }
-        deckBomb.data = {
-            value: value
-        }
-        deckMap[`${card}${card}${card}${card}`] = deckBomb;
-        deckMap[`${card}炸`] = deckBomb;
-        deckMap[`四${card}`] = deckBomb;
-
-        const c = cMap[2];
-        for (let i = 0; i < c.length; i++) {
-            if (
-                c[i].includes(card) ||
-                (c[i][0] == '大王' && c[i][1] == '大王') ||
-                (c[i][0] == '小王' && c[i][1] == '小王')
-            ) {
-                continue;
-            }
-
-            const cards = c[i];
-
-            const cards1 = [card, card, card, card, ...cards]
-            const deck1 = new Deck(cards1.join(''));
-            deck1.type = 'bomb1';
-            deck1.cards = cards1;
-            deck1.solve = (ctx, msg, game, player) => { }
-            deck1.data = {
-                value: value
-            }
-            deckMap[cards1.join('')] = deck1;
-            deckMap[`四${card}带${cards.join('')}`] = deck1;
-
-            if (cards.includes('大王') || cards.includes('小王')) {
-                continue;
-            }
-
-            const cardsPair = cards.flatMap(card => [card, card])
-
-            const cards2 = [card, card, card, card, ...cardsPair]
-            const deck2 = new Deck(cards2.join(''));
-            deck2.type = 'bomb2';
-            deck2.cards = cards2;
-            deck2.solve = (ctx, msg, game, player) => { }
-            deck2.data = {
-                value: value
-            }
-            deckMap[cards2.join('')] = deck2;
-            deckMap[`四${card}带对${cards[0]}对${cards[1]}`] = deck2;
-        }
-
-        for (let i = 5; i < 13; i++) {
-            if (value < 13 - i) {
-                const cards = [];
-                for (let j = 0; j < i; j++) {
-                    cards.push(ranks[value + j]);
-                }
-
-                const deck = new Deck(cards.join(''));
-                deck.type = 'straight' + i;;
-                deck.cards = cards;
-                deck.solve = (ctx, msg, game, player) => { }
-                deck.data = {
-                    value: value
-                }
-                deckMap[cards.join('')] = deck;
-                deckMap[`顺${cards.join('')}`] = deck;
-            }
-        }
-
-        for (let i = 3; i < 11; i++) {
-            if (value < 13 - i) {
-                const cards = [];
-                for (let j = 0; j < i; j++) {
-                    cards.push(ranks[value + j], ranks[value + j]);
-                }
-
-                const deck = new Deck(cards.join(''));
-                deck.type = 'pairs' + i;
-                deck.cards = cards;
-                deck.solve = (ctx, msg, game, player) => { }
-                deck.data = {
-                    value: value
-                }
-                deckMap[cards.join('')] = deck;
-                deckMap[`连对${cards.join('')}`] = deck;
-            }
-        }
-
-        for (let i = 2; i < 6; i++) {
-            if (value < 13 - i) {
-                const cardsPlane = [];
-                for (let j = 0; j < i; j++) {
-                    cardsPlane.push(ranks[value + j], ranks[value + j], ranks[value + j]);
-                }
-
-                const deck = new Deck(cardsPlane.join(''));
-                deck.type = 'plane' + i;
-                deck.cards = cardsPlane;
-                deck.solve = (ctx, msg, game, player) => { }
-                deck.data = {
-                    value: value
-                }
-                deckMap[cardsPlane.join('')] = deck;
-                deckMap[`飞机${cardsPlane.join('')}`] = deck;
-
-                const c = cMap[i];
-                for (let j = 0; j < c.length; j++) {
-                    if (
-                        c[j].filter(item => item === card).length > 1 ||
-                        c[j].filter(item => item === '大王').length > 1 ||
-                        c[j].filter(item => item === '小王').length > 1
-                    ) {
-                        continue;
-                    }
-
-                    const cards = c[j];
-
-                    const cards1 = [...cardsPlane, ...cards]
-                    const deck1 = new Deck(cards1.join(''));
-                    deck1.type = 'plane' + i + '1';
-                    deck1.cards = cards1;
-                    deck1.solve = (ctx, msg, game, player) => { }
-                    deck1.data = {
-                        value: value
-                    }
-                    deckMap[cards1.join('')] = deck1;
-
-                    if (i > 4 || cards.includes('大王') || cards.includes('小王')) {
-                        continue;
-                    }
-
-                    const cardsPair = cards.flatMap(card => [card, card])
-
-                    const cards2 = [...cardsPlane, ...cardsPair]
-                    const deck2 = new Deck(cards2.join(''));
-                    deck2.type = 'plane' + i + '2';
-                    deck2.cards = cards2;
-                    deck2.solve = (ctx, msg, game, player) => { }
-                    deck2.data = {
-                        value: value
-                    }
-                    deckMap[cards2.join('')] = deck2;
-                }
-            }
-        }
-    }
-
     const cards = [
         '大王', '小王',
         '2', '2', '2', '2',
@@ -713,7 +459,277 @@ JJJ4 三带一
     cmdPlay.disabledInPrivate = true;// 不允许私聊
     cmdPlay.solve = (ctx, msg, cmdArgs) => {
         let val = cmdArgs.getArgN(1);
+
+        if (val == 'load' && !loaded) {
+            seal.replyToSender(ctx, msg, '开始加载牌型');
+
+            //              0    1    2    3    4    5    6    7     8    9   10    11   12    13     14
+            const ranks = ['3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', '2', '小王', '大王'];
+
+            function getC(n, selected = [], index = 0) {
+                const result = [];
+                if (selected.length === n) {
+                    result.push([...selected]);
+                } else {
+                    for (let i = index; i < ranks.length; i++) {
+                        selected.push(ranks[i]);
+                        result.push(...getC(n, selected, i));
+                        selected.pop();
+                    }
+                }
+                return result;
+            }
+
+            const cMap = {
+                2: getC(2),
+                3: getC(3),
+                4: getC(4),
+                5: getC(5)
+            }
+
+            const deckBomb = new Deck(`王炸`);
+            deckBomb.type = 'bomb';
+            deckBomb.cards = ['大王', '小王'];
+            deckBomb.solve = (ctx, msg, game, player) => { }
+            deckBomb.data = {
+                value: 13
+            }
+            deckMap[`小王大王`] = deckBomb;
+            deckMap[`王炸`] = deckBomb;
+
+            for (let value = 0; value < ranks.length; value++) {
+                const card = ranks[value];
+
+                const deck = new Deck(card);
+                deck.type = 'single';
+                deck.cards = [card];
+                deck.solve = (ctx, msg, game, player) => { }
+                deck.data = {
+                    value: value
+                }
+                deckMap[card] = deck;
+                deckMap[`单${card}`] = deck;
+
+                if (value > 12) {
+                    continue;
+                }
+
+                const deckPair = new Deck(`${card}${card}`);
+                deckPair.type = 'pair';
+                deckPair.cards = [card, card];
+                deckPair.solve = (ctx, msg, game, player) => { }
+                deckPair.data = {
+                    value: value
+                }
+                deckMap[`${card}${card}`] = deckPair;
+                deckMap[`对${card}`] = deckPair;
+
+                const deckTriple = new Deck(`${card}${card}${card}`);
+                deckTriple.type = 'triple';
+                deckTriple.cards = [card, card, card];
+                deckTriple.solve = (ctx, msg, game, player) => { }
+                deckTriple.data = {
+                    value: value
+                }
+                deckMap[`${card}${card}${card}`] = deckTriple;
+                deckMap[`三个${card}`] = deckTriple;
+                deckMap[`三${card}`] = deckTriple;
+
+                for (let i = 0; i < ranks.length; i++) {
+                    if (ranks[i] == card) {
+                        continue;
+                    }
+
+                    const card2 = ranks[i];
+
+                    const cards1 = [card, card, card, card2];
+                    const deck1 = new Deck(cards1.join(''));
+                    deck1.type = 'triple1';
+                    deck1.cards = cards1;
+                    deck1.solve = (ctx, msg, game, player) => { }
+                    deck1.data = {
+                        value: value
+                    }
+                    deckMap[cards1.join('')] = deck1;
+                    deckMap[`三${card}带${card2}`] = deck1;
+
+                    if (i > 12) {
+                        continue;
+                    }
+
+                    const cards2 = [card, card, card, card2, card2];
+                    const deck2 = new Deck(cards2.join(''));
+                    deck2.type = 'triple2';
+                    deck2.cards = cards2;
+                    deck2.solve = (ctx, msg, game, player) => { }
+                    deck2.data = {
+                        value: value
+                    }
+                    deckMap[cards2.join('')] = deck2;
+                    deckMap[`三${card}带对${card2}`] = deck2;
+                }
+
+                const deckBomb = new Deck(`${card}${card}${card}${card}`);
+                deckBomb.type = 'bomb';
+                deckBomb.cards = [card, card, card, card];
+                deckBomb.solve = (ctx, msg, game, player) => { }
+                deckBomb.data = {
+                    value: value
+                }
+                deckMap[`${card}${card}${card}${card}`] = deckBomb;
+                deckMap[`${card}炸`] = deckBomb;
+                deckMap[`四${card}`] = deckBomb;
+
+                const c = cMap[2];
+                for (let i = 0; i < c.length; i++) {
+                    if (
+                        c[i].includes(card) ||
+                        (c[i][0] == '大王' && c[i][1] == '大王') ||
+                        (c[i][0] == '小王' && c[i][1] == '小王')
+                    ) {
+                        continue;
+                    }
+
+                    const cards = c[i];
+
+                    const cards1 = [card, card, card, card, ...cards]
+                    const deck1 = new Deck(cards1.join(''));
+                    deck1.type = 'bomb1';
+                    deck1.cards = cards1;
+                    deck1.solve = (ctx, msg, game, player) => { }
+                    deck1.data = {
+                        value: value
+                    }
+                    deckMap[cards1.join('')] = deck1;
+                    deckMap[`四${card}带${cards.join('')}`] = deck1;
+
+                    if (cards.includes('大王') || cards.includes('小王')) {
+                        continue;
+                    }
+
+                    const cardsPair = cards.flatMap(card => [card, card])
+
+                    const cards2 = [card, card, card, card, ...cardsPair]
+                    const deck2 = new Deck(cards2.join(''));
+                    deck2.type = 'bomb2';
+                    deck2.cards = cards2;
+                    deck2.solve = (ctx, msg, game, player) => { }
+                    deck2.data = {
+                        value: value
+                    }
+                    deckMap[cards2.join('')] = deck2;
+                    deckMap[`四${card}带对${cards[0]}对${cards[1]}`] = deck2;
+                }
+
+                for (let i = 5; i < 13; i++) {
+                    if (value < 13 - i) {
+                        const cards = [];
+                        for (let j = 0; j < i; j++) {
+                            cards.push(ranks[value + j]);
+                        }
+
+                        const deck = new Deck(cards.join(''));
+                        deck.type = 'straight' + i;;
+                        deck.cards = cards;
+                        deck.solve = (ctx, msg, game, player) => { }
+                        deck.data = {
+                            value: value
+                        }
+                        deckMap[cards.join('')] = deck;
+                        deckMap[`顺${cards.join('')}`] = deck;
+                    }
+                }
+
+                for (let i = 3; i < 11; i++) {
+                    if (value < 13 - i) {
+                        const cards = [];
+                        for (let j = 0; j < i; j++) {
+                            cards.push(ranks[value + j], ranks[value + j]);
+                        }
+
+                        const deck = new Deck(cards.join(''));
+                        deck.type = 'pairs' + i;
+                        deck.cards = cards;
+                        deck.solve = (ctx, msg, game, player) => { }
+                        deck.data = {
+                            value: value
+                        }
+                        deckMap[cards.join('')] = deck;
+                        deckMap[`连对${cards.join('')}`] = deck;
+                    }
+                }
+
+                for (let i = 2; i < 6; i++) {
+                    if (value < 13 - i) {
+                        const cardsPlane = [];
+                        for (let j = 0; j < i; j++) {
+                            cardsPlane.push(ranks[value + j], ranks[value + j], ranks[value + j]);
+                        }
+
+                        const deck = new Deck(cardsPlane.join(''));
+                        deck.type = 'plane' + i;
+                        deck.cards = cardsPlane;
+                        deck.solve = (ctx, msg, game, player) => { }
+                        deck.data = {
+                            value: value
+                        }
+                        deckMap[cardsPlane.join('')] = deck;
+                        deckMap[`飞机${cardsPlane.join('')}`] = deck;
+
+                        const c = cMap[i];
+                        for (let j = 0; j < c.length; j++) {
+                            if (
+                                c[j].filter(item => item === card).length > 1 ||
+                                c[j].filter(item => item === '大王').length > 1 ||
+                                c[j].filter(item => item === '小王').length > 1
+                            ) {
+                                continue;
+                            }
+
+                            const cards = c[j];
+
+                            const cards1 = [...cardsPlane, ...cards]
+                            const deck1 = new Deck(cards1.join(''));
+                            deck1.type = 'plane' + i + '1';
+                            deck1.cards = cards1;
+                            deck1.solve = (ctx, msg, game, player) => { }
+                            deck1.data = {
+                                value: value
+                            }
+                            deckMap[cards1.join('')] = deck1;
+
+                            if (i > 4 || cards.includes('大王') || cards.includes('小王')) {
+                                continue;
+                            }
+
+                            const cardsPair = cards.flatMap(card => [card, card])
+
+                            const cards2 = [...cardsPlane, ...cardsPair]
+                            const deck2 = new Deck(cards2.join(''));
+                            deck2.type = 'plane' + i + '2';
+                            deck2.cards = cards2;
+                            deck2.solve = (ctx, msg, game, player) => { }
+                            deck2.data = {
+                                value: value
+                            }
+                            deckMap[cards2.join('')] = deck2;
+                        }
+                    }
+                }
+            }
+
+            seal.replyToSender(ctx, msg, '牌型加载完成');
+            loaded = true;
+            return;
+        }
+
+        if (!loaded) {
+            seal.replyToSender(ctx, msg, '牌型未加载，请使用【.ddz load】加载牌型');
+            return;
+        }
+
         const id = ctx.group.groupId;
+
         switch (val) {
             case 'start': {
                 const game = getData(id);
