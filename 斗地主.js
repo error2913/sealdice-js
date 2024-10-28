@@ -2,17 +2,17 @@
 // @name         斗地主
 // @author       错误
 // @version      1.0.0
-// @description  待完善
+// @description  指令 .ddz help 获取帮助。依赖于错误:team:>=3.1.1
 // @timestamp    1729847396
 // 2024-10-25 17:09:56
 // @license      MIT
-// @homepageURL  https://github.com/sealdice/javascript
+// @homepageURL  https://github.com/error2913/sealdice-js/
 // @depends 错误:team:>=3.1.1
 // ==/UserScript==
 // 首先检查是否已经存在
-let ext = seal.ext.find('cardFramework');
+let ext = seal.ext.find('FightWithLandlord');
 if (!ext) {
-    ext = seal.ext.new('cardFramework', '错误', '1.0.0');
+    ext = seal.ext.new('FightWithLandlord', '错误', '1.0.0');
     seal.ext.register(ext);
     const deckMap = {};
     const data = {}
@@ -66,8 +66,8 @@ if (!ext) {
         game.players = (savedData.players || []).map(player => getPlayerData(player));
         game.round = savedData.round || 0;
         game.turn = savedData.turn || 0;
-        game.currentPlayerId = savedData.currentPlayerId || '';
-        game.currentDeckName = savedData.currentDeckName || '';
+        game.curPlayerId = savedData.curPlayerId || '';
+        game.curDeckName = savedData.curDeckName || '';
         game.mainDeck = savedData.mainDeck ? getDeckData(savedData.mainDeck) : deckMap['主牌堆'].clone();
         game.discardDeck = savedData.discardDeck ? getDeckData(savedData.discardDeck) : deckMap['弃牌堆'].clone();
 
@@ -215,18 +215,6 @@ if (!ext) {
 
             return deck;
         }
-
-        //按照rank排序
-        sort() {
-            const ranks = ['3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', '2', '小王', '大王'];
-
-            // 使用 sort 方法和比较函数进行排序
-            this.cards.sort((a, b) => {
-                const indexA = ranks.indexOf(a);
-                const indexB = ranks.indexOf(b);
-                return indexA - indexB;
-            });
-        }
     }
 
     class Game {
@@ -237,8 +225,8 @@ if (!ext) {
             this.players = [];//玩家对象的数组
             this.round = 0;//回合数
             this.turn = 0;//一个回合内的轮次数
-            this.currentPlayerId = '';//当前需要做出动作的玩家
-            this.currentDeckName = '';//当前场上的牌组，进入弃牌堆的缓冲区
+            this.curPlayerId = '';//当前需要做出动作的玩家
+            this.curDeckName = '';//当前场上的牌组
             this.mainDeck = deckMap['主牌堆'].clone();//包含所有卡牌的牌组
             this.discardDeck = deckMap['弃牌堆'].clone();//丢弃的卡牌
         }
@@ -259,35 +247,57 @@ if (!ext) {
                 return;
             }
 
+            //决定地主
+            for (let i = 2; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [this.players[i], this.players[j]] = [this.players[j], this.players[i]];
+            }
+
+            this.players[0].data.class = '地主';
+            this.players[1].data.class = '农民';
+            this.players[2].data.class = '农民';
+
             this.status = true;
 
             //发牌等逻辑
-            this.data.landlordId = '';
+            this.data.curDeckPlayerId = this.players[0].id;
             this.mainDeck.shuffle();
+
+            const cards = this.mainDeck.cards.splice(0, 3);
+            this.players[0].hand.add(cards);
+            seal.replyToSender(ctx, msg, `地主的底牌为：\n${cards.join('\n')}`);
+
             for (let i = 0; i < this.players.length; i++) {
                 const cards = this.mainDeck.cards.splice(0, 17);
                 const player = this.players[i];
                 player.hand.add(cards);
-                player.hand.sort();
+
+                //排序
+                const ranks = ['3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', '2', '小王', '大王'];
+                player.hand.cards.sort((a, b) => {
+                    const indexA = ranks.indexOf(a);
+                    const indexB = ranks.indexOf(b);
+                    return indexA - indexB;
+                });
 
                 replyPrivate(ctx, msg, player.hand.cards.join('\n'), player.id);
             }
 
             const name = getName(ctx, msg, this.players[0].id)
-            seal.replyToSender(ctx, msg, `游戏开始，从${name}开始叫地主`);
+            seal.replyToSender(ctx, msg, `游戏开始，从地主${name}开始`);
             this.nextRound(ctx, msg);
         }
 
         //结束游戏
         end(ctx, msg) {
-            seal.replyToSender(ctx, msg, '游戏结束');
+            seal.replyToSender(ctx, msg, `游戏结束:回合数${this.round}`);
 
             this.status = false;
             this.players = [];
             this.round = 0;
             this.turn = 0;
-            this.currentPlayerId = '';
-            this.currentDeckName = '';
+            this.curPlayerId = '';
+            this.curDeckName = '';
             this.mainDeck = deckMap['主牌堆'].clone();
             this.discardDeck = deckMap['弃牌堆'].clone();
         }
@@ -302,15 +312,15 @@ if (!ext) {
         //进入下一轮
         nextTurn(ctx, msg) {
             if (this.turn == 0) {
-                this.currentPlayerId = this.players[0].id;
+                this.curPlayerId = this.players[0].id;
             } else {
-                const index = this.players.findIndex(player => player.id === this.currentPlayerId);
+                const index = this.players.findIndex(player => player.id === this.curPlayerId);
                 if (index == this.players.length - 1) {
                     this.nextRound(ctx, msg);
                     return;
                 }
 
-                this.currentPlayerId = this.players[index + 1].id;
+                this.curPlayerId = this.players[index + 1].id;
             }
 
             this.turn++;
@@ -318,29 +328,73 @@ if (!ext) {
 
         //打出某张牌的方法
         play(ctx, msg, name) {
-            if (ctx.player.userId !== this.currentPlayerId) {
+            if (ctx.player.userId !== this.curPlayerId) {
                 seal.replyToSender(ctx, msg, '不是当前玩家');
                 return;
             }
 
-            if (!deckMap[name]) {
-                seal.replyToSender(ctx, msg, '未注册牌组');
+            const index = this.players.findIndex(player => player.id === this.curPlayerId);
+            const player = this.players[index];
+            const playerName = getName(ctx, msg, player.id)
+
+            const anotherIndex = index < this.players.length - 1 ? (index + 1) : 0;
+            const anotherPlayer = this.players[anotherIndex];
+            const anotherName = getName(ctx, msg, anotherPlayer.id);
+
+            if (name == 'SKIP' || name == 'PASS' || name == '不要' || name == '要不起' || name == '过' || name == '不出') {
+                if (this.data.curDeckPlayerId == this.curPlayerId) {
+                    seal.replyToSender(ctx, msg, '不能跳过');
+                    return;
+                }
+                seal.replyToSender(ctx, msg, `${playerName}跳过了，下一位是${anotherName}`);
+                this.nextTurn(ctx, msg);//进入下一轮
                 return;
             }
 
-            const index = this.players.findIndex(player => player.id === this.currentPlayerId);
-            const player = this.players[index];
+            if (!deckMap[name]) {
+                seal.replyToSender(ctx, msg, '未注册牌型');
+                return;
+            }
+
             const deck = deckMap[name].clone();
+
             if (!player.hand.check(deck.cards)) {
                 seal.replyToSender(ctx, msg, '手牌不足');
                 return;
             }
 
-            player.hand.remove(deck.cards);
-            this.discardDeck.add(deck.cards);
-            this.currentDeckName = deck.name;
+            if (this.data.curDeckPlayerId !== this.curPlayerId && this.curDeckName) {
+                const curDeck = deckMap[this.curDeckName].clone();
 
-            deck.solve(ctx, msg, this, player);
+                if (
+                    deck.type !== 'bomb' &&
+                    deck.type !== curDeck.type
+                ) {
+                    seal.replyToSender(ctx, msg, '牌型错误');
+                    return;
+                }
+
+                if (
+                    deck.type == curDeck.type &&
+                    deck.data.value <= curDeck.data.value
+                ) {
+                    seal.replyToSender(ctx, msg, '牌不够大');
+                    return;
+                }
+            }
+
+            player.hand.remove(deck.cards);
+            this.curDeckName = deck.name;
+            this.data.curDeckPlayerId = this.curPlayerId;
+
+            if (player.hand.cards.length == 0) {
+                seal.replyToSender(ctx, msg, `${player.data.class}${playerName}胜利了`);
+                this.end(ctx, msg);
+                return;
+            }
+
+            replyPrivate(ctx, msg, player.hand.cards.join('\n'));
+            seal.replyToSender(ctx, msg, `${playerName}打出了${name}，还剩${player.hand.cards.length}张牌。下一位是${anotherName}`);
             this.nextTurn(ctx, msg);//进入下一轮
             return;
         }
@@ -387,6 +441,7 @@ if (!ext) {
     deckBomb.data = {
         value: 13
     }
+    deckMap[`小王大王`] = deckBomb;
     deckMap[`王炸`] = deckBomb;
 
     for (let value = 0; value < ranks.length; value++) {
@@ -525,8 +580,7 @@ if (!ext) {
                 deck.cards = cards;
                 deck.solve = (ctx, msg, game, player) => { }
                 deck.data = {
-                    value: value,
-                    length: i
+                    value: value
                 }
                 deckMap[cards.join('')] = deck;
                 deckMap[`顺${cards.join('')}`] = deck;
@@ -545,8 +599,7 @@ if (!ext) {
                 deck.cards = cards;
                 deck.solve = (ctx, msg, game, player) => { }
                 deck.data = {
-                    value: value,
-                    length: i
+                    value: value
                 }
                 deckMap[cards.join('')] = deck;
                 deckMap[`连对${cards.join('')}`] = deck;
@@ -646,7 +699,17 @@ if (!ext) {
     //注册指令
     const cmdPlay = seal.ext.newCmdItemInfo();
     cmdPlay.name = 'ddz'; // 指令名字，可用中文
-    cmdPlay.help = `帮助：`;
+    cmdPlay.help = `帮助：
+【.ddz start】
+【.ddz end】
+【.ddz check】查看手牌
+【.ddz test 牌型名称】测试牌型是否存在
+【.ddz 牌型名称】出牌
+【.ddz 不要】跳过
+牌应当从小到大排列，附带的牌加在后边
+例如：
+JJJ4 三带一
+44455533AA 飞机带对子`;
     cmdPlay.disabledInPrivate = true;// 不允许私聊
     cmdPlay.solve = (ctx, msg, cmdArgs) => {
         let val = cmdArgs.getArgN(1);
@@ -664,13 +727,6 @@ if (!ext) {
                 saveData(id);
                 return;
             }
-            case 'play': {
-                const game = getData(id);
-                const name = cmdArgs.getRestArgsFrom(2);
-                game.play(ctx, msg, name)
-                saveData(id)
-                return;
-            }
             case 'test': {
                 const name = cmdArgs.getRestArgsFrom(2);
                 if (deckMap[name]) {
@@ -681,11 +737,29 @@ if (!ext) {
                     return;
                 }
             }
-            case 'help':
-            default: {
+            case 'check': {
+                const game = getData(id);
+                const index = game.players.findIndex(player => player.id == ctx.player.userId);
+                if (index == -1) {
+                    seal.replyToSender(ctx, msg, '没有你的信息');
+                    return;
+                }
+
+                replyPrivate(ctx, msg, game.players[index].hand.cards.join('\n'));
+                return;
+            }
+            case '':
+            case 'help': {
                 const ret = seal.ext.newCmdExecuteResult(true);
                 ret.showHelp = true;
                 return ret;
+            }
+            default: {
+                const game = getData(id);
+                const name = val.toUpperCase();
+                game.play(ctx, msg, name)
+                saveData(id)
+                return;
             }
         }
     };
