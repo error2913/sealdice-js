@@ -2,11 +2,11 @@
 // @name         抽乌龟
 // @author       错误
 // @version      1.0.0
-// @description  指令.turtle/tl
+// @description  指令.turtle/tl 获取帮助。依赖于错误:team:>=3.1.1
 // @timestamp    1729847396
 // 2024-10-25 17:09:56
 // @license      MIT
-// @homepageURL  https://github.com/sealdice/javascript
+// @homepageURL  https://github.com/error2913/sealdice-js/
 // @depends 错误:team:>=3.1.1
 // ==/UserScript==
 // 首先检查是否已经存在
@@ -87,8 +87,8 @@ if (!ext) {
         game.players = (savedData.players || []).map(player => getPlayerData(player));
         game.round = savedData.round || 0;
         game.turn = savedData.turn || 0;
-        game.currentPlayerId = savedData.currentPlayerId || '';
-        game.currentDeckName = savedData.currentDeckName || '';
+        game.curPlayerId = savedData.curPlayerId || '';
+        game.curDeckName = savedData.curDeckName || '';
         game.mainDeck = savedData.mainDeck ? getDeckData(savedData.mainDeck) : deckMap['主牌堆'].clone();
         game.discardDeck = savedData.discardDeck ? getDeckData(savedData.discardDeck) : deckMap['弃牌堆'].clone();
 
@@ -224,18 +224,6 @@ if (!ext) {
 
             return deck;
         }
-
-        //按照rank排序
-        sort() {
-            const ranks = ['3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', '2', '小王', '大王'];
-
-            // 使用 sort 方法和比较函数进行排序
-            this.cards.sort((a, b) => {
-                const indexA = ranks.indexOf(a);
-                const indexB = ranks.indexOf(b);
-                return indexA - indexB;
-            });
-        }
     }
 
     class Game {
@@ -246,8 +234,8 @@ if (!ext) {
             this.players = [];
             this.round = 0;
             this.turn = 0;
-            this.currentPlayerId = '';//当前需要做出动作的玩家
-            this.currentDeckName = '';//当前场上的牌组，进入弃牌堆的缓冲区
+            this.curPlayerId = '';//当前需要做出动作的玩家
+            this.curDeckName = '';//当前场上的牌组，进入弃牌堆的缓冲区
             this.mainDeck = deckMap['主牌堆'].clone();
             this.discardDeck = deckMap['弃牌堆'].clone();
         }
@@ -300,8 +288,8 @@ if (!ext) {
             this.players = [];
             this.round = 0;
             this.turn = 0;
-            this.currentPlayerId = '';
-            this.currentDeckName = '';
+            this.curPlayerId = '';
+            this.curDeckName = '';
             this.mainDeck = deckMap['主牌堆'].clone();
             this.discardDeck = deckMap['弃牌堆'].clone();
         }
@@ -314,27 +302,27 @@ if (!ext) {
 
         nextTurn(ctx, msg) {
             if (this.turn == 0) {
-                this.currentPlayerId = this.players[0].id;
+                this.curPlayerId = this.players[0].id;
             } else {
-                const index = this.players.findIndex(player => player.id === this.currentPlayerId);
+                const index = this.players.findIndex(player => player.id === this.curPlayerId);
                 if (index == this.players.length - 1) {
                     this.nextRound(ctx, msg);
                     return;
                 }
 
-                this.currentPlayerId = this.players[index + 1].id;
+                this.curPlayerId = this.players[index + 1].id;
             }
 
             this.turn++;
         }
 
         play(ctx, msg, position = -1) {
-            if (ctx.player.userId !== this.currentPlayerId) {
+            if (ctx.player.userId !== this.curPlayerId) {
                 seal.replyToSender(ctx, msg, '不是当前玩家');
                 return;
             }
 
-            const index = this.players.findIndex(player => player.id === this.currentPlayerId);
+            const index = this.players.findIndex(player => player.id === this.curPlayerId);
             const player = this.players[index];
             const name = getName(ctx, msg, player.id)
 
@@ -486,8 +474,7 @@ check`;
             }
             case 'play': {
                 const game = getData(id);
-                const name = cmdArgs.getRestArgsFrom(2);
-                game.play(ctx, msg, name)
+                game.play(ctx, msg)
                 saveData(id)
                 return;
             }
