@@ -2,11 +2,11 @@
 // @name         牌类游戏框架
 // @author       错误
 // @version      1.0.0
-// @description  待完善
+// @description  待完善。依赖于错误:team:>=3.1.1
 // @timestamp    1729847396
 // 2024-10-25 17:09:56
 // @license      MIT
-// @homepageURL  https://github.com/sealdice/javascript
+// @homepageURL  https://github.com/error2913/sealdice-js/
 // @depends 错误:team:>=3.1.1
 // ==/UserScript==
 // 首先检查是否已经存在
@@ -66,8 +66,8 @@ if (!ext) {
         game.players = (savedData.players || []).map(player => getPlayerData(player));
         game.round = savedData.round || 0;
         game.turn = savedData.turn || 0;
-        game.currentPlayerId = savedData.currentPlayerId || '';
-        game.currentDeckName = savedData.currentDeckName || '';
+        game.currentId = savedData.currentId || '';
+        game.curDeckName = savedData.curDeckName || '';
         game.mainDeck = savedData.mainDeck ? getDeckData(savedData.mainDeck) : deckMap['主牌堆'].clone();
         game.discardDeck = savedData.discardDeck ? getDeckData(savedData.discardDeck) : deckMap['弃牌堆'].clone();
 
@@ -215,18 +215,6 @@ if (!ext) {
 
             return deck;
         }
-
-        //按照rank排序
-        sort() {
-            const ranks = ['3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', '2', '小王', '大王'];
-
-            // 使用 sort 方法和比较函数进行排序
-            this.cards.sort((a, b) => {
-                const indexA = ranks.indexOf(a);
-                const indexB = ranks.indexOf(b);
-                return indexA - indexB;
-            });
-        }
     }
 
     class Game {
@@ -237,8 +225,8 @@ if (!ext) {
             this.players = [];//玩家对象的数组
             this.round = 0;//回合数
             this.turn = 0;//一个回合内的轮次数
-            this.currentPlayerId = '';//当前需要做出动作的玩家
-            this.currentDeckName = '';//当前场上的牌组，进入弃牌堆的缓冲区
+            this.currentId = '';//当前需要做出动作的玩家
+            this.curDeckName = '';//当前场上的牌组
             this.mainDeck = deckMap['主牌堆'].clone();//包含所有卡牌的牌组
             this.discardDeck = deckMap['弃牌堆'].clone();//丢弃的卡牌
         }
@@ -275,8 +263,8 @@ if (!ext) {
             this.players = [];
             this.round = 0;
             this.turn = 0;
-            this.currentPlayerId = '';
-            this.currentDeckName = '';
+            this.currentId = '';
+            this.curDeckName = '';
             this.mainDeck = deckMap['主牌堆'].clone();
             this.discardDeck = deckMap['弃牌堆'].clone();
         }
@@ -291,15 +279,15 @@ if (!ext) {
         //进入下一轮
         nextTurn(ctx, msg) {
             if (this.turn == 0) {
-                this.currentPlayerId = this.players[0].id;
+                this.currentId = this.players[0].id;
             } else {
-                const index = this.players.findIndex(player => player.id === this.currentPlayerId);
+                const index = this.players.findIndex(player => player.id === this.currentId);
                 if (index == this.players.length - 1) {
                     this.nextRound(ctx, msg);
                     return;
                 }
 
-                this.currentPlayerId = this.players[index + 1].id;
+                this.currentId = this.players[index + 1].id;
             }
 
             this.turn++;
@@ -307,7 +295,7 @@ if (!ext) {
 
         //打出某张牌的方法
         play(ctx, msg, name) {
-            if (ctx.player.userId !== this.currentPlayerId) {
+            if (ctx.player.userId !== this.currentId) {
                 seal.replyToSender(ctx, msg, '不是当前玩家');
                 return;
             }
@@ -317,7 +305,7 @@ if (!ext) {
                 return;
             }
 
-            const index = this.players.findIndex(player => player.id === this.currentPlayerId);
+            const index = this.players.findIndex(player => player.id === this.currentId);
             const player = this.players[index];
             const deck = deckMap[name].clone();
             if (!player.hand.check(deck.cards)) {
@@ -327,7 +315,7 @@ if (!ext) {
 
             player.hand.remove(deck.cards);
             this.discardDeck.add(deck.cards);
-            this.currentDeckName = deck.name;
+            this.curDeckName = deck.name;
 
             deck.solve(ctx, msg, this, player);
             this.nextTurn(ctx, msg);//进入下一轮
