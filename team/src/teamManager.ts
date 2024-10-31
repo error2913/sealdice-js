@@ -290,7 +290,7 @@ export class TeamManager {
         let teamList = this.getTeamList(id);
         let team = teamList[0];
 
-        const callList = this.getCallList(id);
+        let callList = this.getCallList(id);
         const configManager = new ConfigManager(this.ext)
 
         const memberNum = team.members.length;
@@ -299,6 +299,9 @@ export class TeamManager {
 
         let reply = configManager.recallText(callList, memberNum, signNum, guguNum);
         reply = seal.format(ctx, reply);
+
+        callList = [];
+        this.saveCallList(id, callList);
 
         const msg = getMsg("group", ctx.player.userId, id);
         seal.replyToSender(ctx, msg, reply);
