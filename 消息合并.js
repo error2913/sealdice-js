@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         消息合并
 // @author       错误
-// @version      1.0.0
+// @version      1.0.1
 // @description  手机QQ不能进行复杂的图文混排？！没关系，我帮你合并！使用 .合 获取帮助！
 // @timestamp    1730121013
 // 2024-10-28 21:10:13
@@ -11,7 +11,7 @@
 // 首先检查是否已经存在
 let ext = seal.ext.find('消息合并');
 if (!ext) {
-    ext = seal.ext.new('消息合并', '错误', '1.0.0');
+    ext = seal.ext.new('消息合并', '错误', '1.0.1');
     // 注册扩展
     seal.ext.register(ext);
 
@@ -34,6 +34,11 @@ if (!ext) {
                 return ret;
             }
             case '停': {
+                if (!data[id]) {
+                    seal.replyToSender(ctx, msg, '没有正在进行的合并！')
+                    return;
+                }
+
                 seal.replyToSender(ctx, msg, data[id].text.join(''));
                 delete data[id];
                 seal.replyToSender(ctx, msg, '合并已暂停！');
