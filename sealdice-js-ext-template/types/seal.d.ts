@@ -190,6 +190,8 @@ declare namespace seal {
     command: string;
     /** 指令参数，如“.ra 力量 测试”时，参数1为“力量”，参数2为“测试” */
     args: string[];
+    /** 关键字参数 */
+    kwargs: Kwarg[];
     /** 当前被at的有哪些 */
     at: AtInfo[];
     /** 参数的原始文本 */
@@ -213,7 +215,7 @@ declare namespace seal {
     /** 吃掉前缀并去除复数空格 `set xxx  xxx` => `xxx xxx`，返回修改后的字符串和是否修改成功的布尔值  */
     eatPrefixWith(...s: string[]): [string, boolean]
     /** 将第 n 个参数及之后参数用空格拼接起来; 如指令 `send to qq x1 x2`,n=3返回 `x1 x2` */
-    getRestArgsFrom(n: number): number
+    getRestArgsFrom(n: number): string
     /** 检查第N项参数是否为某个字符串，n从1开始，若没有第n项参数也视为失败 */
     isArgEqual(n: number, ...s: string[]): boolean
   }
@@ -459,37 +461,37 @@ declare namespace seal {
      * @param ext 扩展对象
      * @param key 配置项名称
      */
-    getStringConfig(ext: ExtInfo,key: string): ConfigItem;
+    getStringConfig(ext: ExtInfo,key: string): string;
     /**
      * 获取指定名称的整型配置项对象
      * @param ext 扩展对象
      * @param key 配置项名称
      */
-    getIntConfig(ext: ExtInfo,key: string): ConfigItem;
+    getIntConfig(ext: ExtInfo,key: string): number;
     /**
      * 获取指定名称的布尔类型配置项对象
      * @param ext 扩展对象
      * @param key 配置项名称
      */
-    getBoolConfig(ext: ExtInfo,key: string): ConfigItem;
+    getBoolConfig(ext: ExtInfo,key: string): boolean;
     /**
      * 获取指定名称的浮点数类型配置项对象
      * @param ext 扩展对象
      * @param key 配置项名称
      */
-    getFloatConfig(ext: ExtInfo,key: string): ConfigItem;
+    getFloatConfig(ext: ExtInfo,key: string): number;
     /**
      * 获取指定名称的template类型配置项对象
      * @param ext 扩展对象
      * @param key 配置项名称
      */
-    getTemplateConfig(ext: ExtInfo,key: string): ConfigItem;
+    getTemplateConfig(ext: ExtInfo,key: string): string[];
     /**
      * 获取指定名称的option类型配置项对象
      * @param ext 扩展对象
      * @param key 配置项名称
      */
-    getOptionConfig(ext: ExtInfo,key: string): ConfigItem;
+    getOptionConfig(ext: ExtInfo,key: string): string;
     /**
      * 卸载对应名称的配置项
      * @param ext 扩展对象
