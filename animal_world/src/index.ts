@@ -1,5 +1,4 @@
 import { sample } from "lodash-es";
-import { nameList } from "./utils";
 
 function main() {
   // 注册扩展

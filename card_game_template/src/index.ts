@@ -1,38 +1,51 @@
-import { sample } from "lodash-es";
-import { nameList } from "./utils";
+import { Game } from "./game";
 
 function main() {
   // 注册扩展
-  let ext = seal.ext.find('test');
+  let ext = seal.ext.find('cardGameTemplate');
   if (!ext) {
-    ext = seal.ext.new('test', '木落', '1.0.0');
+    ext = seal.ext.new('cardGameTemplate', '错误', '1.0.0');
     seal.ext.register(ext);
   }
 
-  // 编写指令
-  const cmdSeal = seal.ext.newCmdItemInfo();
-  cmdSeal.name = 'seal';
-  cmdSeal.help = '召唤一只海豹，可用.seal <名字> 命名';
+  //注册指令
+  const cmdGame = seal.ext.newCmdItemInfo();
+  cmdGame.name = 'game'; // 指令名字，可用中文
+  cmdGame.help = `帮助：TODO`;
+  cmdGame.disabledInPrivate = true;// 不允许私聊
+  cmdGame.solve = (ctx, msg, cmdArgs) => {
+    const val = cmdArgs.getArgN(1);
+    const id = ctx.group.groupId;
 
-  cmdSeal.solve = (ctx, msg, cmdArgs) => {
-    let val = cmdArgs.getArgN(1);
     switch (val) {
-      case 'help': {
+      case 'start': {
+        const game = Game.getData(ext, id);
+        game.start(ctx, msg);
+        Game.saveData(ext, id);
+        return seal.ext.newCmdExecuteResult(true);;
+      }
+      case 'end': {
+        const game = Game.getData(ext, id);
+        game.end(ctx, msg);
+        Game.saveData(ext, id);
+        return seal.ext.newCmdExecuteResult(true);;
+      }
+      case 'play': {
+        const game = Game.getData(ext, id);
+        const name = cmdArgs.getArgN(2);
+        game.play(ctx, msg, name)
+        Game.saveData(ext, id);
+        return seal.ext.newCmdExecuteResult(true);;
+      }
+      case 'help':
+      default: {
         const ret = seal.ext.newCmdExecuteResult(true);
         ret.showHelp = true;
         return ret;
       }
-      default: {
-        // 命令为 .seal XXXX，取第一个参数为名字
-        if (!val) val = sample(nameList); // 无参数，随机名字
-        seal.replyToSender(ctx, msg, `你抓到一只海豹！取名为${val}\n它的逃跑意愿为${Math.ceil(Math.random() * 100)}`);
-        return seal.ext.newCmdExecuteResult(true);
-      }
     }
-  }
-
-  // 注册命令
-  ext.cmdMap['seal'] = cmdSeal;
+  };
+  ext.cmdMap['game'] = cmdGame;
 }
 
 main();
