@@ -6,7 +6,7 @@ import { Player } from "./player";
 export interface Event {
     name: string;
     info: string;
-    species: string[];
+    species: string[];//能够触发该事件的动物
     active: boolean;
     solve: (ctx: seal.MsgContext, msg: seal.Message, players: Player[]) => void;
 }
@@ -14,8 +14,8 @@ export interface Event {
 export interface Env {
     name: string;
     info: string;
-    species: string[];
-    events: {[key: string]: Event};
+    species: string[];//该环境内包含的物种
+    events: {[key: string]: Event};//该环境内能触发的事件
 }
 
 const envMap: { [key: string]: Env } = {};

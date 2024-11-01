@@ -6,9 +6,9 @@ export interface Animal {
     species: string;
     info: string;
     env: string;
-    enemy: string[];
+    enemy: string[];//敌人和食物，用于在遭遇的时候判断
     food: string[];
-    events: string[];//这是被动事件
+    events: string[];//这是被动事件，探索时可能触发
     attr: {
         hp: number;
         atk: number;

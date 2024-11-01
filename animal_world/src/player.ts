@@ -10,11 +10,8 @@ export class Player {
     public id: string;
     public name: string;
     public animal: Animal;
-    public exp: number;
-    public level: number;
     public score: number;
-    public credits: number;
-    public entries: string[];
+    public entries: string[];//词条列表
 
     constructor(id: string, name: string) {
         this.id = id;
@@ -34,10 +31,7 @@ export class Player {
                 lck: 0,
             }
         };
-        this.exp = 0;
-        this.level = 1;
         this.score = 0;
-        this.credits = 0;
         this.entries = [];
     }
 
@@ -76,16 +70,15 @@ export class Player {
         const player = new Player(id, name);
 
         player.animal = data.animal || getAnimal(player);
-        player.exp = data.exp || 0;
-        player.level = data.level || 1;
         player.score = data.score || 0;
-        player.credits = data.credits || 0;
         player.entries = data.entries || [];
 
         return player;
     }
 
     public revive(ctx: seal.MsgContext, msg: seal.Message): void {
+        this.entries = [];
+        
         getAnimal(this);
         getEntries(this, 1);
 
@@ -102,10 +95,14 @@ export class Player {
     }
 
     /* TODO
+    public emergency(ctx: seal.MsgContext, msg: seal.Message): void {}
+
     public explore(ctx: seal.MsgContext, msg: seal.Message): void {}
 
     public multiply(ctx: seal.MsgContext, msg: seal.Message): void {}
 
     public evolve(ctx: seal.MsgContext, msg: seal.Message): void {}
+
+    public meet(ctx: seal.MsgContext, msg: seal.Message): void {}
     */
 }
