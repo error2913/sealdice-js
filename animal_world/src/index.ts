@@ -1,4 +1,3 @@
-import { sample } from "lodash-es";
 
 function main() {
   // 注册扩展
@@ -22,8 +21,6 @@ function main() {
         return ret;
       }
       default: {
-        // 命令为 .seal XXXX，取第一个参数为名字
-        if (!val) val = sample(nameList); // 无参数，随机名字
         seal.replyToSender(ctx, msg, `你抓到一只海豹！取名为${val}\n它的逃跑意愿为${Math.ceil(Math.random() * 100)}`);
         return seal.ext.newCmdExecuteResult(true);
       }

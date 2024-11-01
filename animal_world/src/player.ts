@@ -1,26 +1,34 @@
 import { Animal } from "./animal";
 
-export interface player {
-    id: string;
-    name: string;
-    animal: Animal;
-    exp: number;
-    level: number;
-    gold: number;
-    items: string[];
-}
-
 export class Player {
-    private player: player;
+    public id: string;
+    public name: string;
+    public animal: Animal;
+    public exp: number;
+    public level: number;
+    public score: number;
+    public credits: number;
+    public entrys: string[];
+
     constructor(id: string, name: string, animal: Animal) {
-        this.player = {
-            id: id,
-            name: name,
-            animal: animal,
-            exp: 0,
-            level: 1,
-            gold: 0,
-            items: []
-        }
+        this.id = id;
+        this.name = name;
+        this.animal = animal;
+        this.exp = 0;
+        this.level = 1;
+        this.score = 0;
+        this.credits = 0;
+        this.entrys = [];
     }
+
+    public revive(): void {}
+
+    public survive(): void {}
+
+    public multiply(): void {}
+
+    public explore(): void {}
+
+    public evolve(): void {}
+
 }
