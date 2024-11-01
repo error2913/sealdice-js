@@ -1,6 +1,6 @@
 //这里是一个玩家类，用于存储玩家的信息和行为
 
-import { Animal, getAnimal } from "./animal";
+import { Animal, getAnimal, parseAnimal } from "./animal";
 import { getEntries } from "./entry";
 import { envMap } from "./env";
 
@@ -65,11 +65,11 @@ export class Player {
 
     private static parsePlayer(ctx: seal.MsgContext, data: any): Player {
         const id = ctx.player.userId;
+        const name = data.name || ctx.player.name;
 
-        const name = data.name || ctx.player.userId;
         const player = new Player(id, name);
 
-        player.animal = data.animal || getAnimal(player);
+        player.animal = parseAnimal(data.animal);
         player.score = data.score || 0;
         player.entries = data.entries || [];
 
@@ -78,7 +78,7 @@ export class Player {
 
     public revive(ctx: seal.MsgContext, msg: seal.Message): void {
         this.entries = [];
-        
+
         getAnimal(this);
         getEntries(this, 1);
 

@@ -18,6 +18,41 @@ export interface Animal {
     }
 }
 
+export function parseAnimal(data: any): Animal {
+    if (!data) {
+        return {
+            species: "未知物种",
+            info: "未知",
+            env: "未知环境",
+            enemy: [],
+            food: [],
+            events: [],
+            attr: {
+                hp: 0,
+                atk: 0,
+                def: 0,
+                dex: 0,
+                lck: 0,
+            }
+        }
+    }
+    return {
+        species: data.species || "未知物种",
+        info: data.info || "未知",
+        env: data.env || "未知环境",
+        enemy: data.enemy || [],
+        food: data.food || [],
+        events: data.events || [],
+        attr: {
+            hp: data.attr.hp || 0,
+            atk: data.attr.atk || 0,
+            def: data.attr.def || 0,
+            dex: data.attr.dex || 0,
+            lck: data.attr.lck || 0,
+        }
+    }
+}
+
 export function getAnimal(player: Player): void {
     const animals = Object.keys(animalMap);
     const animal = animalMap[animals[Math.floor(Math.random() * animals.length)]];
