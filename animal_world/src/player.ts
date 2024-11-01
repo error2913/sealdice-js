@@ -1,6 +1,7 @@
 //这里是一个玩家类，用于存储玩家的信息和行为
 
 import { Animal, getAnimal } from "./animal";
+import { getEntries } from "./entry";
 import { envMap } from "./env";
 
 const cache: { [key: string]: Player } = {};
@@ -13,15 +14,31 @@ export class Player {
     public level: number;
     public score: number;
     public credits: number;
+    public entries: string[];
 
-    constructor(id: string, name: string, animal: Animal) {
+    constructor(id: string, name: string) {
         this.id = id;
         this.name = name;
-        this.animal = animal;
+        this.animal = {
+            species: "",
+            info: "",
+            env: "",
+            enemy: [],
+            food: [],
+            events: [],
+            attr: {
+                hp: 0,
+                atk: 0,
+                def: 0,
+                dex: 0,
+                lck: 0,
+            }
+        };
         this.exp = 0;
         this.level = 1;
         this.score = 0;
         this.credits = 0;
+        this.entries = [];
     }
 
     public static getData(ext: seal.ExtInfo, ctx: seal.MsgContext): Player {
@@ -56,19 +73,21 @@ export class Player {
         const id = ctx.player.userId;
 
         const name = data.name || ctx.player.userId;
-        const animal = data.animal || getAnimal();
-        const player = new Player(id, name, animal);
+        const player = new Player(id, name);
 
+        player.animal = data.animal || getAnimal(player);
         player.exp = data.exp || 0;
         player.level = data.level || 1;
         player.score = data.score || 0;
         player.credits = data.credits || 0;
+        player.entries = data.entries || [];
 
         return player;
     }
 
     public revive(ctx: seal.MsgContext, msg: seal.Message): void {
-        this.animal = getAnimal();
+        getAnimal(this);
+        getEntries(this, 1);
 
         seal.replyToSender(ctx, msg, `${this.name}转生成了新的动物: ${this.animal.species}`);
     }

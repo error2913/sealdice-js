@@ -1,5 +1,7 @@
 // 这里是不同动物的各种属性
 
+import { Player } from "./player";
+
 export interface Animal {
     species: string;
     info: string;
@@ -7,7 +9,6 @@ export interface Animal {
     enemy: string[];
     food: string[];
     events: string[];//这是被动事件
-    entrys: string[];
     attr: {
         hp: number;
         atk: number;
@@ -17,8 +18,11 @@ export interface Animal {
     }
 }
 
-export function getAnimal(): Animal {
-    return animalMap[Object.keys(animalMap)[Math.floor(Math.random() * Object.keys(animalMap).length)]];
+export function getAnimal(player: Player): void {
+    const animals = Object.keys(animalMap);
+    const animal = animalMap[animals[Math.floor(Math.random() * animals.length)]];
+
+    player.animal = animal;
 }
 
 const animalMap: { [key: string]: Animal } = {};
@@ -30,7 +34,6 @@ animalMap["黑鱼"] = {
     enemy: ["白鱼"],
     food: ["黑鱼", "乌龟", "水草"],
     events: [],
-    entrys: [],
     attr: {
         hp: 10,
         atk: 100,
@@ -47,7 +50,6 @@ animalMap["白鱼"] = {
     enemy: ["黑鱼"],
     food: ["黑鱼", "乌龟", "水草"],
     events: [],
-    entrys: [],
     attr: {
         hp: 100,
         atk: 50,
@@ -64,7 +66,6 @@ animalMap["乌龟"] = {
     enemy: ["黑鱼", "白鱼"],
     food: ["水草"],
     events: [],
-    entrys: [],
     attr: {
         hp: 100,
         atk: 1,

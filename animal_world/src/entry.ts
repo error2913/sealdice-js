@@ -8,6 +8,19 @@ export interface Entry {
     solve: (player: Player) => void;
 }
 
+export function getEntries(player: Player, n: number): void {
+    const entries = Object.keys(entryMap);
+    const result: string[] = [];
+
+    for (let i = 0; i < n && i < entries.length; i++) {
+        const index = Math.floor(Math.random() * entries.length);
+        result.push(entries[index]);
+        entries.splice(index, 1);
+    }
+
+    player.entries = result;
+}
+
 const entryMap: { [key: string]: Entry } = {};
 
 entryMap["坚韧"] = {
