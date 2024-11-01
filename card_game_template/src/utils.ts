@@ -28,3 +28,22 @@ export function getName(ctx: seal.MsgContext, id: string) {
     const mctx = getCtx(ctx.endPoint.userId, mmsg);
     return mctx.player.name;
 }
+
+export function parseCards(s: string): string[] {
+    const cards = ['card A', 'card B', 'card C'];
+    const pattern = new RegExp(`^${cards.join('|^')}`);
+    const result = [];
+
+    while (true) { 
+        const match = s.match(pattern);
+
+        if (match) {
+            result.push(match[0]);
+            s = s.slice(match[0].length).trim();
+        } else {
+            break;
+        }
+    }
+
+    return result;
+}
