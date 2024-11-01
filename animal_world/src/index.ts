@@ -1,13 +1,13 @@
 
 function main() {
   // 注册扩展
-  let ext = seal.ext.find('test');
+  let ext = seal.ext.find('animalWorld');
   if (!ext) {
-    ext = seal.ext.new('test', '木落', '1.0.0');
+    ext = seal.ext.new('animalWorld', '错误', '1.0.0');
     seal.ext.register(ext);
   }
 
-  // 编写指令
+  // 编写指令，还没写
   const cmdSeal = seal.ext.newCmdItemInfo();
   cmdSeal.name = 'seal';
   cmdSeal.help = '召唤一只海豹，可用.seal <名字> 命名';

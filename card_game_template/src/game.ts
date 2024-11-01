@@ -17,7 +17,7 @@ export class Game {
     private mainDeck: Deck;//包含所有卡牌的牌组
     private discardDeck: Deck;//丢弃的卡牌
 
-    constructor(id) {
+    constructor(id: string) {
         this.id = id//一般是群号
         this.data = {};//数据
         this.status = false;//游戏状态
