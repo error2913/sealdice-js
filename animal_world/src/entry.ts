@@ -1,3 +1,5 @@
+//这里是词条的定义
+
 import { Player } from "./player";
 
 export interface Entry {

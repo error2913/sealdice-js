@@ -1,3 +1,5 @@
+// 这里是不同动物的各种属性
+
 export interface Animal {
     species: string;
     info: string;

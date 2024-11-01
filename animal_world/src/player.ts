@@ -1,3 +1,5 @@
+//这里是一个玩家类，用于存储玩家的信息和行为
+
 import { Animal, getAnimal } from "./animal";
 import { envMap } from "./env";
 

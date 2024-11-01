@@ -1,3 +1,5 @@
+//这里是环境和环境内的定义
+
 import { animalMap } from "./animal";
 import { Player } from "./player";
 
