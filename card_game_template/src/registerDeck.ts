@@ -2,11 +2,13 @@ import { Deck } from "./deck";
 
 const deckMap: { [key: string]: Deck } = {};
 
+const cards = ['A', 'B', 'C'];
+
 //注册主牌堆
 const deckMain = new Deck();
 deckMain.name = '主牌堆';
 deckMain.type = 'public';
-deckMain.cards = [];
+deckMain.cards = cards;
 deckMap['主牌堆'] = deckMain;
 
 //注册弃牌堆
