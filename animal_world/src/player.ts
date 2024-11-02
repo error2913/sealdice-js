@@ -146,6 +146,7 @@ export class Player {
         }
 
         envMap[this.animal.env].events[event].solve(ctx, msg, [this]);
+        this.age(ctx, msg);
     }
 
     public explore(ctx: seal.MsgContext, msg: seal.Message): void {
@@ -164,9 +165,15 @@ export class Player {
         }
 
         envMap[this.animal.env].events[event].solve(ctx, msg, [this]);
+        this.age(ctx, msg);
     }
 
     public multiply(ctx: seal.MsgContext, msg: seal.Message): void {
+        if (this.animal.age[0] < this.animal.age[1] * 0.15) {
+            seal.replyToSender(ctx, msg, `繁衍失败，年龄不够`);
+            return;
+        }
+
         if (Math.random() * this.animal.attr.hp * (this.animal.age[1] - this.animal.age[0]) <= 10) {
             seal.replyToSender(ctx, msg, `繁衍失败`);
             this.age(ctx, msg);
