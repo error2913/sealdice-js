@@ -40,7 +40,7 @@ animalMap["黑鱼"] = {
     food: ["黑鱼", "乌龟"],
     events: {
         active: ["咬乌龟"],
-        passive: []
+        passive: ["死掉"]
     },
     attr: {
         hp: 10,
@@ -59,7 +59,7 @@ animalMap["白鱼"] = {
     food: ["黑鱼", "乌龟", "水草"],
     events: {
         active: ["咬乌龟", "吃草"],
-        passive: []
+        passive: ["死掉"]
     },
     attr: {
         hp: 100,
@@ -78,7 +78,7 @@ animalMap["乌龟"] = {
     food: ["水草"],
     events: {
         active: ["吃草"],
-        passive: []
+        passive: ["死掉"]
 
     },
     attr: {

@@ -5,8 +5,6 @@ import { Player } from "./player";
 export interface Event {
     name: string;
     info: string;
-    species: string[];//能够触发该事件的动物
-    active: boolean;
     solve: (ctx: seal.MsgContext, msg: seal.Message, players: Player[]) => void;
 }
 
@@ -27,8 +25,6 @@ envMap["池塘"] = {
         "吃草": {
             name: "吃草",
             info: "吃掉水草",
-            species: ["白鱼", "乌龟"],
-            active: true,
             solve: (ctx: seal.MsgContext, msg: seal.Message, players: Player[]) => {
                 const player = players[0];
 
@@ -40,8 +36,6 @@ envMap["池塘"] = {
         "咬乌龟": {
             name: "鱼咬龟",
             info: "鱼咬了乌龟",
-            species: ["黑鱼", "白鱼"],
-            active: true,
             solve: (ctx: seal.MsgContext, msg: seal.Message, players: Player[]) => {
                 const fish = players[0];
                 const turtle = Player.getRandomPlayer("乌龟");
@@ -64,6 +58,18 @@ envMap["池塘"] = {
                 }
 
                 seal.replyToSender(ctx, msg, `${fish.name}咬了${turtle.name}，${turtle.name}掉了${fish.animal.attr.atk - turtle.animal.attr.def}血`);
+            }
+        },
+        "死掉": {
+            name: "死掉",
+            info: "死了",
+            solve: (ctx: seal.MsgContext, msg: seal.Message, players: Player[]) => {
+                const player = players[0];
+
+                player.score -= 1;
+                player.revive();
+
+                seal.replyToSender(ctx, msg, `${player.name}死了，扣了1分。转生成了新的动物: ${player.animal.species}`);
             }
         }
     }

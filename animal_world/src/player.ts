@@ -112,13 +112,36 @@ export class Player {
         this.entries = [];
 
         this.animal = getAnimal();
-        const entries = getEntries(2);
+        const entries = getEntries(3);
         addEntries(this, entries);
     }
 
     public survive(ctx: seal.MsgContext, msg: seal.Message, event: string): void {
-        const events = envMap[this.animal.env].events;
-        if (!events.hasOwnProperty(event) || !events[event].active) {
+        if (!event || !this.animal.events.active.includes(event)) {
+            seal.replyToSender(ctx, msg, `可选：${this.animal.events.active.join('、')}`);
+            return;
+        }
+
+        if (!envMap[this.animal.env].events.hasOwnProperty(event)) {
+            seal.replyToSender(ctx, msg, `错误，这个事件可能忘记写了:${event}`);
+            return;
+        }
+      
+        envMap[this.animal.env].events[event].solve(ctx, msg, [this]);
+    }
+
+    public explore(ctx: seal.MsgContext, msg: seal.Message): void {
+        const events = this.animal.events.passive;
+
+        if (events.length == 0) {
+            seal.replyToSender(ctx, msg, `没有可以探索的`);
+            return;
+        }
+
+        const event = events[Math.floor(Math.random() * events.length)];
+
+        if (!envMap[this.animal.env].events.hasOwnProperty(event)) {
+            seal.replyToSender(ctx, msg, `错误，这个事件可能忘记写了:${event}`);
             return;
         }
 
@@ -126,10 +149,6 @@ export class Player {
     }
 
     /* TODO
-    public emergency(ctx: seal.MsgContext, msg: seal.Message): void {}
-
-    public explore(ctx: seal.MsgContext, msg: seal.Message): void {}
-
     public multiply(ctx: seal.MsgContext, msg: seal.Message): void {}
 
     public evolve(ctx: seal.MsgContext, msg: seal.Message): void {}

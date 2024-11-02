@@ -1,4 +1,3 @@
-import { envMap } from "./env";
 import { Player } from "./player";
 import { getPlayerList } from "./playerManager";
 import { getScoreChart } from "./utils";
@@ -67,6 +66,7 @@ function main() {
     }
   };
   ext.cmdMap['aw'] = cmdAW;
+  ext.cmdMap['阿瓦'] = cmdAW;
 
   const cmdRevive = seal.ext.newCmdItemInfo();
   cmdRevive.name = 'revive';
@@ -87,21 +87,30 @@ function main() {
   cmdSurvive.name = 'survive';
   cmdSurvive.help = '没有帮助';
   cmdSurvive.solve = (ctx, msg, cmdArgs) => {
-    const name = cmdArgs.getArgN(1);
+    const event = cmdArgs.getArgN(1);
     const player = Player.getPlayer(ext, ctx.player.userId, ctx);
 
-    if (!name || !player.animal.events.active.includes(name)) {
-      seal.replyToSender(ctx, msg, `可选：${player.animal.events.active.join('、')}`);
-      return seal.ext.newCmdExecuteResult(true);
-    }
-
-    envMap[player.animal.env].events[name].solve(ctx, msg, [player]);
+    player.survive(ctx, msg, event);
 
     Player.savePlayer(ext, player);
     return seal.ext.newCmdExecuteResult(true);
   };
   ext.cmdMap['survive'] = cmdSurvive;
   ext.cmdMap['生存'] = cmdSurvive;
+
+  const cmdExplore = seal.ext.newCmdItemInfo();
+  cmdExplore.name = 'explore'; // 指令名字，可用中文
+  cmdExplore.help = '';
+  cmdExplore.solve = (ctx, msg, _) => {
+    const player = Player.getPlayer(ext, ctx.player.userId, ctx);
+
+    player.explore(ctx, msg);
+
+    Player.savePlayer(ext, player);
+    return seal.ext.newCmdExecuteResult(true);
+  };
+  ext.cmdMap['explore'] = cmdExplore;   
+  ext.cmdMap['探索'] = cmdExplore;   
 }
 
 main();
