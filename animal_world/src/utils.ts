@@ -35,6 +35,7 @@ export function parseAnimal(data: any): Animal {
             species: data.species,
             info: data.info,
             env: data.env,
+            evolve: data.evolve,
             enemy: data.enemy,
             food: data.food,
             events: {
@@ -55,6 +56,7 @@ export function parseAnimal(data: any): Animal {
             species: "未知物种",
             info: "未知",
             env: "未知环境",
+            evolve: "",
             enemy: [],
             food: [],
             events: {

@@ -18,9 +18,10 @@ export class Player {
         this.id = id;
         this.name = name;
         this.animal = {
-            species: "",
-            info: "",
-            env: "",
+            species: "未知物种",
+            info: "未知",
+            env: "未知环境",
+            evolve: "",
             enemy: [],
             food: [],
             events: {
@@ -98,11 +99,17 @@ export class Player {
         return Player.createPlayer(`Robot`, `奇怪的${species}`);
     }
 
-    public static getRandomPlayer(species: string): Player {
-        const players = Object.values(cache).filter(player => player.animal.species === species);
+    public static getRandomPlayer(species: string[]): Player {
+        const players = Object.values(cache).filter(player => {
+            if (species.length == 0) {
+                return true;
+            }
+
+            return species.includes(player.animal.species)
+        });
 
         if (players.length == 0) {
-            return this.createRobot(species);
+            return this.createRobot(species[Math.floor(Math.random() * species.length)]);
         }
 
         return players[Math.floor(Math.random() * players.length)];
@@ -122,11 +129,16 @@ export class Player {
             return;
         }
 
+        if (Math.random() <= 0.2) {
+            this.explore(ctx, msg);
+            return;
+        }
+
         if (!envMap[this.animal.env].events.hasOwnProperty(event)) {
             seal.replyToSender(ctx, msg, `错误，这个事件可能忘记写了:${event}`);
             return;
         }
-      
+
         envMap[this.animal.env].events[event].solve(ctx, msg, [this]);
     }
 
@@ -148,9 +160,26 @@ export class Player {
         envMap[this.animal.env].events[event].solve(ctx, msg, [this]);
     }
 
-    /* TODO
-    public multiply(ctx: seal.MsgContext, msg: seal.Message): void {}
+    public multiply(ctx: seal.MsgContext, msg: seal.Message): void {
+        if (Math.random() <= 0.2) {
+            this.explore(ctx, msg);
+            return;
+        }
 
+        if (Math.random() <= 0.5) {
+            seal.replyToSender(ctx, msg, `繁殖失败`);
+            return;
+        }
+
+        this.score += 1;
+        const entry = getEntries(1);
+        addEntries(this, entry);
+
+        seal.replyToSender(ctx, msg, `${this.name}繁殖了，得1分。新的词条：${entry[0].name}`);
+        return;
+    }
+
+    /* TODO
     public evolve(ctx: seal.MsgContext, msg: seal.Message): void {}
 
     public meet(ctx: seal.MsgContext, msg: seal.Message): void {}

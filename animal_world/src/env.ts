@@ -38,7 +38,7 @@ envMap["池塘"] = {
             info: "鱼咬了乌龟",
             solve: (ctx: seal.MsgContext, msg: seal.Message, players: Player[]) => {
                 const fish = players[0];
-                const turtle = Player.getRandomPlayer("乌龟");
+                const turtle = Player.getRandomPlayer(["乌龟"]);
 
                 //尝试逃跑
                 if (turtle.animal.attr.dex * Math.random() > fish.animal.attr.dex * Math.random()) {

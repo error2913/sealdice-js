@@ -33,9 +33,8 @@ function main() {
 
         const text = `昵称:<${player.name}>
 物种:${player.animal.species}
-攻击:${player.animal.attr.atk} | 防御:${player.animal.attr.def}
-敏捷:${player.animal.attr.dex} | 幸运:${player.animal.attr.lck}
-生命:${player.animal.attr.hp} | 积分:${player.score}
+攻击:${player.animal.attr.atk} | 防御:${player.animal.attr.def} | 敏捷:${player.animal.attr.dex}
+幸运:${player.animal.attr.lck} | 生命:${player.animal.attr.hp} | 积分:${player.score}
 词条:${player.entries.join('、')}`
 
         seal.replyToSender(ctx, msg, text);
@@ -110,7 +109,21 @@ function main() {
     return seal.ext.newCmdExecuteResult(true);
   };
   ext.cmdMap['explore'] = cmdExplore;   
-  ext.cmdMap['探索'] = cmdExplore;   
+  ext.cmdMap['探索'] = cmdExplore;
+
+  const cmdMultiply = seal.ext.newCmdItemInfo();
+  cmdMultiply.name = 'multiply';
+  cmdMultiply.help = '没有帮助';
+  cmdMultiply.solve = (ctx, msg, _) => {
+    const player = Player.getPlayer(ext, ctx.player.userId, ctx);
+
+    player.multiply(ctx, msg);
+
+    Player.savePlayer(ext, player);
+    return seal.ext.newCmdExecuteResult(true);
+  };
+  ext.cmdMap['multiply'] = cmdMultiply;
+  ext.cmdMap['繁衍'] = cmdMultiply;
 }
 
 main();
