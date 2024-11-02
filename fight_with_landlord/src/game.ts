@@ -229,7 +229,7 @@ export class Game {
 
         if (this.data.curDeckPlayerId !== this.curPlayerId && this.curDeck) {
             if (
-                type !== 'bomb' &&
+                type !== '炸弹' &&
                 type !== this.curDeck[0]
             ) {
                 seal.replyToSender(ctx, msg, '牌型错误');

@@ -55,6 +55,7 @@ export function parseCards(s: string): string[] {
 }
 
 export function getType(cards: string[]): [string, number] {
+    //              0    1    2    3    4    5    6    7     8    9   10    11   12    13     14
     const rank = ['3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', '2', '小王', '大王'];
 
     const map = {};
@@ -65,78 +66,79 @@ export function getType(cards: string[]): [string, number] {
 
     const kinds = Object.keys(map);
 
+    let [maxCard, maxNum] = ['', 0];
+    kinds.forEach(card => {
+        if (map[card] > maxNum) {
+            [maxCard, maxNum] = [card, map[card]];
+        }
+    })
+
     if (
         cards.length === 0 ||
         (kinds.includes('小王') && map['小王'] > 1) ||
-        (kinds.includes('小王') && map['小王'] > 1)
+        (kinds.includes('大王') && map['大王'] > 1)
     ) {
         return ['', 0];
     }
 
-    if (cards.length === 1) {
-        const index = rank.indexOf(cards[0]);
-        return ['single', index];
-    }
-
-    if (cards.length === 2) {
-        if (kinds.length !== 1) {
-            return ['', 0];
+    if (maxNum == 1) {
+        //单张
+        if (kinds.length == 1) {
+            const index = rank.indexOf(cards[0]);
+            return ['单', index];
         }
 
-        const index = rank.indexOf(cards[0]);
-        return ['pair', index];
-    }
-
-    if (cards.length === 3) {
-        if (kinds.length!== 1) {
-            return ['', 0];
+        //王炸
+        if (kinds.includes('小王') && kinds.includes('大王')) {
+            return ['炸弹', 13];
         }
 
+        //顺子
         const index = rank.indexOf(cards[0]);
-        return ['triple', index];
-    }
-
-    if (cards.length === 4) {
-        if (kinds.length !== 1) {
-            for (let i = 0; i < kinds.length; i++) {
-                if (map[kinds[i]] == 3) {
-                    const index = rank.indexOf(kinds[i]);
-                    return ['triple1', index];
-                }
+        for (let i = index + 1; i < cards.length; i++) {
+            if (rank[i] !== cards[i - index]) {
+                return ['', 0];
             }
+        }
+        return [`${cards.length}顺}`, index];
+    }
 
-            return ['', 0];
+    if (maxNum == 2 && kinds.length == 1) {
+        //对子
+        if (kinds.length == 1) {
+            const index = rank.indexOf(cards[0]);
+            return ['对', index];
         }
 
-        const index = rank.indexOf(cards[0]);
-        return ['bomb', index];
+        //连对
     }
 
-    if (cards.length === 5) {
+    if (maxNum == 3) {
+        //三张
+        if (kinds.length == 1) {
+            const index = rank.indexOf(cards[0]);
+            return ['三', index];
+        }
+
+        //三带一
+
         //三带对子
-        //五顺
-        //
-    }
 
-    if (cards.length === 6) {
-        //四带两张单
-        //六顺
-        //三连对
         //飞机
     }
 
-    if (cards.length === 7) {
-        //
-        //七顺
-        //
+    if (cards.length === 4) {
+        if (kinds.length == 1) {
+            const index = rank.indexOf(cards[0]);
+            return ['炸弹', index];
+        }
+
+        //四带两张单
+        
+        //四带两个对子
+
+        //飞机
     }
 
-    if (cards.length === 8) {
-        //四带两对子
-        //八顺
-        //四连对
-        //飞机带单
-    }
-
-    //我草不想写了
+    return ['', 0];
 }
