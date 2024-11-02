@@ -51,7 +51,7 @@ function main() {
         }
 
         let text = `排行榜\n♚`
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 10 && i < scoreChart.length; i++) {
           const player = scoreChart[i];
           text += `第${i + 1}名: <${player.name}>  ${player.score}\n`
         }
@@ -96,7 +96,7 @@ function main() {
     }
 
     envMap[player.animal.env].events[name].solve(ctx, msg, [player]);
-    
+
     Player.savePlayer(ext, player);
     return seal.ext.newCmdExecuteResult(true);
   };
