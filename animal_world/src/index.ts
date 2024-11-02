@@ -43,7 +43,7 @@ function main() {
         }
 
         const text = `昵称:<${player.name}>
-物种:${player.animal.species}
+物种:${player.animal.species} | 年龄:${player.animal.age[0]}/${player.animal.age[1]}
 攻击:${player.animal.attr.atk} | 防御:${player.animal.attr.def} | 敏捷:${player.animal.attr.dex}
 幸运:${player.animal.attr.lck} | 生命:${player.animal.attr.hp} | 积分:${player.score}
 词条:\n${entries2.join('\n')}`

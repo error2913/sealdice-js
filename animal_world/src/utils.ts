@@ -36,6 +36,7 @@ export function parseAnimal(data: any): Animal {
             info: data.info,
             env: data.env,
             evolve: data.evolve,
+            age: data.age,
             enemy: data.enemy,
             food: data.food,
             events: {
@@ -57,6 +58,7 @@ export function parseAnimal(data: any): Animal {
             info: "未知",
             env: "未知环境",
             evolve: "",
+            age: [0, 999],
             enemy: [],
             food: [],
             events: {

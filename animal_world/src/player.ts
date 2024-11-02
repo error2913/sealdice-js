@@ -22,6 +22,7 @@ export class Player {
             info: "未知",
             env: "未知环境",
             evolve: "",
+            age: [0, 999],
             enemy: [],
             food: [],
             events: {
@@ -115,6 +116,16 @@ export class Player {
         return players[Math.floor(Math.random() * players.length)];
     }
 
+    public age(ctx: seal.MsgContext, msg: seal.Message): void {
+        this.animal.age[0] += 1;
+
+        if (this.animal.age[0] > this.animal.age[1]) {
+            this.revive();
+
+            seal.replyToSender(ctx, msg, `<${this.name}>老死了。转生成了新的动物: ${this.animal.species}`);
+        }
+    }
+
     public revive(): void {
         this.entries = [];
 
@@ -126,11 +137,6 @@ export class Player {
     public survive(ctx: seal.MsgContext, msg: seal.Message, event: string): void {
         if (!event || !this.animal.events.active.includes(event)) {
             seal.replyToSender(ctx, msg, `可选：${this.animal.events.active.join('、')}`);
-            return;
-        }
-
-        if (Math.random() <= 0.2) {
-            this.explore(ctx, msg);
             return;
         }
 
@@ -161,21 +167,19 @@ export class Player {
     }
 
     public multiply(ctx: seal.MsgContext, msg: seal.Message): void {
-        if (Math.random() <= 0.2) {
-            this.explore(ctx, msg);
-            return;
-        }
-
-        if (Math.random() <= 0.2) {
+        if (Math.random() * this.animal.attr.hp * (this.animal.age[1] - this.animal.age[0]) <= 10) {
             seal.replyToSender(ctx, msg, `繁衍失败`);
+            this.age(ctx, msg);
             return;
         }
 
-        this.score += 1;
+        const num = Math.floor(this.animal.attr.hp / 10);
+        this.score += num;
         const entry = getEntries(1);
         addEntries(this, entry);
 
-        seal.replyToSender(ctx, msg, `${this.name}繁衍了，得1分。新的词条：${entry[0].name}`);
+        seal.replyToSender(ctx, msg, `<${this.name}>繁衍了${num}个后代，积分加${num}。新的词条：${entry[0].name}`);
+        this.age(ctx, msg);
         return;
     }
 
@@ -196,7 +200,7 @@ export class Player {
         addEntries(this, entries);
         this.score += 5;
 
-        seal.replyToSender(ctx, msg, `${this.name}进化了，进化为${this.animal.species}。得5分`);
+        seal.replyToSender(ctx, msg, `<${this.name}>进化了，进化为${this.animal.species}。得5分`);
     }
 
     /* TODO

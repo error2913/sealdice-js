@@ -5,6 +5,7 @@ export interface Animal {
     info: string;
     env: string;
     evolve: string;
+    age: [number, number];//当前年龄和最大年龄
     enemy: string[];//敌人和食物，用于在遭遇的时候判断
     food: string[];
     events: {
@@ -36,6 +37,7 @@ animalMap["黑鱼"] = {
     info: "可怕的黑鱼",
     env: "池塘",
     evolve: "白鱼",
+    age: [0, 10],
     enemy: ["白鱼"],
     food: ["黑鱼", "乌龟"],
     events: {
@@ -56,6 +58,7 @@ animalMap["白鱼"] = {
     info: "可怕的白鱼",
     env: "池塘",
     evolve: "",
+    age: [0, 20],
     enemy: ["黑鱼"],
     food: ["黑鱼", "乌龟", "水草"],
     events: {
@@ -76,6 +79,7 @@ animalMap["乌龟"] = {
     info: "可怕的乌龟",
     env: "池塘",
     evolve: "",
+    age: [0, 100],
     enemy: ["黑鱼", "白鱼"],
     food: ["水草"],
     events: {
