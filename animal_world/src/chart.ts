@@ -34,7 +34,11 @@ export function updateScoreChart(ext: seal.ExtInfo, player: Player): void {
     if (index === -1) {
         scoreChart.push([player.id, player.name, player.score]);
     } else {
-        scoreChart[index] = [player.id, player.name, player.score];
+        if (scoreChart[index][2] == player.score) {
+            return;
+        }
+        
+        scoreChart[index][2] = player.score;
     }
 
     scoreChart.sort((a, b) => b[2] - a[2]);
