@@ -1,10 +1,11 @@
 //这里是一个玩家类，用于存储玩家的信息和行为
 
-import { Animal, getAnimal, parseAnimal } from "./animal";
-import { getEntries } from "./entry";
+import { cache } from ".";
+import { Animal, getAnimal } from "./animal";
+import { addEntries, getEntries } from "./entry";
 import { envMap } from "./env";
-
-const cache: { [key: string]: Player } = {};
+import { playerList, savePlayerList } from "./playerManager";
+import { parseAnimal } from "./utils";
 
 export class Player {
     public id: string;
@@ -22,7 +23,10 @@ export class Player {
             env: "",
             enemy: [],
             food: [],
-            events: [],
+            events: {
+                active: [],
+                passive: []
+            },
             attr: {
                 hp: 0,
                 atk: 0,
@@ -35,54 +39,81 @@ export class Player {
         this.entries = [];
     }
 
-    public static getData(ext: seal.ExtInfo, ctx: seal.MsgContext): Player {
-        const id = ctx.player.userId;
-
+    public static getPlayer(ext: seal.ExtInfo, id: string, ctx: seal.MsgContext = undefined): Player {
         if (!cache.hasOwnProperty(id)) {
-            let data = {};
+            let data: any;
 
             try {
                 data = JSON.parse(ext.storageGet(`player_${id}`) || '{}');
             } catch (error) {
                 console.error(`从数据库中获取player_${id}失败:`, error);
+                data = {};
             }
-        
-            const player = this.parsePlayer(ctx, data);
-        
-            cache[id] = player;
+
+            if (data && Object.keys(data).length > 0) {
+                cache[id] = Player.parse(data);
+            } else {
+                cache[id] = Player.createPlayer(id, ctx.player.name || "未知玩家");
+                playerList.push(id);
+                savePlayerList(ext);
+            }
         }
-    
+
         return cache[id];
     }
 
-    public static saveData(ext: seal.ExtInfo, ctx: seal.MsgContext): void {
-        const id = ctx.player.userId;
-
-        if (cache.hasOwnProperty(id)) {
-            ext.storageSet(`player_${id}`, JSON.stringify(cache[id]));
-        }
+    public static savePlayer(ext: seal.ExtInfo, player: Player): void {
+        ext.storageSet(`player_${player.id}`, JSON.stringify(player));
     }
 
-    private static parsePlayer(ctx: seal.MsgContext, data: any): Player {
-        const id = ctx.player.userId;
-        const name = data.name || ctx.player.name;
+    public static parse(data: any): Player {
+        let player: Player;
 
-        const player = new Player(id, name);
+        try {
+            player = new Player(data.id, data.name);
 
-        player.animal = parseAnimal(data.animal);
-        player.score = data.score || 0;
-        player.entries = data.entries || [];
+            player.animal = parseAnimal(data.animal);
+            player.score = data.score;
+            player.entries = data.entries;
+        } catch (err) {
+            console.error(`解析玩家失败:`, err);
+            player = new Player('', '');
+        }
 
         return player;
     }
 
-    public revive(ctx: seal.MsgContext, msg: seal.Message): void {
+    public static createPlayer(id: string, name: string): Player {
+        const player = new Player(id, name);
+
+        player.animal = getAnimal();
+        const entries = getEntries(2);
+        addEntries(player, entries);
+
+        return player;
+    }
+
+    //TODO:随机ID，随机名字
+    public static createRobot(species: string): Player {
+        return Player.createPlayer(`Robot`, `奇怪的${species}`);
+    }
+
+    public static getRandomPlayer(species: string): Player {
+        const players = Object.values(cache).filter(player => player.animal.species === species);
+
+        if (players.length == 0) {
+            return this.createRobot(species);
+        }
+
+        return players[Math.floor(Math.random() * players.length)];
+    }
+
+    public revive(): void {
         this.entries = [];
 
-        getAnimal(this);
-        getEntries(this, 1);
-
-        seal.replyToSender(ctx, msg, `${this.name}转生成了新的动物: ${this.animal.species}`);
+        this.animal = getAnimal();
+        const entries = getEntries(2);
+        addEntries(this, entries);
     }
 
     public survive(ctx: seal.MsgContext, msg: seal.Message, event: string): void {

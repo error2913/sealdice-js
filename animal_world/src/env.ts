@@ -1,6 +1,5 @@
 //这里是环境和环境内的定义
 
-import { animalMap } from "./animal";
 import { Player } from "./player";
 
 export interface Event {
@@ -32,25 +31,39 @@ envMap["池塘"] = {
             active: true,
             solve: (ctx: seal.MsgContext, msg: seal.Message, players: Player[]) => {
                 const player = players[0];
-                const animal = animalMap[player.animal.species];
-                if (!animal.food.includes("水草")) {
-                    seal.replyToSender(ctx, msg, `${player.name}不吃水草`);
-                    return;
-                }
 
-                seal.replyToSender(ctx, msg, `${player.name}吃草`);
+                player.score += 1;
+
+                seal.replyToSender(ctx, msg, `${player.name}吃草，得了1分`);
             }
         },
-        "鱼咬龟": {
+        "咬乌龟": {
             name: "鱼咬龟",
             info: "鱼咬了乌龟",
             species: ["黑鱼", "白鱼"],
             active: true,
             solve: (ctx: seal.MsgContext, msg: seal.Message, players: Player[]) => {
                 const fish = players[0];
-                const turtle = players[1];
+                const turtle = Player.getRandomPlayer("乌龟");
 
-                seal.replyToSender(ctx, msg, `${fish.name}咬了${turtle.name}`);
+                //尝试逃跑
+                if (turtle.animal.attr.dex * Math.random() > fish.animal.attr.dex * Math.random()) {
+                    seal.replyToSender(ctx, msg, `${turtle.name}逃跑了`);
+                    return;
+                }
+
+                const damage = fish.animal.attr.atk - turtle.animal.attr.def > 0? fish.animal.attr.atk - turtle.animal.attr.def : 0;
+
+                turtle.animal.attr.hp -= damage;
+
+                //吃掉
+                if (turtle.animal.attr.hp <= 0) {
+                    seal.replyToSender(ctx, msg, `${fish.name}吃掉了${turtle.name}`);
+                    turtle.revive();
+                    return;
+                }
+
+                seal.replyToSender(ctx, msg, `${fish.name}咬了${turtle.name}，${turtle.name}掉了${fish.animal.attr.atk - turtle.animal.attr.def}血`);
             }
         }
     }

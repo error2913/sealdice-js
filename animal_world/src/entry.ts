@@ -8,17 +8,32 @@ export interface Entry {
     solve: (player: Player) => void;//获取词条后发生的变化
 }
 
-export function getEntries(player: Player, n: number): void {
+/** 这是不放回抽取 */
+export function getEntries(n: number, name: string = ''): Entry[] {
     const entries = Object.keys(entryMap);
+    const result = [];
 
-    for (let i = 0; i < n && i < entries.length; i++) {
-        const index = Math.floor(Math.random() * entries.length);
+    for (let i = 0; i < n; i++) {
+        if (entries.includes(name)) {
+            result.push(entryMap[name])
+        } else {
+            const index = Math.floor(Math.random() * entries.length);
+            const name = entries[index];
 
-        player.entries.push(entries[index]);
-        entryMap[entries[index]].solve(player);
+            result.push(entryMap[name]);
 
-        entries.splice(index, 1);
+            entries.splice(index, 1);
+        }
     }
+
+    return result;
+}
+
+export function addEntries(player: Player, entries: Entry[]): void {
+    entries.forEach(entry => {
+        player.entries.push(entry.name);
+        entry.solve(player);
+    })
 }
 
 const entryMap: { [key: string]: Entry } = {};
