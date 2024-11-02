@@ -19,21 +19,25 @@ export class Deck {
         this.solve = () => {}//方法
     }
 
-    public static parseDeck(data: any): Deck {
-        const name = data.name || '未知牌堆';
-
-        if (deckMap.hasOwnProperty(name)) {
-            const deck = deckMap[name].clone();
-            deck.data = data.data || {};
-            return deck;
-        }
-
+    public static parse(data: any): Deck {
         const deck = new Deck();
-        deck.name = name;
-        deck.desc = data.desc || '';
-        deck.type = data.type || '';
-        deck.cards = data.cards || [];
-        deck.data = data.data || {};
+
+        try {
+            if (deckMap.hasOwnProperty(data.name)) {
+                const deck = deckMap[data.name].clone();
+                deck.data = data.data || {};
+                return deck;
+            }
+
+            deck.name = data.name;
+            deck.desc = data.desc;
+            deck.type = data.type;
+            deck.cards = data.cards;
+            deck.data = data.data;
+        } catch (err) {
+            console.error(`解析牌组失败: ${name}`, err);
+            deck.name = '未知牌堆';
+        }
 
         return deck;
     }

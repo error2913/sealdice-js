@@ -22,14 +22,19 @@ export class Player {
     }
 
     //获取并解析player对象的数据
-    public static parsePlayer(data: any): Player {
-        const id = data.id || 'QQ:114514';
-        const player = new Player(id);
+    public static parse(data: any): Player {
+        let player: Player;
 
-        player.data = data.data || {};
-        player.hand = Deck.parseDeck(data.hand);
-        player.show = Deck.parseDeck(data.show);
-        player.hide = Deck.parseDeck(data.hide);
+        try {
+            player = new Player(data.id);
+            player.data = data.data;
+            player.hand = Deck.parse(data.hand);
+            player.show = Deck.parse(data.show);
+            player.hide = Deck.parse(data.hide);
+        } catch (err) {
+            console.error(`解析玩家失败:`, err);
+            player = new Player('QQ:114514');
+        }
 
         return player
     }

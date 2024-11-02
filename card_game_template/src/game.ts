@@ -40,7 +40,7 @@ export class Game {
                 console.error(`从数据库中获取game_${id}失败:`, error);
             }
         
-            const game = this.parseGame(id, data);
+            const game = this.parse(id, data);
         
             cache[id] = game;
         }
@@ -56,18 +56,22 @@ export class Game {
         }
     }
 
-    private static parseGame(id: string, data: any): Game {
+    private static parse(id: string, data: any): Game {
         const game = new Game(id);
 
-        game.data = data.data || {};
-        game.status = data.status || false;
-        game.players = (data.players || []).map(player => Player.parsePlayer(player));
-        game.round = data.round || 0;
-        game.turn = data.turn || 0;
-        game.curPlayerId = data.curPlayerId || '';
-        game.curDeckName = data.curDeckName || '';
-        game.mainDeck = data.mainDeck ? Deck.parseDeck(data.mainDeck) : deckMap['主牌堆'].clone();
-        game.discardDeck = data.discardDeck ? Deck.parseDeck(data.discardDeck) : deckMap['弃牌堆'].clone();
+        try {
+            game.data = data.data;
+            game.status = data.status;
+            game.players = data.players.map(player => Player.parse(player));
+            game.round = data.round;
+            game.turn = data.turn;
+            game.curPlayerId = data.curPlayerId;
+            game.curDeckName = data.curDeckName;
+            game.mainDeck = Deck.parse(data.mainDeck);
+            game.discardDeck = Deck.parse(data.discardDeck);
+        } catch (err) {
+            console.error('解析游戏数据失败:', err);
+        }
 
         return game;
     }
