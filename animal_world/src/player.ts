@@ -166,8 +166,8 @@ export class Player {
             return;
         }
 
-        if (Math.random() <= 0.5) {
-            seal.replyToSender(ctx, msg, `繁殖失败`);
+        if (Math.random() <= 0.2) {
+            seal.replyToSender(ctx, msg, `繁衍失败`);
             return;
         }
 
@@ -175,13 +175,30 @@ export class Player {
         const entry = getEntries(1);
         addEntries(this, entry);
 
-        seal.replyToSender(ctx, msg, `${this.name}繁殖了，得1分。新的词条：${entry[0].name}`);
+        seal.replyToSender(ctx, msg, `${this.name}繁衍了，得1分。新的词条：${entry[0].name}`);
         return;
     }
 
-    /* TODO
-    public evolve(ctx: seal.MsgContext, msg: seal.Message): void {}
+    public evolve(ctx: seal.MsgContext, msg: seal.Message): void {
+        if (!this.animal.evolve) {
+            seal.replyToSender(ctx, msg, `进化失败，没有进化路线`);
+            return;
+        }
 
+        if (this.entries.length < 5) {
+            seal.replyToSender(ctx, msg, `进化失败，词条不足`);
+            return;
+        }
+
+        this.entries.splice(0, 5);
+        this.animal = getAnimal(this.animal.evolve);
+        this.score += 5;
+
+        seal.replyToSender(ctx, msg, `${this.name}进化了，进化为${this.animal.species}。得5分`);
+    }
+
+    /* TODO
+    //遭遇其他玩家？
     public meet(ctx: seal.MsgContext, msg: seal.Message): void {}
     */
 }

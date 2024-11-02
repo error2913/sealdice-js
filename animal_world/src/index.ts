@@ -124,6 +124,20 @@ function main() {
   };
   ext.cmdMap['multiply'] = cmdMultiply;
   ext.cmdMap['繁衍'] = cmdMultiply;
+
+  const cmdEvolve = seal.ext.newCmdItemInfo();
+  cmdEvolve.name = 'evolve';
+  cmdEvolve.help = '';
+  cmdEvolve.solve = (ctx, msg, _) => {
+    const player = Player.getPlayer(ext, ctx.player.userId, ctx);
+
+    player.evolve(ctx, msg);
+
+    Player.savePlayer(ext, player);
+    return seal.ext.newCmdExecuteResult(true);
+  };
+  ext.cmdMap['evolve'] = cmdEvolve;
+  ext.cmdMap['进化'] = cmdEvolve;
 }
 
 main();
