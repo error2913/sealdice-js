@@ -1,4 +1,4 @@
-import { scoreChart } from "./chart";
+import { getScoreChart } from "./chart";
 import { Player } from "./player";
 
 function main() {
@@ -30,8 +30,10 @@ function main() {
       }
       case '排行榜':
       case 'chart': {
+        const scoreChart = getScoreChart(ext);
+
         let text = `排行榜\n♚`
-        for (let i = 0; i < scoreChart.length; i++) {
+        for (let i = 0; i < 10; i++) {
           const [_, name, score] = scoreChart[i];
           text += `第${i + 1}名: <${name}>  ${score}\n`
         }
