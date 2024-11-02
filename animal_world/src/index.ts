@@ -34,9 +34,9 @@ function main() {
 
         const text = `昵称:<${player.name}>
 物种:${player.animal.species}
-生命:${player.animal.attr.hp} | 防御:${player.animal.attr.def}
+攻击:${player.animal.attr.atk} | 防御:${player.animal.attr.def}
 敏捷:${player.animal.attr.dex} | 幸运:${player.animal.attr.lck}
-积分:${player.score}
+生命:${player.animal.attr.hp} | 积分:${player.score}
 词条:${player.entries.join('、')}`
 
         seal.replyToSender(ctx, msg, text);

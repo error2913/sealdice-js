@@ -87,7 +87,7 @@ export class Player {
         const player = new Player(id, name);
 
         player.animal = getAnimal();
-        const entries = getEntries(2);
+        const entries = getEntries(3);
         addEntries(player, entries);
 
         return player;
