@@ -22,20 +22,25 @@ function main() {
         const game = Game.getData(ext, id);
         game.start(ctx, msg);
         Game.saveData(ext, id);
-        return seal.ext.newCmdExecuteResult(true);;
+        return seal.ext.newCmdExecuteResult(true);
       }
       case 'end': {
         const game = Game.getData(ext, id);
         game.end(ctx, msg);
         Game.saveData(ext, id);
-        return seal.ext.newCmdExecuteResult(true);;
+        return seal.ext.newCmdExecuteResult(true);
+      }
+      case 'check': {
+        const game = Game.getData(ext, id);
+        game.check(ctx, msg);
+        return seal.ext.newCmdExecuteResult(true);
       }
       case 'play': {
         const game = Game.getData(ext, id);
         const name = cmdArgs.getArgN(2);
         game.play(ctx, msg, name)
         Game.saveData(ext, id);
-        return seal.ext.newCmdExecuteResult(true);;
+        return seal.ext.newCmdExecuteResult(true);
       }
       case 'help':
       default: {

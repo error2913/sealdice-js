@@ -45,5 +45,11 @@ export function parseCards(s: string): string[] {
         }
     }
 
+    result.sort((a, b) => {
+        const indexA = cards.indexOf(a);
+        const indexB = cards.indexOf(b);
+        return indexA - indexB;
+    });
+
     return result;
 }
