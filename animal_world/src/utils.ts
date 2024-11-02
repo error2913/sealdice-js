@@ -85,3 +85,21 @@ export function getScoreChart(): Player[] {
 
     return scoreChart;
 }
+
+export function AHurtB(playerA: Player, playerB: Player): [number, boolean] {
+    const [lck1, lck2] = [playerA.animal.attr.lck, playerB.animal.attr.lck];
+
+    let crit = false;
+    let rate = 0;
+    if (lck1 * Math.random() > lck2 * Math.random()) {
+        crit = true;
+        rate = lck1 / (lck1 + lck2);
+    }
+
+    const baseDamage = playerA.animal.attr.atk - playerB.animal.attr.def > 0 ? playerA.animal.attr.atk - playerB.animal.attr.def : 1;
+    const damage = Math.floor(baseDamage * (1 + rate));
+
+    playerB.animal.attr.hp -= damage;
+
+    return [damage, crit];
+}

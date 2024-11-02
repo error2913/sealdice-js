@@ -31,11 +31,22 @@ function main() {
       case 'info': {
         const player = Player.getPlayer(ext, ctx.player.userId, ctx);
 
+        //展示词条
+        const entries = player.entries;
+        const map = {};
+        entries.forEach(entry => {
+          map[entry] = map[entry] + 1 || 1;
+        })
+        const entries2 = [];
+        for (let entry in map) {
+          entries2.push(`${entry}×${map[entry]}`);
+        }
+
         const text = `昵称:<${player.name}>
 物种:${player.animal.species}
 攻击:${player.animal.attr.atk} | 防御:${player.animal.attr.def} | 敏捷:${player.animal.attr.dex}
 幸运:${player.animal.attr.lck} | 生命:${player.animal.attr.hp} | 积分:${player.score}
-词条:${player.entries.join('、')}`
+词条:\n${entries2.join('\n')}`
 
         seal.replyToSender(ctx, msg, text);
         return seal.ext.newCmdExecuteResult(true);
