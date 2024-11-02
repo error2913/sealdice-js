@@ -96,7 +96,8 @@ export function AHurtB(playerA: Player, playerB: Player): [number, boolean] {
         rate = lck1 / (lck1 + lck2);
     }
 
-    const baseDamage = playerA.animal.attr.atk - playerB.animal.attr.def > 0 ? playerA.animal.attr.atk - playerB.animal.attr.def : 1;
+    const baseAtk = playerA.animal.attr.atk - playerB.animal.attr.def;
+    const baseDamage = baseAtk > 0 ? baseAtk : 1;
     const damage = Math.floor(baseDamage * (1 + rate));
 
     playerB.animal.attr.hp -= damage;

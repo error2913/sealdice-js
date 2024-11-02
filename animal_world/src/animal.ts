@@ -23,12 +23,10 @@ export interface Animal {
 export function getAnimal(species: string = ''): Animal {
     if (!animalMap.hasOwnProperty(species)) {
         const animals = Object.keys(animalMap);
-        const animal = animalMap[animals[Math.floor(Math.random() * animals.length)]];
-
-        return animal;
+        species = animals[Math.floor(Math.random() * animals.length)];
     }
 
-    return animalMap[species];
+    return JSON.parse(JSON.stringify(animalMap[species]));
 }
 
 const animalMap: { [key: string]: Animal } = {};

@@ -119,7 +119,7 @@ export class Player {
         this.entries = [];
 
         this.animal = getAnimal();
-        const entries = getEntries(3);
+        const entries = getEntries(1);
         addEntries(this, entries);
     }
 
@@ -192,6 +192,8 @@ export class Player {
 
         this.entries.splice(0, 5);
         this.animal = getAnimal(this.animal.evolve);
+        const entries = getEntries(1);
+        addEntries(this, entries);
         this.score += 5;
 
         seal.replyToSender(ctx, msg, `${this.name}进化了，进化为${this.animal.species}。得5分`);
