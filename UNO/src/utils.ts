@@ -29,6 +29,13 @@ export function getName(ctx: seal.MsgContext, id: string) {
     return mctx.player.name;
 }
 
+/** 回复私聊消息*/
+export function replyPrivate(ctx: seal.MsgContext, s: string, id: string = ''): void {
+    const mmsg = getMsg('private', id || ctx.player.userId, ctx.group.groupId);
+    const mctx = getCtx(ctx.endPoint.userId, mmsg);
+    seal.replyToSender(mctx, mmsg, s);
+}
+
 export function parseCards(s: string): string[] {
     const cards = ['card A', 'card B', 'card C'];
     const pattern = new RegExp(`^${cards.join('|^')}`);
