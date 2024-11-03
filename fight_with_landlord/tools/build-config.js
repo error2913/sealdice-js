@@ -1,4 +1,4 @@
-var filename = 'cardGame.js'
+var filename = '斗地主2.js'
 
 module.exports = {
   dev: {

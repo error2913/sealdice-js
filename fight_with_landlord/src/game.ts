@@ -1,7 +1,7 @@
 import { Deck } from "./deck";
 import { Player } from "./player";
-import { deckMap } from "./registerDeck";
-import { getCtx, getMsg, getName, getType, parseCards } from "./utils";
+import { deckMap } from "./deck";
+import { getCards, getCtx, getMsg, getName } from "./utils";
 
 const cache: { [key: string]: Game } = {};
 
@@ -213,12 +213,10 @@ export class Game {
             return;
         }
 
-        const cards = parseCards(name);
-
-        const [type, value] = getType(cards);
+        const [cards, type, value] = getCards(name);
 
         if (!type) {
-            seal.replyToSender(ctx, msg, '未注册牌型');
+            seal.replyToSender(ctx, msg, '不存在牌型');
             return;
         }
 

@@ -1,5 +1,5 @@
 import { Game } from "./game";
-import { getType, parseCards } from "./utils";
+import { getCards } from "./utils";
 
 function main() {
   // 注册扩展
@@ -18,10 +18,23 @@ function main() {
 【.ddz test 牌型名称】测试牌型是否存在
 【.ddz 牌型名称】出牌
 【.ddz 不要】跳过
-牌应当从小到大排列，附带的牌加在后边
-例如：
-JJJ4 三带一
-44455533AA 飞机带对子`;
+出牌教程：
+王炸
+x
+对x
+三x
+炸弹x
+三x带y
+三x带对y
+四x带yz
+四x带对yz
+
+牌型连续时，x作为起头，n作为长度：
+n顺x
+n连对x
+n飞机x
+n飞机x带yz...
+n飞机x带对yz...`;
   cmdPlay.disabledInPrivate = true;// 不允许私聊
   cmdPlay.solve = (ctx, msg, cmdArgs) => {
     let val = cmdArgs.getArgN(1);
@@ -42,8 +55,7 @@ JJJ4 三带一
       }
       case 'test': {
         const s = cmdArgs.getRestArgsFrom(2);
-        const cards = parseCards(s);
-        const [type, value] = getType(cards);
+        const [cards, type, value] = getCards(s);
 
         if (type) {
           seal.replyToSender(ctx, msg, `${cards.join('')}存在${type}:${value}`);

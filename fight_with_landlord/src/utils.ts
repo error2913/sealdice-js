@@ -54,141 +54,160 @@ export function parseCards(s: string): string[] {
     return result;
 }
 
-function checkStraight(cards: string[]): [string, number] {
-
-}
-
-function checkPlaner(cards: string[]): [string, number] {
-
-}
-
-export function getType(cards: string[]): [string, number] {
-    if (cards.length == 0) {
-        return ['', 0];
-    }
-
-    if (cards.length > 5) {
-        checkPlaner(cards);///////////////
-    }
-
+export function getCards(s: string): [string[], string, number] {
     //              0    1    2    3    4    5    6    7     8    9   10    11   12    13     14
     const rank = ['3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', '2', '小王', '大王'];
 
-    //单张
-    if (cards.length == 1) {
-        const index = rank.indexOf(cards[0]);
-        return ['单', index];
-    }
-
     //王炸
-    if (cards.length == 2 && cards.includes('小王') && cards.includes('大王')) {
-        return ['炸弹', 13];
+    if (s == '王炸') {
+        return [['小王', '大王'], '炸弹', 13];
     }
 
-    // 排序
-    cards.sort((a, b) => {
-        const indexA = rank.indexOf(a);
-        const indexB = rank.indexOf(b);
-        return indexA - indexB;
-    });
-
-    //先建立一个牌到数字的映射表
-    const map: { [key: string]: number } = {};
-    cards.forEach(card => {
-        map[card] = map[card] + 1 || 1;
-    })
-
-    //检查大小王数量
-    if (
-        (map['小王'] && map['小王'] > 1) ||
-        (map['大王'] && map['大王'] > 1)
-    ) {
-        return ['', 0];
+    //单张
+    if (rank.includes(s)) {
+        const index = rank.indexOf(s);
+        return [[s], '单', index];
     }
 
-    //再建立一个数字到牌的映射表
-    //                       1    2   3   4
-    const arr: string[][] = [[], [], [], []];
+    //对子
+    var match = s.match(/^对(3|4|5|6|7|8|9|10|J|Q|K|A|2)$/);
+    if (match) {
+        const index = rank.indexOf(match[1]);
+        return [[match[1], match[1]], '对', index];
+    }
+
+    //三张
+    match = s.match(/^三(3|4|5|6|7|8|9|10|J|Q|K|A|2)$/);
+    if (match) {
+        const index = rank.indexOf(match[1]);
+        return [[match[1], match[1], match[1]], '三', index];
+    }
+
+    //炸弹
+    match = s.match(/^炸弹(3|4|5|6|7|8|9|10|J|Q|K|A|2)$/);
+    if (match) {
+        const index = rank.indexOf(match[1]);
+        return [[match[1], match[1], match[1], match[1]], '炸弹', index];
+    }
+
+    //三带一
+    match = s.match(/^三(3|4|5|6|7|8|9|10|J|Q|K|A|2)带(3|4|5|6|7|8|9|10|J|Q|K|A|2|小王|大王)$/);
+    if (match) {
+        const index = rank.indexOf(match[1]);
+        return [[match[1], match[1], match[1], match[2]], '三带一', index];
+    }
+
+    //三带二
+    match = s.match(/^三(3|4|5|6|7|8|9|10|J|Q|K|A|2)带对(3|4|5|6|7|8|9|10|J|Q|K|A|2|小王|大王)$/);
+    if (match) {
+        const index = rank.indexOf(match[1]);
+        return [[match[1], match[1], match[1], match[2], match[2]], '三带对', index];
+    }
+
+    //四带一
+    match = s.match(/^四(3|4|5|6|7|8|9|10|J|Q|K|A|2)带(3|4|5|6|7|8|9|10|J|Q|K|A|2|小王|大王)(3|4|5|6|7|8|9|10|J|Q|K|A|2|小王|大王)$/);
+    if (match) {
+        const index = rank.indexOf(match[1]);
+        return [[match[1], match[1], match[1], match[1], match[2], match[3]], '四带一', index];
+    }
+
+    //四带对
+    match = s.match(/^四(3|4|5|6|7|8|9|10|J|Q|K|A|2)带对(3|4|5|6|7|8|9|10|J|Q|K|A|2|小王|大王)(3|4|5|6|7|8|9|10|J|Q|K|A|2|小王|大王)$/);
+    if (match) {
+        const index = rank.indexOf(match[1]);
+        return [[match[1], match[1], match[1], match[1], match[2], match[2], match[3], match[3]], '四带对', index];
+    }
+
+    //顺子
+    match = s.match(/^(\d+)顺(3|4|5|6|7|8|9|10)$/);
+    if (match) {
+        const n = parseInt(match[1]);
+        if (n >= 5 && n <= 12) {
+            const index = rank.indexOf(match[2]);
+            if (index + n < 13) {
+                const cards = [];
+                for (let i = 0; i < n; i++) {
+                    cards.push(rank[index + i]);
+                }
+                return [cards, '顺', index];
+
+            }
+        }
+    }
+
+    //连对
+    match = s.match(/^(\d+)连对(3|4|5|6|7|8|9|10|J|Q)$/);
+    if (match) {
+        const n = parseInt(match[1]);
+        if (n >= 3 && n <= 10) {
+            const index = rank.indexOf(match[2]);
+            if (index + n < 13) {
+                const cards = [];
+                for (let i = 0; i < n; i++) {
+                    cards.push(rank[index + i], rank[index + i]);
+                }
+                return [cards, '连对', index];
+            }
+        }
+    }
+
+    //飞机
+    match = s.match(/^(\d+)飞机(3|4|5|6|7|8|9|10|J|Q|K)$/);
+    if (match) {
+        const n = parseInt(match[1]);
+        if (n >= 2 && n <= 5) {
+            const index = rank.indexOf(match[2]);
+            if (index + n < 13) {
+                const cards = [];
+                for (let i = 0; i < n; i++) {
+                    cards.push(rank[index + i], rank[index + i], rank[index + i]);
+                }
+                return [cards, '飞机', index];
+            }
+        }
+    }
+
+    //飞机带单张
+    match = s.match(/^(\d+)飞机(3|4|5|6|7|8|9|10|J|Q|K)带(.+)$/);
+    if (match) {
+        const n = parseInt(match[1]);
+        if (n >= 2 && n <= 5) {
+            const match2 = match[3].match(/3|4|5|6|7|8|9|10|J|Q|K|A|2|小王|大王/g);
+            if (match2 && match2.length == n) {
+                const index = rank.indexOf(match[2]);
+                if (index + n < 13) {
+                    const cards = [];
+                    for (let i = 0; i < n; i++) {
+                        cards.push(rank[index + i], rank[index + i], rank[index + i]);
+                    }
+                    cards.push(...match2);
+                    return [cards, '飞机带单张', index];
+                }
+            }
+        }
+    }
     
-    for (let card in map) {
-        if (map[card] > 4) {
-            return ['', 0];
+    //飞机带对子
+    match = s.match(/^(\d+)飞机(3|4|5|6|7|8|9|10|J|Q|K)带对(.+)$/);
+    if (match) {
+        const n = parseInt(match[1]);
+        if (n >= 2 && n <= 5) {
+            const match2 = match[3].match(/3|4|5|6|7|8|9|10|J|Q|K|A|2|小王|大王/g);
+            if (match2 && match2.length == n) {
+                const index = rank.indexOf(match[2]);
+                if (index + n < 13) {
+                    const cards = [];
+                    for (let i = 0; i < n; i++) {
+                        cards.push(rank[index + i], rank[index + i], rank[index + i]);
+                    }
+                    cards.push(...match2,...match2);
+                    return [cards, '飞机带对子', index];
+                }
+            }
         }
-
-        arr[map[card] - 1].push(card);
     }
-
-    //对arr的元素进行排序
-    arr.forEach(item => {
-        item.sort((a, b) => {
-            const indexA = rank.indexOf(a);
-            const indexB = rank.indexOf(b);
-            return indexA - indexB;
-        })
-    })
-
-    //1
-    if (arr[0].length > 0) {
-        //1和2
-        if (arr[1].length > 0) {
-            return ['', 0];
-        }
-
-        //1和3
-        if (arr[2].length > 0 && arr[3].length == 0) {
-        
-        }
-
-        //1和4
-        if (arr[2].length == 0 && arr[3].length > 0) {
-        
-        }
-
-        //纯1，顺子
-
-    }
-
-    if (arr[1].length > 0) {
-        //2和3
-        if (arr[2].length > 0) {
-        
-        }
     
-        //2和4
-        if (arr[3].length > 0) {
-            
-        }
-
-        //纯2，对子，连对
-
-        //对子
-        if (arr[1].length == 1) {
-            const index = rank.indexOf(arr[1][0]);
-            return ['对', index];
-        }
-
-        //连对
-        
-    }
-
-    if (arr[2].length > 0) {
-        //纯3，三张
-        if (arr[2].length == 1) {
-            const index = rank.indexOf(arr[2][0]);
-            return ['三张', index];
-        }
-        
-    }
-
-    if (arr[3].length > 0) {
-        //纯4，炸弹
-        if (arr[3].length == 1) {
-            const index = rank.indexOf(arr[3][0]);
-            return ['炸弹', index];
-        }
-    }
-
-    return ['', 0];
+    return [[], '', 0];
 }
 
 /*
@@ -226,7 +245,7 @@ export function getType(cards: string[]): [string, number] {
 
 突然想到可以改输入而不用费力解析：
 王炸
-单x
+x
 对x
 三x
 炸弹x

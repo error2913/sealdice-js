@@ -1,6 +1,6 @@
 import { Deck } from "./deck";
 import { Player } from "./player";
-import { deckMap } from "./registerDeck";
+import { deckMap } from "./deck";
 import { getCtx, getMsg, getName } from "./utils";
 
 const cache:{[key: string]: Game} = {};
