@@ -18,23 +18,16 @@ function main() {
 【.ddz test 牌型名称】测试牌型是否存在
 【.ddz 牌型名称】出牌
 【.ddz 不要】跳过
-出牌教程：
-王炸
-x
-对x
-三x
-炸弹x
-三x带y
-三x带对y
-四x带yz
-四x带对yz
+出牌教程：x、y、z都为牌名
+王炸、x、对x、三x、炸弹x
+三x带y、三x带对y
+四x带yz、四x带对yz
 
-牌型连续时，x作为起头，n作为长度：
-n顺x
-n连对x
-n飞机x
-n飞机x带yz...
-n飞机x带对yz...`;
+牌型连续时，n作为连续部分的长度，x作为起头：
+n顺x、n连对x、n飞机x
+n飞机x带yz...、n飞机x带对yz...
+如：5飞机3带8910AJ就是
+3334445556667778910AJ`;
   cmdPlay.disabledInPrivate = true;// 不允许私聊
   cmdPlay.solve = (ctx, msg, cmdArgs) => {
     let val = cmdArgs.getArgN(1);

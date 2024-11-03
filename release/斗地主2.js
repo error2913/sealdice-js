@@ -2,7 +2,7 @@
 // @name         斗地主2
 // @author       错误
 // @version      2.0.0
-// @description  指令 .ddz help 获取帮助。依赖于错误:team:>=4.0.0
+// @description  指令 .ddz help 获取帮助。仅供娱乐。依赖于错误:team:>=4.0.0
 // @timestamp    1730448043
 // 2024-11-01 16:00:43
 // @license      MIT
@@ -543,23 +543,16 @@ ${player.hand.cards.join("\n")}`, player.id);
 \u3010.ddz test \u724C\u578B\u540D\u79F0\u3011\u6D4B\u8BD5\u724C\u578B\u662F\u5426\u5B58\u5728
 \u3010.ddz \u724C\u578B\u540D\u79F0\u3011\u51FA\u724C
 \u3010.ddz \u4E0D\u8981\u3011\u8DF3\u8FC7
-\u51FA\u724C\u6559\u7A0B\uFF1A
-\u738B\u70B8
-x
-\u5BF9x
-\u4E09x
-\u70B8\u5F39x
-\u4E09x\u5E26y
-\u4E09x\u5E26\u5BF9y
-\u56DBx\u5E26yz
-\u56DBx\u5E26\u5BF9yz
+\u51FA\u724C\u6559\u7A0B\uFF1Ax\u3001y\u3001z\u90FD\u4E3A\u724C\u540D
+\u738B\u70B8\u3001x\u3001\u5BF9x\u3001\u4E09x\u3001\u70B8\u5F39x
+\u4E09x\u5E26y\u3001\u4E09x\u5E26\u5BF9y
+\u56DBx\u5E26yz\u3001\u56DBx\u5E26\u5BF9yz
 
-\u724C\u578B\u8FDE\u7EED\u65F6\uFF0Cx\u4F5C\u4E3A\u8D77\u5934\uFF0Cn\u4F5C\u4E3A\u957F\u5EA6\uFF1A
-n\u987Ax
-n\u8FDE\u5BF9x
-n\u98DE\u673Ax
-n\u98DE\u673Ax\u5E26yz...
-n\u98DE\u673Ax\u5E26\u5BF9yz...`;
+\u724C\u578B\u8FDE\u7EED\u65F6\uFF0Cn\u4F5C\u4E3A\u8FDE\u7EED\u90E8\u5206\u7684\u957F\u5EA6\uFF0Cx\u4F5C\u4E3A\u8D77\u5934\uFF1A
+n\u987Ax\u3001n\u8FDE\u5BF9x\u3001n\u98DE\u673Ax
+n\u98DE\u673Ax\u5E26yz...\u3001n\u98DE\u673Ax\u5E26\u5BF9yz...
+\u5982\uFF1A5\u98DE\u673A3\u5E268910AJ\u5C31\u662F
+3334445556667778910AJ`;
     cmdPlay.disabledInPrivate = true;
     cmdPlay.solve = (ctx, msg, cmdArgs) => {
       let val = cmdArgs.getArgN(1);
