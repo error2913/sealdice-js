@@ -78,8 +78,8 @@ n飞机x带对yz...`;
       }
       default: {
         const game = Game.getData(ext, id);
-        const name = cmdArgs.getArgN(2);
-        game.play(ctx, msg, name)
+        const name = val.toUpperCase();
+        game.play(ctx, msg, name);
         Game.saveData(ext, id);
         return seal.ext.newCmdExecuteResult(true);
       }

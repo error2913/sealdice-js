@@ -1,31 +1,29 @@
 import { Deck } from "./deck";
 import { Player } from "./player";
 import { deckMap } from "./deck";
-import { getCtx, getMsg, getName } from "./utils";
+import { getName, replyPrivate } from "./utils";
 
 const cache:{[key: string]: Game} = {};
 
 export class Game {
     private id: string;//id
-    private data: { [key: string]: any };
     private status: boolean;//游戏状态
     private players: Player[];//玩家对象的数组
     private round: number;//回合数
     private turn: number;//一个回合内的轮次数
     private curPlayerId: string;//当前需要做出动作的玩家
-    private curDeckName: string;//当前场上的牌组
+    private curDeckInfo: [string];//当前场上的牌组的一些信息比如type,value,id,可以改
     private mainDeck: Deck;//包含所有卡牌的牌组
     private discardDeck: Deck;//丢弃的卡牌
 
     constructor(id: string) {
         this.id = id//一般是群号
-        this.data = {};//数据
         this.status = false;//游戏状态
         this.players = [];//玩家对象的数组
         this.round = 0;//回合数
         this.turn = 0;//一个回合内的轮次数
         this.curPlayerId = '';//当前需要做出动作的玩家
-        this.curDeckName = '';//当前场上的牌组
+        this.curDeckInfo = [''];//当前场上的牌组
         this.mainDeck = deckMap['主牌堆'].clone();//包含所有卡牌的牌组
         this.discardDeck = deckMap['弃牌堆'].clone();//丢弃的卡牌
     }
@@ -60,13 +58,12 @@ export class Game {
         const game = new Game(id);
 
         try {
-            game.data = data.data;
             game.status = data.status;
             game.players = data.players.map(player => Player.parse(player));
             game.round = data.round;
             game.turn = data.turn;
             game.curPlayerId = data.curPlayerId;
-            game.curDeckName = data.curDeckName;
+            game.curDeckInfo = data.curDeckInfo;
             game.mainDeck = Deck.parse(data.mainDeck);
             game.discardDeck = Deck.parse(data.discardDeck);
         } catch (err) {
@@ -83,7 +80,7 @@ export class Game {
           return;
         }
 
-        seal.replyPerson(ctx, msg, this.players[index].hand.cards.join('\n'));
+        replyPrivate(ctx, `您的手牌为:\n${this.players[index].hand.cards.join('\n')}`);
     }
 
     //游戏初始化
@@ -113,9 +110,7 @@ export class Game {
             const cards = this.mainDeck.draw(0, n);
             player.hand.add(cards);
 
-            const mmsg = getMsg("private", player.id);
-            const mctx = getCtx(ctx.endPoint.userId, mmsg);
-            seal.replyPerson(mctx, mmsg, `您的手牌为: ${player.hand.cards.join(', ')}`);
+            replyPrivate(ctx, `您的手牌为:\n${player.hand.cards.join('\n')}`, player.id);
         }
 
         seal.replyToSender(ctx, msg, '游戏开始');
@@ -124,16 +119,8 @@ export class Game {
 
     //结束游戏
     public end(ctx: seal.MsgContext, msg: seal.Message):void {
-        seal.replyToSender(ctx, msg, '游戏结束');
-
-        this.status = false;
-        this.players = [];
-        this.round = 0;
-        this.turn = 0;
-        this.curPlayerId = '';
-        this.curDeckName = '';
-        this.mainDeck = deckMap['主牌堆'].clone();
-        this.discardDeck = deckMap['弃牌堆'].clone();
+        seal.replyToSender(ctx, msg, `游戏结束:回合数${this.round}`);
+        cache[this.id] = new Game(this.id);
     }
 
     //进入下一回合
@@ -181,17 +168,13 @@ export class Game {
             return;
         }
 
-        if (this.curDeckName == 'xxx') {
-            //TODO
-        }
-
-        if (this.data.hasOwnProperty('xxx')) {
-            //TODO
+        if (this.curDeckInfo) {
+            //一些逻辑
         }
 
         player.hand.remove(deck.cards);
         this.discardDeck.add(deck.cards);
-        this.curDeckName = deck.name;
+        this.curDeckInfo = [deck.type];
 
         deck.solve(ctx, msg, this, player);
         seal.replyToSender(ctx, msg, `${playerName}打出了${deck.name}`);

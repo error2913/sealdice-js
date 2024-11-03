@@ -1,33 +1,29 @@
 import { Deck } from "./deck";
 import { Player } from "./player";
 import { deckMap } from "./deck";
-import { getCards, getCtx, getMsg, getName } from "./utils";
+import { getCards, getName, replyPrivate } from "./utils";
 
 const cache: { [key: string]: Game } = {};
 
 export class Game {
     private id: string;//id
-    private data: { [key: string]: any };
     private status: boolean;//游戏状态
     private players: Player[];//玩家对象的数组
     private round: number;//回合数
     private turn: number;//一个回合内的轮次数
     private curPlayerId: string;//当前需要做出动作的玩家
-    private curDeck: [string, number];//当前场上的牌组
+    private curDeckInfo: [string, number, string];//当前场上的牌组type,value,id
     private mainDeck: Deck;//包含所有卡牌的牌组
-    private discardDeck: Deck;//丢弃的卡牌
 
     constructor(id: string) {
         this.id = id//一般是群号
-        this.data = {};//数据
         this.status = false;//游戏状态
         this.players = [];//玩家对象的数组
         this.round = 0;//回合数
         this.turn = 0;//一个回合内的轮次数
         this.curPlayerId = '';//当前需要做出动作的玩家
-        this.curDeck = ['', 0];//当前场上的牌组
+        this.curDeckInfo = ['', 0, ''];//当前场上的牌组
         this.mainDeck = deckMap['主牌堆'].clone();//包含所有卡牌的牌组
-        this.discardDeck = deckMap['弃牌堆'].clone();//丢弃的卡牌
     }
 
     public static getData(ext: seal.ExtInfo, id: string): Game {
@@ -60,15 +56,13 @@ export class Game {
         const game = new Game(id);
 
         try {
-            game.data = data.data;
             game.status = data.status;
             game.players = data.players.map(player => Player.parse(player));
             game.round = data.round;
             game.turn = data.turn;
             game.curPlayerId = data.curPlayerId;
-            game.curDeck = data.curDeck;
+            game.curDeckInfo = data.curDeckInfo;
             game.mainDeck = Deck.parse(data.mainDeck);
-            game.discardDeck = Deck.parse(data.discardDeck);
         } catch (err) {
             console.error('解析游戏数据失败:', err);
         }
@@ -83,7 +77,7 @@ export class Game {
           return;
         }
 
-        seal.replyPerson(ctx, msg, this.players[index].hand.cards.join('\n'));
+        replyPrivate(ctx, `您的手牌为:\n${this.players[index].hand.cards.join('\n')}`);
     }
 
     //游戏初始化
@@ -116,7 +110,7 @@ export class Game {
         this.status = true;
 
         //发牌等游戏开始前的逻辑
-        this.data.curDeckPlayerId = this.players[0].id;
+        this.curDeckInfo[2]= this.players[0].id;
         this.mainDeck.shuffle();
 
         const cards = this.mainDeck.cards.splice(0, 3);
@@ -136,9 +130,7 @@ export class Game {
                 return indexA - indexB;
             });
 
-            const mmsg = getMsg("private", player.id);
-            const mctx = getCtx(ctx.endPoint.userId, mmsg);
-            seal.replyPerson(mctx, mmsg, `您的手牌为: ${player.hand.cards.join('\n')}`);
+            replyPrivate(ctx, `您的手牌为:\n${player.hand.cards.join('\n')}`, player.id);
         }
 
         const name = getName(ctx, this.players[0].id)
@@ -149,15 +141,7 @@ export class Game {
     //结束游戏
     public end(ctx: seal.MsgContext, msg: seal.Message): void {
         seal.replyToSender(ctx, msg, `游戏结束:回合数${this.round}`);
-
-        this.status = false;
-        this.players = [];
-        this.round = 0;
-        this.turn = 0;
-        this.curPlayerId = '';
-        this.curDeck = ['', 0];
-        this.mainDeck = deckMap['主牌堆'].clone();
-        this.discardDeck = deckMap['弃牌堆'].clone();
+        cache[this.id] = new Game(this.id);
     }
 
     //进入下一回合
@@ -190,11 +174,6 @@ export class Game {
             return;
         }
 
-        if (!deckMap.hasOwnProperty(name)) {
-            seal.replyToSender(ctx, msg, '未注册牌组');
-            return;
-        }
-
         const index = this.players.findIndex(player => player.id === this.curPlayerId);
         const player = this.players[index];
         const playerName = getName(ctx, this.curPlayerId);
@@ -204,7 +183,7 @@ export class Game {
         const anotherName = getName(ctx, anotherPlayer.id);
 
         if (name == 'SKIP' || name == 'PASS' || name == '不要' || name == '要不起' || name == '过' || name == '不出') {
-            if (this.data.curDeckPlayerId == this.curPlayerId) {
+            if (this.curDeckInfo[2] == this.curPlayerId) {
                 seal.replyToSender(ctx, msg, '不能跳过');
                 return;
             }
@@ -225,18 +204,18 @@ export class Game {
             return;
         }
 
-        if (this.data.curDeckPlayerId !== this.curPlayerId && this.curDeck) {
+        if (this.curDeckInfo[2] !== this.curPlayerId && this.curDeckInfo) {
             if (
                 type !== '炸弹' &&
-                type !== this.curDeck[0]
+                type !== this.curDeckInfo[0]
             ) {
                 seal.replyToSender(ctx, msg, '牌型错误');
                 return;
             }
 
             if (
-                type == this.curDeck[0] &&
-                value <= this.curDeck[1]
+                type == this.curDeckInfo[0] &&
+                value <= this.curDeckInfo[1]
             ) {
                 seal.replyToSender(ctx, msg, '牌不够大');
                 return;
@@ -244,8 +223,7 @@ export class Game {
         }
 
         player.hand.remove(cards);
-        this.curDeck = [type, value];
-        this.data.curDeckPlayerId = this.curPlayerId;
+        this.curDeckInfo = [type, value, this.curPlayerId];
 
         if (player.hand.cards.length == 0) {
             seal.replyToSender(ctx, msg, `${player.data.class}${playerName}胜利了`);
@@ -253,7 +231,7 @@ export class Game {
             return;
         }
 
-        seal.replyPerson(ctx, msg, `您的手牌为: ${player.hand.cards.join('\n')}`);
+        replyPrivate(ctx, `您的手牌为:\n${player.hand.cards.join('\n')}`, player.id);
         seal.replyToSender(ctx, msg, `${playerName}打出了${name}，还剩${player.hand.cards.length}张牌。下一位是${anotherName}`);
         this.nextTurn(ctx, msg);//进入下一轮
         return;
