@@ -1,6 +1,6 @@
 import { Player } from "./player";
 import { getPlayerList } from "./playerManager";
-import { getScoreChart } from "./utils";
+import { find, getScoreChart } from "./utils";
 
 export const cache: { [key: string]: Player } = {};
 
@@ -68,6 +68,27 @@ function main() {
         seal.replyToSender(ctx, msg, text);
         return seal.ext.newCmdExecuteResult(true);
       }
+      case '查询':
+      case 'find': {
+        const s = cmdArgs.getArgN(2);
+        const { animal, env, event, entry } = find(s);
+        let text = `查询结果如下:`
+        if (animal) {
+          text += `\n动物:${animal.info}`;
+        }
+        if (env) {
+          text += `\n环境:${env.info}`;
+        }
+        if (event) {
+          text += `\n事件:${event.info}`;
+        }
+        if (entry) {
+          text += `\n词条:${entry.info}`;
+        }
+
+        seal.replyToSender(ctx, msg, text);
+        return seal.ext.newCmdExecuteResult(true);
+      }
       default: {
         const ret = seal.ext.newCmdExecuteResult(true);
         ret.showHelp = true;
@@ -119,7 +140,7 @@ function main() {
     Player.savePlayer(ext, player);
     return seal.ext.newCmdExecuteResult(true);
   };
-  ext.cmdMap['explore'] = cmdExplore;   
+  ext.cmdMap['explore'] = cmdExplore;
   ext.cmdMap['探索'] = cmdExplore;
 
   const cmdMultiply = seal.ext.newCmdItemInfo();

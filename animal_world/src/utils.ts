@@ -1,5 +1,7 @@
 import { cache } from ".";
-import { Animal } from "./animal";
+import { Animal, animalMap } from "./animal";
+import { Entry, entryMap } from "./entry";
+import { Env, Event, envMap } from "./env";
 import { Player } from "./player";
 
 export function getMsg(messageType: "group" | "private", senderId: string, groupId: string = ''): seal.Message {
@@ -118,4 +120,39 @@ export function AHurtB(playerA: Player, playerB: Player): [number, boolean] {
     playerB.animal.attr.hp -= damage;
 
     return [damage, crit];
+}
+
+export function find(s: string): { 
+    animal: Animal | undefined,
+    env: Env | undefined,
+    event: Event | undefined,
+    entry: Entry | undefined
+} {
+    let animal: Animal | undefined;
+    let env: Env | undefined;
+    let event: Event | undefined;
+    let entry: Entry | undefined;
+
+    if (animalMap.hasOwnProperty(s)) {
+        animal = animalMap[s];
+    }
+    
+    if (entryMap.hasOwnProperty('『' + s + '』')) {
+        entry = entryMap['『' + s + '』'];
+    }
+
+    for (let name in envMap) {
+        if (name == s) {
+            env = envMap[name];
+        }
+
+        for (let eventName in envMap[name].events) {
+            if (eventName == s) {
+                event = envMap[name].events[eventName];
+                break;
+            }
+        }
+    }
+
+    return { animal, env, event, entry };
 }
