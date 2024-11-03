@@ -263,7 +263,7 @@ export class Player {
         //吃掉
         if (this.animal.attr.hp <= 0) {
             this.revive();
-            seal.replyToSender(ctx, msg, text + `\n${this.animal.species}<${this.name}>被吃掉了，转生成了新的动物: ${this.animal.species}`);
+            seal.replyToSender(ctx, msg, text + `\n<${this.name}>被吃掉了，转生成了新的动物: ${this.animal.species}`);
             return;
         }
 
