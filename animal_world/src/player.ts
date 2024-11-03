@@ -177,6 +177,7 @@ export class Player {
 
             seal.replyToSender(ctx, msg, `${this.animal.species}<${this.name}>吃掉了${food}，新的词条：${entry[0].name}`);
             this.age(ctx, msg);
+            return;
         }
 
         const foodPlayer = Player.getRandomPlayer([food]);
