@@ -106,17 +106,17 @@ export class Player {
         return player;
     }
 
-    public static getRandomPlayer(species: string[]): Player {
+    public static getRandomPlayer(speciesList: string[]): Player {
         const players = Object.values(cache).filter(player => {
-            if (species.length == 0) {
+            if (speciesList.length == 0) {
                 return true;
             }
 
-            return species.includes(player.animal.species)
+            return speciesList.includes(player.animal.species)
         });
 
         if (players.length == 0) {
-            return this.createRobot(species[Math.floor(Math.random() * species.length)]);
+            return this.createRobot(speciesList[Math.floor(Math.random() * speciesList.length)]);
         }
 
         return players[Math.floor(Math.random() * players.length)];
@@ -191,14 +191,14 @@ export class Player {
 
         const [damage, crit] = AHurtB(this, foodPlayer);
 
-        let text = `<${this.name}>咬了<${foodPlayer.name}>，${crit ? `暴击了，` : ``}咬掉了${damage}血`
+        let text = `${this.animal.species}<${this.name}>咬了${foodPlayer.animal.species}<${foodPlayer.name}>，${crit ? `暴击了，` : ``}咬掉了${damage}血`
 
         //吃掉
         if (foodPlayer.animal.attr.hp <= 0) {
             const entry = getEntries(1);
             addEntries(this, entry);
 
-            seal.replyToSender(ctx, msg, text + `\n<${this.name}>吃掉了<${foodPlayer.name}>，新的词条：${entry[0].name}`);
+            seal.replyToSender(ctx, msg, text + `\n${this.animal.species}<${this.name}>吃掉了${foodPlayer.animal.species}<${foodPlayer.name}>，新的词条：${entry[0].name}`);
             foodPlayer.revive();
             return;
         }
@@ -278,18 +278,18 @@ export class Player {
             return;
         }
 
-        if (Math.random() * this.animal.attr.hp * (this.animal.age[1] - this.animal.age[0]) <= 10) {
+        if (Math.random() * this.animal.attr.hp <= 1) {
             seal.replyToSender(ctx, msg, `繁衍失败`);
             this.age(ctx, msg);
             return;
         }
 
-        const num = Math.floor(this.animal.attr.hp / 10);
+        const num = Math.ceil(Math.random() * 200 / this.animal.age[1]);
         this.score += num;
         const entry = getEntries(1);
         addEntries(this, entry);
 
-        seal.replyToSender(ctx, msg, `<${this.name}>繁衍了${num}个后代，积分加${num}。新的词条：${entry[0].name}`);
+        seal.replyToSender(ctx, msg, `${this.animal.species}<${this.name}>繁衍了${num}个后代，积分加${num}。新的词条：${entry[0].name}`);
         this.age(ctx, msg);
         return;
     }
