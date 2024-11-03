@@ -222,5 +222,24 @@ export function getType(cards: string[]): [string, number] {
 飞机：
 取出大于三的牌检查顺序
 
-我草不想写了
+我草不想写了。。。
+
+突然想到可以改输入而不用费力解析：
+王炸
+单x
+对x
+三x
+炸弹x
+三x带y
+三x带对y
+四x带yz
+四x带对yz
+
+//连续的牌型，x作为起头，n作为长度
+n顺x
+n连对x
+n飞机x
+n飞机x带yz...
+n飞机x带对yz...
+
 */
