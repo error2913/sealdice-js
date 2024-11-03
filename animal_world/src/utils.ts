@@ -27,6 +27,7 @@ export function getCtx(epId: string, msg: seal.Message): seal.MsgContext | undef
     return undefined;
 }
 
+/** 解析出Animal */
 export function parseAnimal(data: any): Animal {
     let animal: Animal;
 
@@ -78,6 +79,7 @@ export function parseAnimal(data: any): Animal {
     return animal;
 }
 
+/** 排序后返回前十的玩家列表 */
 export function getScoreChart(): Player[] {
     const scoreChart = Object.values(cache);
 
@@ -88,6 +90,17 @@ export function getScoreChart(): Player[] {
     return scoreChart;
 }
 
+export function BEscapeFromA(playerA: Player, playerB: Player): boolean {
+    const [dex1, dex2] = [playerA.animal.attr.dex, playerB.animal.attr.dex];
+
+    if (dex1 * Math.random() < dex2 * Math.random()) {
+        return true;
+    }
+
+    return false;
+}
+
+/** A攻击B，返回[造成的伤害,是否暴击] */
 export function AHurtB(playerA: Player, playerB: Player): [number, boolean] {
     const [lck1, lck2] = [playerA.animal.attr.lck, playerB.animal.attr.lck];
 

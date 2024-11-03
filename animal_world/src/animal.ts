@@ -41,7 +41,7 @@ animalMap["黑鱼"] = {
     enemy: ["白鱼", "大鱼", "鱼鹰"],
     food: ["乌龟", "小鱼", "蝌蚪"],
     events: {
-        active: ["咬乌龟", "咬小鱼", "咬蝌蚪"],
+        active: ["殴打乌龟"],
         passive: ["死掉"]
     },
     attr: {
@@ -62,7 +62,7 @@ animalMap["白鱼"] = {
     enemy: ["黑鱼", "大鱼", "鱼鹰"],
     food: ["乌龟", "水草", "小鱼"],
     events: {
-        active: ["咬乌龟", "咬水草", "咬小鱼"],
+        active: ["殴打乌龟", "殴打水草"],
         passive: ["死掉"]
     },
     attr: {
@@ -83,7 +83,7 @@ animalMap["乌龟"] = {
     enemy: ["黑鱼", "白鱼", "蛇", "鱼鹰"],
     food: ["水草"],
     events: {
-        active: ["咬水草"],
+        active: [],
         passive: ["死掉"]
     },
     attr: {
@@ -100,11 +100,11 @@ animalMap["浮游植物"] = {
     info: "池塘中的微小植物，提供氧气和养分",
     env: "池塘",
     evolve: "",
-    age: [0, 1],
+    age: [0, 2],
     enemy: ["浮游动物", "小鱼", "水虿", "蝌蚪"],
     food: [],
     events: {
-        active: ["进行光合作用"],
+        active: ["光合作用"],
         passive: ["死掉"]
     },
     attr: {
@@ -121,11 +121,11 @@ animalMap["浮游动物"] = {
     info: "以浮游植物为食的微小动物，是许多池塘生物的食物",
     env: "池塘",
     evolve: "",
-    age: [0, 1],
+    age: [0, 2],
     enemy: ["小鱼", "水虿", "青蛙"],
     food: ["浮游植物"],
     events: {
-        active: ["咬浮游植物"],
+        active: [],
         passive: ["死掉"]
     },
     attr: {
@@ -142,11 +142,11 @@ animalMap["水虿"] = {
     info: "蜻蜓的幼虫，水中的小型捕食者",
     env: "池塘",
     evolve: "蜻蜓",
-    age: [0, 2],
+    age: [0, 5],
     enemy: ["青蛙", "鱼类", "蛇"],
     food: ["浮游动物", "蚊子幼虫", "蝌蚪"],
     events: {
-        active: ["咬浮游动物", "咬蚊子幼虫", "咬蝌蚪"],
+        active: [],
         passive: ["死掉"]
     },
     attr: {
@@ -163,11 +163,11 @@ animalMap["小鱼"] = {
     info: "普普通通小小鱼",
     env: "池塘",
     evolve: "大鱼",
-    age: [0, 3],
+    age: [0, 7],
     enemy: ["青蛙", "鸟", "蛇", "鱼鹰"],
     food: ["浮游动物", "水虿", "蚊子幼虫", "蝌蚪"],
     events: {
-        active: ["咬浮游动物", "咬水虿", "咬蚊子幼虫", "咬蝌蚪"],
+        active: ["殴打乌龟", "殴打水草"],
         passive: ["死掉"]
     },
     attr: {
@@ -184,11 +184,11 @@ animalMap["蝌蚪"] = {
     info: "青蛙的幼体，水中的小型动物",
     env: "池塘",
     evolve: "青蛙",
-    age: [0, 1],
+    age: [0, 2],
     enemy: ["小鱼", "水虿"],
     food: ["浮游植物"],
     events: {
-        active: ["咬浮游植物"],
+        active: ["殴打水草"],
         passive: ["死掉"]
     },
     attr: {
@@ -209,7 +209,7 @@ animalMap["青蛙"] = {
     enemy: ["鸟", "蛇", "鱼鹰"],
     food: ["浮游动物", "蚊子幼虫", "小鱼", "水虿"],
     events: {
-        active: ["咬浮游动物", "咬蚊子幼虫", "咬小鱼", "咬水虿"],
+        active: ["殴打乌龟", "殴打水草"],
         passive: ["死掉"]
     },
     attr: {
@@ -230,7 +230,7 @@ animalMap["鸭子"] = {
     enemy: ["蛇"],
     food: ["水草", "小鱼", "浮游动物"],
     events: {
-        active: ["咬水草", "咬小鱼", "咬浮游动物"],
+        active: ["殴打乌龟"],
         passive: ["死掉"]
     },
     attr: {
@@ -251,7 +251,7 @@ animalMap["蛇"] = {
     enemy: ["鸟", "大型鱼类", "鱼鹰"],
     food: ["青蛙", "小鱼", "乌龟", "鸭子"],
     events: {
-        active: ["咬青蛙", "咬小鱼", "咬乌龟", "咬鸭子"],
+        active: ["殴打乌龟"],
         passive: ["死掉"]
     },
     attr: {
@@ -272,7 +272,7 @@ animalMap["水草"] = {
     enemy: ["乌龟", "鸭子", "鱼类"],
     food: [],
     events: {
-        active: ["进行光合作用"],
+        active: ["光合作用"],
         passive: ["死掉"]
     },
     attr: {
@@ -293,7 +293,7 @@ animalMap["蚊子幼虫"] = {
     enemy: ["小鱼", "水虿", "青蛙"],
     food: ["浮游植物"],
     events: {
-        active: ["咬浮游植物"],
+        active: [],
         passive: ["死掉"]
     },
     attr: {
@@ -310,11 +310,11 @@ animalMap["蚊子"] = {
     info: "池塘上空的微小昆虫",
     env: "池塘",
     evolve: "",
-    age: [0, 1],
+    age: [0, 2],
     enemy: ["蜻蜓", "青蛙", "小鱼"],
     food: ["血"],
     events: {
-        active: ["吸血"],
+        active: [],
         passive: ["死掉"]
     },
     attr: {
@@ -335,7 +335,7 @@ animalMap["小鸟"] = {
     enemy: ["大型鱼类", "蛇"],
     food: ["青蛙", "蛇", "小鱼"],
     events: {
-        active: ["咬青蛙", "咬蛇", "咬小鱼"],
+        active: ["殴打乌龟"],
         passive: ["死掉"]
     },
     attr: {
@@ -353,10 +353,10 @@ animalMap["鱼鹰"] = {
     env: "池塘上空",
     evolve: "",
     age: [0, 20],
-    enemy: ["无"],
+    enemy: [],
     food: ["黑鱼", "白鱼", "小鱼", "蛇"],
     events: {
-        active: ["咬黑鱼", "咬白鱼", "咬小鱼", "咬蛇"],
+        active: ["殴打乌龟",],
         passive: ["死掉"]
     },
     attr: {
