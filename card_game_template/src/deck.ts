@@ -15,7 +15,7 @@ export class Deck {
         this.type = '';//种类
         this.cards = [];//包含的卡牌
         this.data = [];//数据
-        this.solve = () => {}//方法
+        this.solve = (_, __, ___, ____) => {}//方法
     }
 
     public static parse(data: any): Deck {
