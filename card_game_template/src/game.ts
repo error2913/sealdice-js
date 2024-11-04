@@ -57,6 +57,10 @@ export class Game {
     private static parse(id: string, data: any): Game {
         const game = new Game(id);
 
+        if (!data) {
+            return game;
+        }
+
         try {
             game.status = data.status;
             game.players = data.players.map(player => Player.parse(player));

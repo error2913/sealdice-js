@@ -71,6 +71,10 @@ export class Player {
     public static parse(data: any): Player {
         let player: Player;
 
+        if (!data) {
+            return new Player('', '');
+        }
+
         try {
             player = new Player(data.id, data.name);
 

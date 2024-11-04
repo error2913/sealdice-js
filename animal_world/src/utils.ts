@@ -31,7 +31,30 @@ export function getCtx(epId: string, msg: seal.Message): seal.MsgContext | undef
 
 /** 解析出Animal */
 export function parseAnimal(data: any): Animal {
-    let animal: Animal;
+    let animal: Animal = {
+        species: "未知物种",
+        info: "未知",
+        env: "未知环境",
+        evolve: "",
+        age: [0, 999],
+        enemy: [],
+        food: [],
+        events: {
+            active: [],
+            passive: []
+        },
+        attr: {
+            hp: 0,
+            atk: 0,
+            def: 0,
+            dex: 0,
+            lck: 0,
+        }
+    };
+
+    if (!data) {
+        return animal;
+    }
 
     try {
         animal = {
@@ -56,26 +79,6 @@ export function parseAnimal(data: any): Animal {
         }
     } catch (err) {
         console.error(`解析动物失败:`, err);
-        animal = {
-            species: "未知物种",
-            info: "未知",
-            env: "未知环境",
-            evolve: "",
-            age: [0, 999],
-            enemy: [],
-            food: [],
-            events: {
-                active: [],
-                passive: []
-            },
-            attr: {
-                hp: 0,
-                atk: 0,
-                def: 0,
-                dex: 0,
-                lck: 0,
-            }
-        }
     }
 
     return animal;

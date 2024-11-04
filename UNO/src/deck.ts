@@ -21,6 +21,10 @@ export class Deck {
     public static parse(data: any): Deck {
         const deck = new Deck();
 
+        if (!data) {
+            return deck;
+        }
+
         try {
             if (deckMap.hasOwnProperty(data.name)) {
                 const deck = deckMap[data.name].clone();

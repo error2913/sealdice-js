@@ -25,6 +25,11 @@ export class Player {
     public static parse(data: any): Player {
         let player: Player;
 
+        if (!data) {
+            player = new Player('QQ:114514');
+            return player;
+        }
+
         try {
             player = new Player(data.id);
             player.data = data.data;
