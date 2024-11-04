@@ -93,7 +93,7 @@ export class Game {
 
         //检查玩家数量
         if (this.players.length !== 3) {
-            seal.replyToSender(ctx, msg, '玩家数量错误');
+            seal.replyToSender(ctx, msg, `当前队伍成员数量${this.players.length}，玩家数量错误`);
             return;
         }
 
