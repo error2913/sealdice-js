@@ -6,7 +6,7 @@ export class Deck {
     public desc: string;//描述
     public type: string;//种类
     public cards: string[];//包含的卡牌
-    public data: { [key: string]: any };//数据
+    public data: [];//数据
     public solve: (ctx: seal.MsgContext, msg: seal.Message, game: Game, player: Player) => void;//方法
 
     constructor() {
@@ -14,7 +14,7 @@ export class Deck {
         this.desc = '';//描述
         this.type = '';//种类
         this.cards = [];//包含的卡牌
-        this.data = {};//数据
+        this.data = [];//数据
         this.solve = () => {}//方法
     }
 
@@ -24,7 +24,7 @@ export class Deck {
         try {
             if (deckMap.hasOwnProperty(data.name)) {
                 const deck = deckMap[data.name].clone();
-                deck.data = data.data || {};
+                deck.data = data.data || [];
                 return deck;
             }
 
@@ -34,7 +34,7 @@ export class Deck {
             deck.cards = data.cards;
             deck.data = data.data;
         } catch (err) {
-            console.error(`解析牌组失败: ${name}`, err);
+            console.error(`解析牌组失败:`, err);
             deck.name = '未知牌堆';
         }
 
