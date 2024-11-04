@@ -21,7 +21,7 @@
       this.desc = "";
       this.type = "";
       this.cards = [];
-      this.data = {};
+      this.data = [];
       this.solve = () => {
       };
     }
@@ -30,7 +30,7 @@
       try {
         if (deckMap.hasOwnProperty(data.name)) {
           const deck2 = deckMap[data.name].clone();
-          deck2.data = data.data || {};
+          deck2.data = data.data || [];
           return deck2;
         }
         deck.name = data.name;
@@ -39,7 +39,7 @@
         deck.cards = data.cards;
         deck.data = data.data;
       } catch (err) {
-        console.error(`\u89E3\u6790\u724C\u7EC4\u5931\u8D25: ${name}`, err);
+        console.error(`\u89E3\u6790\u724C\u7EC4\u5931\u8D25:`, err);
         deck.name = "\u672A\u77E5\u724C\u5806";
       }
       return deck;
@@ -166,9 +166,10 @@
 
   // src/player.ts
   var Player = class _Player {
+    //暗牌
     constructor(id) {
       this.id = id;
-      this.data = {};
+      this.data = [];
       this.hand = new Deck();
       this.hand.name = "\u624B\u724C";
       this.show = new Deck();
@@ -414,7 +415,7 @@ ${this.players[index].hand.cards.join("\n")}`);
       const teamList = globalThis.teamManager.getTeamList(this.id);
       this.players = teamList[0].members.map((id) => new Player(id));
       if (this.players.length !== 3) {
-        seal.replyToSender(ctx, msg, "\u73A9\u5BB6\u6570\u91CF\u9519\u8BEF");
+        seal.replyToSender(ctx, msg, `\u5F53\u524D\u961F\u4F0D\u6210\u5458\u6570\u91CF${this.players.length}\uFF0C\u73A9\u5BB6\u6570\u91CF\u9519\u8BEF`);
         return;
       }
       for (let i = 2; i > 0; i--) {
@@ -444,8 +445,8 @@ ${cards2.join("\n")}`);
         replyPrivate(ctx, `\u60A8\u7684\u624B\u724C\u4E3A:
 ${player.hand.cards.join("\n")}`, player.id);
       }
-      const name2 = getName(ctx, this.players[0].id);
-      seal.replyToSender(ctx, msg, `\u6E38\u620F\u5F00\u59CB\uFF0C\u4ECE\u5730\u4E3B${name2}\u5F00\u59CB`);
+      const name = getName(ctx, this.players[0].id);
+      seal.replyToSender(ctx, msg, `\u6E38\u620F\u5F00\u59CB\uFF0C\u4ECE\u5730\u4E3B${name}\u5F00\u59CB`);
       this.nextRound(ctx, msg);
     }
     //结束游戏
@@ -473,7 +474,7 @@ ${player.hand.cards.join("\n")}`, player.id);
       }
       this.turn++;
     }
-    play(ctx, msg, name2) {
+    play(ctx, msg, name) {
       if (ctx.player.userId !== this.curPlayerId) {
         seal.replyToSender(ctx, msg, "\u4E0D\u662F\u5F53\u524D\u73A9\u5BB6");
         return;
@@ -484,7 +485,7 @@ ${player.hand.cards.join("\n")}`, player.id);
       const anotherIndex = index < this.players.length - 1 ? index + 1 : 0;
       const anotherPlayer = this.players[anotherIndex];
       const anotherName = getName(ctx, anotherPlayer.id);
-      if (name2 == "SKIP" || name2 == "PASS" || name2 == "\u4E0D\u8981" || name2 == "\u8981\u4E0D\u8D77" || name2 == "\u8FC7" || name2 == "\u4E0D\u51FA") {
+      if (name == "SKIP" || name == "PASS" || name == "\u4E0D\u8981" || name == "\u8981\u4E0D\u8D77" || name == "\u8FC7" || name == "\u4E0D\u51FA") {
         if (this.curDeckInfo[2] == this.curPlayerId) {
           seal.replyToSender(ctx, msg, "\u4E0D\u80FD\u8DF3\u8FC7");
           return;
@@ -493,7 +494,7 @@ ${player.hand.cards.join("\n")}`, player.id);
         this.nextTurn(ctx, msg);
         return;
       }
-      const [cards2, type, value] = getCards(name2);
+      const [cards2, type, value] = getCards(name);
       if (!type) {
         seal.replyToSender(ctx, msg, "\u4E0D\u5B58\u5728\u724C\u578B");
         return;
@@ -521,7 +522,7 @@ ${player.hand.cards.join("\n")}`, player.id);
       }
       replyPrivate(ctx, `\u60A8\u7684\u624B\u724C\u4E3A:
 ${player.hand.cards.join("\n")}`, player.id);
-      seal.replyToSender(ctx, msg, `${playerName}\u6253\u51FA\u4E86${name2}\uFF0C\u8FD8\u5269${player.hand.cards.length}\u5F20\u724C\u3002\u4E0B\u4E00\u4F4D\u662F${anotherName}`);
+      seal.replyToSender(ctx, msg, `${playerName}\u6253\u51FA\u4E86${name}\uFF0C\u8FD8\u5269${player.hand.cards.length}\u5F20\u724C\u3002\u4E0B\u4E00\u4F4D\u662F${anotherName}`);
       this.nextTurn(ctx, msg);
       return;
     }
@@ -593,8 +594,8 @@ n\u98DE\u673Ax\u5E26yz...\u3001n\u98DE\u673Ax\u5E26\u5BF9yz...
         }
         default: {
           const game = Game.getData(ext, id);
-          const name2 = val.toUpperCase();
-          game.play(ctx, msg, name2);
+          const name = val.toUpperCase();
+          game.play(ctx, msg, name);
           Game.saveData(ext, id);
           return seal.ext.newCmdExecuteResult(true);
         }
