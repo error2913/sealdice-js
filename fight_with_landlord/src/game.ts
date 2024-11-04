@@ -103,9 +103,9 @@ export class Game {
             [this.players[i], this.players[j]] = [this.players[j], this.players[i]];
         }
 
-        this.players[0].data.class = '地主';
-        this.players[1].data.class = '农民';
-        this.players[2].data.class = '农民';
+        this.players[0].data[0] = '地主';
+        this.players[1].data[0] = '农民';
+        this.players[2].data[0] = '农民';
 
         this.status = true;
 
@@ -226,7 +226,7 @@ export class Game {
         this.curDeckInfo = [type, value, this.curPlayerId];
 
         if (player.hand.cards.length == 0) {
-            seal.replyToSender(ctx, msg, `${player.data.class}${playerName}胜利了`);
+            seal.replyToSender(ctx, msg, `${player.data[0]}${playerName}胜利了`);
             this.end(ctx, msg);
             return;
         }

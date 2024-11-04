@@ -162,6 +162,10 @@ export class Game {
         const player = this.players[index];
         const playerName = getName(ctx, this.curPlayerId);
 
+        const anotherIndex = index < this.players.length - 1 ? (index + 1) : 0;
+        const anotherPlayer = this.players[anotherIndex];
+        const anotherName = getName(ctx, anotherPlayer.id);
+
         const deck = deckMap[name].clone();
         if (!player.hand.check(deck.cards)) {
             seal.replyToSender(ctx, msg, '手牌不足');
@@ -182,7 +186,7 @@ export class Game {
         this.curDeckInfo = [deck.data[0], deck.type, 0];
 
         deck.solve(ctx, msg, this, player);
-        seal.replyToSender(ctx, msg, `${playerName}打出了${deck.name}`);
+        seal.replyToSender(ctx, msg, `${playerName}打出了${deck.name}，还剩${player.hand.cards.length}张牌。下一位是${anotherName}`);
         this.nextTurn(ctx, msg);//进入下一轮
         return;
     }
