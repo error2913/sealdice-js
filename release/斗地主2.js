@@ -22,7 +22,7 @@
       this.type = "";
       this.cards = [];
       this.data = [];
-      this.solve = () => {
+      this.solve = (_, __, ___, ____) => {
       };
     }
     static parse(data) {
