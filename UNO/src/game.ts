@@ -12,7 +12,7 @@ export class Game {
     private round: number;//回合数
     private turn: number;//一个回合内的轮次数
     private curPlayerId: string;//当前需要做出动作的玩家
-    private curDeckInfo: [string];//当前场上的牌组的一些信息比如type,value,id,可以改
+    private curDeckInfo: [string, string, number];//当前场上的牌组的一些信息color,type,add
     private mainDeck: Deck;//包含所有卡牌的牌组
     private discardDeck: Deck;//丢弃的卡牌
 
@@ -23,7 +23,7 @@ export class Game {
         this.round = 0;//回合数
         this.turn = 0;//一个回合内的轮次数
         this.curPlayerId = '';//当前需要做出动作的玩家
-        this.curDeckInfo = [''];//当前场上的牌组
+        this.curDeckInfo = ['', '', 0];//当前场上的牌组
         this.mainDeck = deckMap['主牌堆'].clone();//包含所有卡牌的牌组
         this.discardDeck = deckMap['弃牌堆'].clone();//丢弃的卡牌
     }
@@ -95,7 +95,7 @@ export class Game {
         this.players = teamList[0].members.map(id => new Player(id));
 
         //检查玩家数量
-        if (this.players.length < 2 || this.players.length > 4) {
+        if (this.players.length < 2 || this.players.length > 10) {
             seal.replyToSender(ctx, msg, `当前队伍成员数量${this.players.length}，玩家数量错误`);
             return;
         }
@@ -168,13 +168,18 @@ export class Game {
             return;
         }
 
-        if (this.curDeckInfo) {
-            //一些逻辑
+        if (
+            deck.data[0] !== 'all' &&
+            deck.data[0] !== this.curDeckInfo[0] &&
+            deck.type !== this.curDeckInfo[1]
+        ) {
+            seal.replyToSender(ctx, msg, '牌型错误');
+            return;
         }
 
         player.hand.remove(deck.cards);
         this.discardDeck.add(deck.cards);
-        this.curDeckInfo = [deck.type];
+        this.curDeckInfo = [deck.data[0], deck.type, 0];
 
         deck.solve(ctx, msg, this, player);
         seal.replyToSender(ctx, msg, `${playerName}打出了${deck.name}`);

@@ -118,7 +118,7 @@ for (let i = 0; i < colors.length; i++) {
         const card = color + normalCards[j];
         const deck = new Deck();
         deck.name = card;
-        deck.type = 'normal';
+        deck.type = normalCards[j];
         deck.cards = [card];
         deck.data = [color];
         deck.solve = (_, __, ___, ____) => {
