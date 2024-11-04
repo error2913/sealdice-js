@@ -27,6 +27,9 @@
     }
     static parse(data) {
       const deck = new _Deck();
+      if (!data) {
+        return deck;
+      }
       try {
         if (deckMap.hasOwnProperty(data.name)) {
           const deck2 = deckMap[data.name].clone();
@@ -169,7 +172,7 @@
     //暗牌
     constructor(id) {
       this.id = id;
-      this.data = [];
+      this.data = [""];
       this.hand = new Deck();
       this.hand.name = "\u624B\u724C";
       this.show = new Deck();
@@ -180,6 +183,10 @@
     //获取并解析player对象的数据
     static parse(data) {
       let player;
+      if (!data) {
+        player = new _Player("QQ:114514");
+        return player;
+      }
       try {
         player = new _Player(data.id);
         player.data = data.data;
@@ -384,6 +391,9 @@
     }
     static parse(id, data) {
       const game = new _Game(id);
+      if (!data) {
+        return game;
+      }
       try {
         game.status = data.status;
         game.players = data.players.map((player) => Player.parse(player));
@@ -422,9 +432,9 @@ ${this.players[index].hand.cards.join("\n")}`);
         const j = Math.floor(Math.random() * (i + 1));
         [this.players[i], this.players[j]] = [this.players[j], this.players[i]];
       }
-      this.players[0].data.class = "\u5730\u4E3B";
-      this.players[1].data.class = "\u519C\u6C11";
-      this.players[2].data.class = "\u519C\u6C11";
+      this.players[0].data[0] = "\u5730\u4E3B";
+      this.players[1].data[0] = "\u519C\u6C11";
+      this.players[2].data[0] = "\u519C\u6C11";
       this.status = true;
       this.curDeckInfo[2] = this.players[0].id;
       this.mainDeck.shuffle();
@@ -516,7 +526,7 @@ ${player.hand.cards.join("\n")}`, player.id);
       player.hand.remove(cards2);
       this.curDeckInfo = [type, value, this.curPlayerId];
       if (player.hand.cards.length == 0) {
-        seal.replyToSender(ctx, msg, `${player.data.class}${playerName}\u80DC\u5229\u4E86`);
+        seal.replyToSender(ctx, msg, `${player.data[0]}${playerName}\u80DC\u5229\u4E86`);
         this.end(ctx, msg);
         return;
       }
