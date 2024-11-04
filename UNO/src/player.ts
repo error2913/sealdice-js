@@ -1,15 +1,15 @@
 import { Deck } from "./deck";
 
 export class Player {
-    public id: string;
-    public data: { [key: string]: any };
-    public hand: Deck;
-    public show: Deck;
-    public hide: Deck;
+    public id: string;//userId
+    public data: [];//玩家数据
+    public hand: Deck;//手牌
+    public show: Deck;//明牌
+    public hide: Deck;//暗牌
 
     constructor(id: string) {
         this.id = id;
-        this.data = {};
+        this.data = [];
 
         this.hand = new Deck();
         this.hand.name = '手牌';
