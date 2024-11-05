@@ -18,83 +18,83 @@
       this.ext = ext;
     }
     registerConfig() {
-      seal.ext.registerTemplateConfig(this.ext, "\u65B0\u5EFA\u961F\u4F0D", ["\u65B0\u5EFA<{{\u961F\u4F0D\u540D\u5B57}}>\u6210\u529F"]);
-      seal.ext.registerTemplateConfig(this.ext, "\u7ED1\u5B9A\u961F\u4F0D", ["\u7ED1\u5B9A<{{\u961F\u4F0D\u540D\u5B57}}>\u6210\u529F"]);
-      seal.ext.registerTemplateConfig(this.ext, "\u5220\u9664\u961F\u4F0D", ["\u5220\u9664\u961F\u4F0D\u6210\u529F\uFF1A\n{{\u961F\u4F0D\u5217\u8868}}"]);
-      seal.ext.registerTemplateConfig(this.ext, "\u961F\u4F0D\u5217\u8868", ["\u961F\u4F0D\u5982\u4E0B\uFF1A\n{{\u961F\u4F0D\u5217\u8868}}"]);
-      seal.ext.registerTemplateConfig(this.ext, "\u6DFB\u52A0\u6210\u5458", ["\u6210\u529F\u6DFB\u52A0{{@\u7684\u4EBA\u6570}}\u4F4D\u6210\u5458\uFF0C\u5F53\u524D\u961F\u4F0D\u4EBA\u6570{{\u961F\u4F0D\u4EBA\u6570}}\u4EBA"]);
-      seal.ext.registerTemplateConfig(this.ext, "\u79FB\u9664\u6210\u5458", ["\u6210\u529F\u79FB\u9664{{@\u7684\u4EBA\u6570}}\u4F4D\u6210\u5458\uFF0C\u5F53\u524D\u961F\u4F0D\u4EBA\u6570{{\u961F\u4F0D\u4EBA\u6570}}\u4EBA"]);
-      seal.ext.registerTemplateConfig(this.ext, "\u62BD\u53D6\u6210\u5458", ["\u62BD\u5230\u4E86\uFF1A\n{{\u6210\u5458\u5217\u8868}}"]);
-      seal.ext.registerTemplateConfig(this.ext, "\u547C\u53EB\u6210\u5458", ["\u8BF7\u5728\u9650\u5B9A\u65F6\u95F460s\u5185\u56DE\u590D\u201C\u5230\u201D\uFF1A\n{{\u6210\u5458\u5217\u8868}}"]);
-      seal.ext.registerTemplateConfig(this.ext, "\u547C\u53EB\u7ED3\u675F", ["\u5E94\u5230{{\u961F\u4F0D\u4EBA\u6570}}\u4EBA\uFF0C\u5B9E\u5230{{\u7B7E\u5230\u4EBA\u6570}}\u4EBA\uFF0C\u672A\u5230{{\u5495\u5495\u4EBA\u6570}}\u4EBA\u3002\u672A\u5230\u5982\u4E0B\uFF1A\n{{\u6210\u5458\u5217\u8868}}"]);
-      seal.ext.registerIntConfig(this.ext, "\u547C\u53EB\u65F6\u95F4\u9650\u5236/s", 60);
-      seal.ext.registerTemplateConfig(this.ext, "\u5C55\u793A\u5C5E\u6027", ["\u5C5E\u6027\u5982\u4E0B\uFF1A\n{{\u6210\u5458\u5C5E\u6027\u5217\u8868}}"]);
-      seal.ext.registerTemplateConfig(this.ext, "\u8BBE\u7F6E\u5C5E\u6027", ["\u4FEE\u6539\u5982\u4E0B\uFF1A\n{{\u4FEE\u6539\u64CD\u4F5C}}\n{{\u6210\u5458\u5C5E\u6027\u5217\u8868}}"]);
-      seal.ext.registerTemplateConfig(this.ext, "\u6392\u5E8F\u5C5E\u6027", ["\u6392\u5E8F\u5982\u4E0B\uFF1A\n{{\u6210\u5458\u5C5E\u6027\u5217\u8868}}"]);
-      seal.ext.registerTemplateConfig(this.ext, "\u63D0\u793A\u961F\u4F0D\u4E3A\u7A7A", ["\u961F\u4F0D\u91CC\u6CA1\u6709\u6210\u5458\u3002"]);
-      seal.ext.registerTemplateConfig(this.ext, "\u63D0\u793A\u961F\u4F0D\u4E0D\u5B58\u5728", ["\u961F\u4F0D\u4E0D\u5B58\u5728\u3002"]);
-      seal.ext.registerTemplateConfig(this.ext, "\u63D0\u793A\u6B63\u5728\u547C\u53EB", ["\u5F53\u524D\u6B63\u5728\u547C\u53EB\u4E2D\u3002"]);
-      seal.ext.registerTemplateConfig(this.ext, "\u6218\u6597\u8F6E\u6392\u5E8F\u5173\u952E\u8BCD", ["\uFF08\u6218\u6597\u8F6E\u5F00\u59CB\uFF09"]);
-      seal.ext.registerTemplateConfig(this.ext, "\u7B7E\u5230\u5173\u952E\u8BCD", ["\u5230"]);
-      seal.ext.registerStringConfig(this.ext, "\u5206\u9694\u7B26", "\n", "\u961F\u4F0D\u5217\u8868\uFF0C\u6210\u5458\u5217\u8868\u7B49\u7684\u5206\u5272\u7B26");
+      seal.ext.registerTemplateConfig(this.ext, "新建队伍", ["新建<{{队伍名字}}>成功"]);
+      seal.ext.registerTemplateConfig(this.ext, "绑定队伍", ["绑定<{{队伍名字}}>成功"]);
+      seal.ext.registerTemplateConfig(this.ext, "删除队伍", ["删除队伍成功：\n{{队伍列表}}"]);
+      seal.ext.registerTemplateConfig(this.ext, "队伍列表", ["队伍如下：\n{{队伍列表}}"]);
+      seal.ext.registerTemplateConfig(this.ext, "添加成员", ["成功添加{{@的人数}}位成员，当前队伍人数{{队伍人数}}人"]);
+      seal.ext.registerTemplateConfig(this.ext, "移除成员", ["成功移除{{@的人数}}位成员，当前队伍人数{{队伍人数}}人"]);
+      seal.ext.registerTemplateConfig(this.ext, "抽取成员", ["抽到了：\n{{成员列表}}"]);
+      seal.ext.registerTemplateConfig(this.ext, "呼叫成员", ["请在限定时间60s内回复“到”：\n{{成员列表}}"]);
+      seal.ext.registerTemplateConfig(this.ext, "呼叫结束", ["应到{{队伍人数}}人，实到{{签到人数}}人，未到{{咕咕人数}}人。未到如下：\n{{成员列表}}"]);
+      seal.ext.registerIntConfig(this.ext, "呼叫时间限制/s", 60);
+      seal.ext.registerTemplateConfig(this.ext, "展示属性", ["属性如下：\n{{成员属性列表}}"]);
+      seal.ext.registerTemplateConfig(this.ext, "设置属性", ["修改如下：\n{{修改操作}}\n{{成员属性列表}}"]);
+      seal.ext.registerTemplateConfig(this.ext, "排序属性", ["排序如下：\n{{成员属性列表}}"]);
+      seal.ext.registerTemplateConfig(this.ext, "提示队伍为空", ["队伍里没有成员。"]);
+      seal.ext.registerTemplateConfig(this.ext, "提示队伍不存在", ["队伍不存在。"]);
+      seal.ext.registerTemplateConfig(this.ext, "提示正在呼叫", ["当前正在呼叫中。"]);
+      seal.ext.registerTemplateConfig(this.ext, "战斗轮排序关键词", ["（战斗轮开始）"]);
+      seal.ext.registerTemplateConfig(this.ext, "签到关键词", ["到"]);
+      seal.ext.registerStringConfig(this.ext, "分隔符", "\n", "队伍列表，成员列表等的分割符");
     }
     getRandomTemplate(key) {
       const templates = seal.ext.getTemplateConfig(this.ext, key);
       return templates[Math.floor(Math.random() * templates.length)];
     }
     createText(name) {
-      const text = this.getRandomTemplate("\u65B0\u5EFA\u961F\u4F0D").replace("{{\u961F\u4F0D\u540D\u5B57}}", name);
+      const text = this.getRandomTemplate("新建队伍").replace("{{队伍名字}}", name);
       return text;
     }
     bindText(name) {
-      const text = this.getRandomTemplate("\u7ED1\u5B9A\u961F\u4F0D").replace("{{\u961F\u4F0D\u540D\u5B57}}", name);
+      const text = this.getRandomTemplate("绑定队伍").replace("{{队伍名字}}", name);
       return text;
     }
     delText(nameList) {
-      const sperator = seal.ext.getStringConfig(this.ext, "\u5206\u9694\u7B26");
+      const sperator = seal.ext.getStringConfig(this.ext, "分隔符");
       const listText = nameList.map((name) => `<${name}>`).join(sperator);
-      const text = this.getRandomTemplate("\u5220\u9664\u961F\u4F0D").replace("{{\u961F\u4F0D\u5217\u8868}}", listText);
+      const text = this.getRandomTemplate("删除队伍").replace("{{队伍列表}}", listText);
       return text;
     }
     getListText(teamList) {
-      const sperator = seal.ext.getStringConfig(this.ext, "\u5206\u9694\u7B26");
+      const sperator = seal.ext.getStringConfig(this.ext, "分隔符");
       const listText = teamList.map((team, index) => {
         if (index == 0) {
-          return `<${team.name}> ${team.members.length}\u4EBA\u25CE`;
+          return `<${team.name}> ${team.members.length}人◎`;
         }
-        return `<${team.name}> ${team.members.length}\u4EBA`;
+        return `<${team.name}> ${team.members.length}人`;
       }).join(sperator);
-      const text = this.getRandomTemplate("\u961F\u4F0D\u5217\u8868").replace("{{\u961F\u4F0D\u5217\u8868}}", listText);
+      const text = this.getRandomTemplate("队伍列表").replace("{{队伍列表}}", listText);
       return text;
     }
     addText(atNum, memberNum) {
-      const text = this.getRandomTemplate("\u6DFB\u52A0\u6210\u5458").replace("{{@\u7684\u4EBA\u6570}}", atNum.toString()).replace("{{\u961F\u4F0D\u4EBA\u6570}}", memberNum.toString());
+      const text = this.getRandomTemplate("添加成员").replace("{{@的人数}}", atNum.toString()).replace("{{队伍人数}}", memberNum.toString());
       return text;
     }
     removeText(atNum, memberNum) {
-      const text = this.getRandomTemplate("\u79FB\u9664\u6210\u5458").replace("{{@\u7684\u4EBA\u6570}}", atNum.toString()).replace("{{\u961F\u4F0D\u4EBA\u6570}}", memberNum.toString());
+      const text = this.getRandomTemplate("移除成员").replace("{{@的人数}}", atNum.toString()).replace("{{队伍人数}}", memberNum.toString());
       return text;
     }
     drawText(nameList) {
-      const sperator = seal.ext.getStringConfig(this.ext, "\u5206\u9694\u7B26");
+      const sperator = seal.ext.getStringConfig(this.ext, "分隔符");
       const listText = nameList.join(sperator);
-      const text = this.getRandomTemplate("\u62BD\u53D6\u6210\u5458").replace("{{\u6210\u5458\u5217\u8868}}", listText);
+      const text = this.getRandomTemplate("抽取成员").replace("{{成员列表}}", listText);
       return text;
     }
     callText(callList) {
-      const sperator = seal.ext.getStringConfig(this.ext, "\u5206\u9694\u7B26");
+      const sperator = seal.ext.getStringConfig(this.ext, "分隔符");
       const listText = callList.map((userId) => `[CQ:at,qq=${userId.replace(/\D+/g, "")}]`).join(sperator);
-      const text = this.getRandomTemplate("\u547C\u53EB\u6210\u5458").replace("{{\u6210\u5458\u5217\u8868}}", listText);
+      const text = this.getRandomTemplate("呼叫成员").replace("{{成员列表}}", listText);
       return text;
     }
     recallText(callList, memberNum, signNum, guguNum) {
-      const sperator = seal.ext.getStringConfig(this.ext, "\u5206\u9694\u7B26");
+      const sperator = seal.ext.getStringConfig(this.ext, "分隔符");
       const listText = callList.map((userId) => `[CQ:at,qq=${userId.replace(/\D+/g, "")}]`).join(sperator);
-      const text = this.getRandomTemplate("\u547C\u53EB\u7ED3\u675F").replace("{{\u961F\u4F0D\u4EBA\u6570}}", memberNum.toString()).replace("{{\u7B7E\u5230\u4EBA\u6570}}", signNum.toString()).replace("{{\u5495\u5495\u4EBA\u6570}}", guguNum.toString()).replace("{{\u6210\u5458\u5217\u8868}}", listText);
+      const text = this.getRandomTemplate("呼叫结束").replace("{{队伍人数}}", memberNum.toString()).replace("{{签到人数}}", signNum.toString()).replace("{{咕咕人数}}", guguNum.toString()).replace("{{成员列表}}", listText);
       return text;
     }
     showText(members, keys) {
-      const sperator = seal.ext.getStringConfig(this.ext, "\u5206\u9694\u7B26");
+      const sperator = seal.ext.getStringConfig(this.ext, "分隔符");
       const listText = members.map((item) => {
         let text2 = item.name;
         if (keys.length === 0) {
@@ -113,37 +113,37 @@
         }
         return text2;
       }).join(sperator);
-      const text = this.getRandomTemplate("\u5C55\u793A\u5C5E\u6027").replace("{{\u6210\u5458\u5C5E\u6027\u5217\u8868}}", listText);
+      const text = this.getRandomTemplate("展示属性").replace("{{成员属性列表}}", listText);
       return text;
     }
     setText(members, key, valueText) {
-      const sperator = seal.ext.getStringConfig(this.ext, "\u5206\u9694\u7B26");
+      const sperator = seal.ext.getStringConfig(this.ext, "分隔符");
       const listText = members.map((item) => {
         let text2 = item.name;
         text2 += ` ${key}=>${item.attr[key]}`;
         return text2;
       }).join(sperator);
-      const text = this.getRandomTemplate("\u8BBE\u7F6E\u5C5E\u6027").replace("{{\u4FEE\u6539\u64CD\u4F5C}}", `\u64CD\u4F5C:${valueText}`).replace("{{\u6210\u5458\u5C5E\u6027\u5217\u8868}}", listText);
+      const text = this.getRandomTemplate("设置属性").replace("{{修改操作}}", `操作:${valueText}`).replace("{{成员属性列表}}", listText);
       return text;
     }
     sortText(members, key) {
-      const sperator = seal.ext.getStringConfig(this.ext, "\u5206\u9694\u7B26");
+      const sperator = seal.ext.getStringConfig(this.ext, "分隔符");
       const listText = members.map((item) => {
         let text2 = item.name;
         text2 += ` ${key}${item.attr[key]}`;
         return text2;
       }).join(sperator);
-      const text = this.getRandomTemplate("\u6392\u5E8F\u5C5E\u6027").replace("{{\u6210\u5458\u5C5E\u6027\u5217\u8868}}", listText);
+      const text = this.getRandomTemplate("排序属性").replace("{{成员属性列表}}", listText);
       return text;
     }
     emptyText() {
-      return this.getRandomTemplate("\u63D0\u793A\u961F\u4F0D\u4E3A\u7A7A");
+      return this.getRandomTemplate("提示队伍为空");
     }
     notExistText() {
-      return this.getRandomTemplate("\u63D0\u793A\u961F\u4F0D\u4E0D\u5B58\u5728");
+      return this.getRandomTemplate("提示队伍不存在");
     }
     isCallingText() {
-      return this.getRandomTemplate("\u63D0\u793A\u6B63\u5728\u547C\u53EB");
+      return this.getRandomTemplate("提示正在呼叫");
     }
   };
 
@@ -172,10 +172,10 @@
   var TeamManager = class {
     constructor(ext) {
       this.team = {
-        name: "\u9ED8\u8BA4\u961F\u4F0D",
+        name: "默认队伍",
         members: []
       };
-      this.teamList = [{ name: "\u9ED8\u8BA4\u961F\u4F0D", members: [] }];
+      this.teamList = [{ name: "默认队伍", members: [] }];
       this.cache = {};
       this.ext = ext;
     }
@@ -199,13 +199,13 @@
           if (data && Array.isArray(data) && data.length !== 0) {
             teamList = data.map((item) => {
               return {
-                name: item.name || "\u9ED8\u8BA4\u961F\u4F0D",
+                name: item.name || "默认队伍",
                 members: item.members || []
               };
             });
           }
         } catch (err) {
-          console.error(`\u5728\u83B7\u53D6${id}_teamList\u65F6\u53D1\u751F\u9519\u8BEF\uFF1A${err}`);
+          console.error(`在获取${id}_teamList时发生错误：${err}`);
         }
         this.cache[id] = teamList;
       }
@@ -224,7 +224,7 @@
           callList = data;
         }
       } catch (err) {
-        console.error(`\u5728\u83B7\u53D6${id}_callList\u65F6\u53D1\u751F\u9519\u8BEF\uFF1A${err}`);
+        console.error(`在获取${id}_callList时发生错误：${err}`);
       }
       return callList;
     }
@@ -245,7 +245,7 @@
         this.saveTeamList(id, teamList);
         return true;
       } else {
-        teamList = teamList.filter((item) => item.name !== "\u9ED8\u8BA4\u961F\u4F0D" || item.members.length !== 0);
+        teamList = teamList.filter((item) => item.name !== "默认队伍" || item.members.length !== 0);
         team = {
           name,
           members: []
@@ -364,7 +364,7 @@
       }
       callList = team.members.slice();
       this.saveCallList(id, callList);
-      const timeLimit = seal.ext.getIntConfig(this.ext, "\u547C\u53EB\u65F6\u95F4\u9650\u5236/s") * 1e3;
+      const timeLimit = seal.ext.getIntConfig(this.ext, "呼叫时间限制/s") * 1e3;
       setTimeout(() => {
         this.recall(ctx);
       }, timeLimit);
@@ -479,7 +479,7 @@
   function main() {
     let ext = seal.ext.find("team");
     if (!ext) {
-      ext = seal.ext.new("team", "\u9519\u8BEF", "4.0.0");
+      ext = seal.ext.new("team", "错误", "4.0.0");
       seal.ext.register(ext);
     }
     const teamManager = new TeamManager(ext);
@@ -487,20 +487,20 @@
     configManager.registerConfig();
     const cmdteam = seal.ext.newCmdItemInfo();
     cmdteam.name = "team";
-    cmdteam.help = `\u5E2E\u52A9\uFF1A
-\u3010.team bind \u961F\u4F0D\u540D\u5B57\u3011\u7ED1\u5B9A/\u65B0\u5EFA\u961F\u4F0D
-\u3010.team del \u961F\u4F0D\u540D\u5B57\u3011\u5220\u9664\u961F\u4F0D
-\u3010.team del --all\u3011\u5220\u9664\u6240\u6709\u961F\u4F0D
-\u3010.team del --now\u3011\u5220\u9664\u5F53\u524D\u961F\u4F0D
-\u3010.team lst\u3011\u961F\u4F0D\u5217\u8868
-\u3010.team add @xx@xxx...\u3011\u6DFB\u52A0\u82E5\u5E72\u6210\u5458
-\u3010.team rm @xx@xxx...\u3011\u5220\u9664\u82E5\u5E72\u6210\u5458
-\u3010.team rm --all\u3011\u5220\u9664\u6240\u6709\u6210\u5458
-\u3010.team draw (\u62BD\u53D6\u6570\u91CF)\u3011\u968F\u673A\u62BD\u53D6\u961F\u4F0D\u5185\u6210\u5458
-\u3010.team call\u3011\u8C03\u67E5\u5458\u96C6\u7ED3\uFF01
-\u3010.team show (\u5C5E\u6027\u540D)\u3011\u67E5\u770B\u5C5E\u6027
-\u3010.team st <\u5C5E\u6027\u540D> <\u8868\u8FBE\u5F0F>\u3011\u4FEE\u6539\u5C5E\u6027
-\u3010.team sort \u5C5E\u6027\u540D\u3011\u5BF9\u6210\u5458\u7684\u8BE5\u9879\u5C5E\u6027\u6392\u5E8F`;
+    cmdteam.help = `帮助：
+【.team bind 队伍名字】绑定/新建队伍
+【.team del 队伍名字】删除队伍
+【.team del --all】删除所有队伍
+【.team del --now】删除当前队伍
+【.team lst】队伍列表
+【.team add @xx@xxx...】添加若干成员
+【.team rm @xx@xxx...】删除若干成员
+【.team rm --all】删除所有成员
+【.team draw (抽取数量)】随机抽取队伍内成员
+【.team call】调查员集结！
+【.team show (属性名)】查看属性
+【.team st <属性名> <表达式>】修改属性
+【.team sort 属性名】对成员的该项属性排序`;
     cmdteam.allowDelegate = true;
     cmdteam.disabledInPrivate = true;
     cmdteam.solve = (ctx, msg, cmdArgs) => {
@@ -513,7 +513,7 @@
         case "bind": {
           const name = cmdArgs.getRestArgsFrom(2);
           if (!name) {
-            seal.replyToSender(ctx, msg, "\u53C2\u6570\u9519\u8BEF\uFF0C\u3010.team bind \u961F\u4F0D\u540D\u5B57\u3011\u7ED1\u5B9A/\u65B0\u5EFA\u961F\u4F0D");
+            seal.replyToSender(ctx, msg, "参数错误，【.team bind 队伍名字】绑定/新建队伍");
             return seal.ext.newCmdExecuteResult(true);
           }
           const result = teamManager.bind(id, name);
@@ -526,7 +526,7 @@
           const name = cmdArgs.getRestArgsFrom(2);
           const kwargs = cmdArgs.kwargs;
           if (!name && kwargs.length == 0) {
-            seal.replyToSender(ctx, msg, "\u53C2\u6570\u9519\u8BEF\uFF0C\u3010.team del \u961F\u4F0D\u540D\u5B57\u3011\u5220\u9664\u961F\u4F0D");
+            seal.replyToSender(ctx, msg, "参数错误，【.team del 队伍名字】删除队伍");
             return seal.ext.newCmdExecuteResult(true);
           }
           const nameList = teamManager.delete(id, name, kwargs);
@@ -619,7 +619,7 @@
           const key = cmdArgs.getArgN(2);
           const valueText = cmdArgs.getArgN(3);
           if (!key || !valueText) {
-            seal.replyToSender(ctx, msg, "\u53C2\u6570\u9519\u8BEF\uFF0C\u3010.team st <\u5C5E\u6027\u540D> <\u8868\u8FBE\u5F0F>\u3011\u4FEE\u6539\u5C5E\u6027");
+            seal.replyToSender(ctx, msg, "参数错误，【.team st <属性名> <表达式>】修改属性");
             return seal.ext.newCmdExecuteResult(true);
           }
           const members = teamManager.set(ctx, key, valueText);
@@ -636,7 +636,7 @@
           }
           const key = cmdArgs.getArgN(2);
           if (!key) {
-            seal.replyToSender(ctx, msg, "\u53C2\u6570\u9519\u8BEF\uFF0C\u3010.team sort \u5C5E\u6027\u540D\u3011\u5BF9\u6210\u5458\u7684\u8BE5\u9879\u5C5E\u6027\u6392\u5E8F");
+            seal.replyToSender(ctx, msg, "参数错误，【.team sort 属性名】对成员的该项属性排序");
             return seal.ext.newCmdExecuteResult(true);
           }
           const members = teamManager.sort(ctx, key);
@@ -654,8 +654,8 @@
     ext.onNotCommandReceived = (ctx, msg) => {
       if (ctx.isPrivate) return;
       const message = msg.message;
-      const sortWords = seal.ext.getTemplateConfig(ext, "\u6218\u6597\u8F6E\u6392\u5E8F\u5173\u952E\u8BCD");
-      const signWords = seal.ext.getTemplateConfig(ext, "\u7B7E\u5230\u5173\u952E\u8BCD");
+      const sortWords = seal.ext.getTemplateConfig(ext, "战斗轮排序关键词");
+      const signWords = seal.ext.getTemplateConfig(ext, "签到关键词");
       if (signWords.includes(message)) {
         teamManager.signUp(ctx);
         return;

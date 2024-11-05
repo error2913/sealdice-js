@@ -56,5 +56,6 @@ module.exports = {
     supported: {
       'async-await': true,
     },
+    charset: 'utf8',
   }
 }

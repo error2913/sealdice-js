@@ -42,8 +42,8 @@
         deck.cards = data.cards;
         deck.data = data.data;
       } catch (err) {
-        console.error(`\u89E3\u6790\u724C\u7EC4\u5931\u8D25:`, err);
-        deck.name = "\u672A\u77E5\u724C\u5806";
+        console.error(`解析牌组失败:`, err);
+        deck.name = "未知牌堆";
       }
       return deck;
     }
@@ -101,8 +101,8 @@
   };
   var deckMap = {};
   var cards = [
-    "\u5927\u738B",
-    "\u5C0F\u738B",
+    "大王",
+    "小王",
     "2",
     "2",
     "2",
@@ -157,15 +157,15 @@
     "3"
   ];
   var deckMain = new Deck();
-  deckMain.name = "\u4E3B\u724C\u5806";
+  deckMain.name = "主牌堆";
   deckMain.type = "public";
   deckMain.cards = cards;
-  deckMap["\u4E3B\u724C\u5806"] = deckMain;
+  deckMap["主牌堆"] = deckMain;
   var deckDiscard = new Deck();
-  deckDiscard.name = "\u5F03\u724C\u5806";
+  deckDiscard.name = "弃牌堆";
   deckDiscard.type = "public";
   deckDiscard.cards = [];
-  deckMap["\u5F03\u724C\u5806"] = deckDiscard;
+  deckMap["弃牌堆"] = deckDiscard;
 
   // src/player.ts
   var Player = class _Player {
@@ -174,11 +174,11 @@
       this.id = id;
       this.data = [""];
       this.hand = new Deck();
-      this.hand.name = "\u624B\u724C";
+      this.hand.name = "手牌";
       this.show = new Deck();
-      this.show.name = "\u660E\u724C";
+      this.show.name = "明牌";
       this.hide = new Deck();
-      this.hide.name = "\u6697\u724C";
+      this.hide.name = "暗牌";
     }
     //获取并解析player对象的数据
     static parse(data) {
@@ -194,7 +194,7 @@
         player.show = Deck.parse(data.show);
         player.hide = Deck.parse(data.hide);
       } catch (err) {
-        console.error(`\u89E3\u6790\u73A9\u5BB6\u5931\u8D25:`, err);
+        console.error(`解析玩家失败:`, err);
         player = new _Player("QQ:114514");
       }
       return player;
@@ -232,48 +232,48 @@
     seal.replyToSender(mctx, mmsg, s);
   }
   function getCards(s) {
-    const rank = ["3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A", "2", "\u5C0F\u738B", "\u5927\u738B"];
-    if (s == "\u738B\u70B8") {
-      return [["\u5C0F\u738B", "\u5927\u738B"], "\u70B8\u5F39", 13];
+    const rank = ["3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A", "2", "小王", "大王"];
+    if (s == "王炸") {
+      return [["小王", "大王"], "炸弹", 13];
     }
     if (rank.includes(s)) {
       const index = rank.indexOf(s);
-      return [[s], "\u5355", index];
+      return [[s], "单", index];
     }
     var match = s.match(/^对(3|4|5|6|7|8|9|10|J|Q|K|A|2)$/);
     if (match) {
       const index = rank.indexOf(match[1]);
-      return [[match[1], match[1]], "\u5BF9", index];
+      return [[match[1], match[1]], "对", index];
     }
     match = s.match(/^三(3|4|5|6|7|8|9|10|J|Q|K|A|2)$/);
     if (match) {
       const index = rank.indexOf(match[1]);
-      return [[match[1], match[1], match[1]], "\u4E09", index];
+      return [[match[1], match[1], match[1]], "三", index];
     }
     match = s.match(/^炸弹(3|4|5|6|7|8|9|10|J|Q|K|A|2)$/);
     if (match) {
       const index = rank.indexOf(match[1]);
-      return [[match[1], match[1], match[1], match[1]], "\u70B8\u5F39", index];
+      return [[match[1], match[1], match[1], match[1]], "炸弹", index];
     }
     match = s.match(/^三(3|4|5|6|7|8|9|10|J|Q|K|A|2)带(3|4|5|6|7|8|9|10|J|Q|K|A|2|小王|大王)$/);
     if (match) {
       const index = rank.indexOf(match[1]);
-      return [[match[1], match[1], match[1], match[2]], "\u4E09\u5E26\u4E00", index];
+      return [[match[1], match[1], match[1], match[2]], "三带一", index];
     }
     match = s.match(/^三(3|4|5|6|7|8|9|10|J|Q|K|A|2)带对(3|4|5|6|7|8|9|10|J|Q|K|A|2|小王|大王)$/);
     if (match) {
       const index = rank.indexOf(match[1]);
-      return [[match[1], match[1], match[1], match[2], match[2]], "\u4E09\u5E26\u5BF9", index];
+      return [[match[1], match[1], match[1], match[2], match[2]], "三带对", index];
     }
     match = s.match(/^四(3|4|5|6|7|8|9|10|J|Q|K|A|2)带(3|4|5|6|7|8|9|10|J|Q|K|A|2|小王|大王)(3|4|5|6|7|8|9|10|J|Q|K|A|2|小王|大王)$/);
     if (match) {
       const index = rank.indexOf(match[1]);
-      return [[match[1], match[1], match[1], match[1], match[2], match[3]], "\u56DB\u5E26\u4E00", index];
+      return [[match[1], match[1], match[1], match[1], match[2], match[3]], "四带一", index];
     }
     match = s.match(/^四(3|4|5|6|7|8|9|10|J|Q|K|A|2)带对(3|4|5|6|7|8|9|10|J|Q|K|A|2|小王|大王)(3|4|5|6|7|8|9|10|J|Q|K|A|2|小王|大王)$/);
     if (match) {
       const index = rank.indexOf(match[1]);
-      return [[match[1], match[1], match[1], match[1], match[2], match[2], match[3], match[3]], "\u56DB\u5E26\u5BF9", index];
+      return [[match[1], match[1], match[1], match[1], match[2], match[2], match[3], match[3]], "四带对", index];
     }
     match = s.match(/^(\d+)顺(3|4|5|6|7|8|9|10)$/);
     if (match) {
@@ -285,7 +285,7 @@
           for (let i = 0; i < n; i++) {
             cards2.push(rank[index + i]);
           }
-          return [cards2, "\u987A", index];
+          return [cards2, "顺", index];
         }
       }
     }
@@ -299,7 +299,7 @@
           for (let i = 0; i < n; i++) {
             cards2.push(rank[index + i], rank[index + i]);
           }
-          return [cards2, "\u8FDE\u5BF9", index];
+          return [cards2, "连对", index];
         }
       }
     }
@@ -313,7 +313,7 @@
           for (let i = 0; i < n; i++) {
             cards2.push(rank[index + i], rank[index + i], rank[index + i]);
           }
-          return [cards2, "\u98DE\u673A", index];
+          return [cards2, "飞机", index];
         }
       }
     }
@@ -330,7 +330,7 @@
               cards2.push(rank[index + i], rank[index + i], rank[index + i]);
             }
             cards2.push(...match2);
-            return [cards2, "\u98DE\u673A\u5E26\u5355\u5F20", index];
+            return [cards2, "飞机带单张", index];
           }
         }
       }
@@ -348,7 +348,7 @@
               cards2.push(rank[index + i], rank[index + i], rank[index + i]);
             }
             cards2.push(...match2, ...match2);
-            return [cards2, "\u98DE\u673A\u5E26\u5BF9\u5B50", index];
+            return [cards2, "飞机带对子", index];
           }
         }
       }
@@ -368,7 +368,7 @@
       this.turn = 0;
       this.curPlayerId = "";
       this.curDeckInfo = ["", 0, ""];
-      this.mainDeck = deckMap["\u4E3B\u724C\u5806"].clone();
+      this.mainDeck = deckMap["主牌堆"].clone();
     }
     static getData(ext, id) {
       if (!cache.hasOwnProperty(id)) {
@@ -376,7 +376,7 @@
         try {
           data = JSON.parse(ext.storageGet(`game_${id}`) || "{}");
         } catch (error) {
-          console.error(`\u4ECE\u6570\u636E\u5E93\u4E2D\u83B7\u53D6game_${id}\u5931\u8D25:`, error);
+          console.error(`从数据库中获取game_${id}失败:`, error);
         }
         const game = this.parse(id, data);
         cache[id] = game;
@@ -403,65 +403,65 @@
         game.curDeckInfo = data.curDeckInfo;
         game.mainDeck = Deck.parse(data.mainDeck);
       } catch (err) {
-        console.error("\u89E3\u6790\u6E38\u620F\u6570\u636E\u5931\u8D25:", err);
+        console.error("解析游戏数据失败:", err);
       }
       return game;
     }
     check(ctx, msg) {
       const index = this.players.findIndex((player) => player.id == ctx.player.userId);
       if (index == -1) {
-        seal.replyToSender(ctx, msg, "\u6CA1\u6709\u4F60\u7684\u4FE1\u606F");
+        seal.replyToSender(ctx, msg, "没有你的信息");
         return;
       }
-      replyPrivate(ctx, `\u60A8\u7684\u624B\u724C\u4E3A:
+      replyPrivate(ctx, `您的手牌为:
 ${this.players[index].hand.cards.join("\n")}`);
     }
     //游戏初始化
     start(ctx, msg) {
       if (this.status) {
-        seal.replyToSender(ctx, msg, "\u6E38\u620F\u5DF2\u5F00\u59CB");
+        seal.replyToSender(ctx, msg, "游戏已开始");
         return;
       }
       const teamList = globalThis.teamManager.getTeamList(this.id);
       this.players = teamList[0].members.map((id) => new Player(id));
       if (this.players.length !== 3) {
-        seal.replyToSender(ctx, msg, `\u5F53\u524D\u961F\u4F0D\u6210\u5458\u6570\u91CF${this.players.length}\uFF0C\u73A9\u5BB6\u6570\u91CF\u9519\u8BEF`);
+        seal.replyToSender(ctx, msg, `当前队伍成员数量${this.players.length}，玩家数量错误`);
         return;
       }
       for (let i = 2; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [this.players[i], this.players[j]] = [this.players[j], this.players[i]];
       }
-      this.players[0].data[0] = "\u5730\u4E3B";
-      this.players[1].data[0] = "\u519C\u6C11";
-      this.players[2].data[0] = "\u519C\u6C11";
+      this.players[0].data[0] = "地主";
+      this.players[1].data[0] = "农民";
+      this.players[2].data[0] = "农民";
       this.status = true;
       this.curDeckInfo[2] = this.players[0].id;
       this.mainDeck.shuffle();
       const cards2 = this.mainDeck.cards.splice(0, 3);
       this.players[0].hand.add(cards2);
-      seal.replyToSender(ctx, msg, `\u5730\u4E3B\u7684\u5E95\u724C\u4E3A\uFF1A
+      seal.replyToSender(ctx, msg, `地主的底牌为：
 ${cards2.join("\n")}`);
       for (let i = 0; i < this.players.length; i++) {
         const player = this.players[i];
         const cards3 = this.mainDeck.draw(0, 17);
         player.hand.add(cards3);
-        const ranks = ["3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A", "2", "\u5C0F\u738B", "\u5927\u738B"];
+        const ranks = ["3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A", "2", "小王", "大王"];
         player.hand.cards.sort((a, b) => {
           const indexA = ranks.indexOf(a);
           const indexB = ranks.indexOf(b);
           return indexA - indexB;
         });
-        replyPrivate(ctx, `\u60A8\u7684\u624B\u724C\u4E3A:
+        replyPrivate(ctx, `您的手牌为:
 ${player.hand.cards.join("\n")}`, player.id);
       }
       const name = getName(ctx, this.players[0].id);
-      seal.replyToSender(ctx, msg, `\u6E38\u620F\u5F00\u59CB\uFF0C\u4ECE\u5730\u4E3B${name}\u5F00\u59CB`);
+      seal.replyToSender(ctx, msg, `游戏开始，从地主${name}开始`);
       this.nextRound(ctx, msg);
     }
     //结束游戏
     end(ctx, msg) {
-      seal.replyToSender(ctx, msg, `\u6E38\u620F\u7ED3\u675F:\u56DE\u5408\u6570${this.round}`);
+      seal.replyToSender(ctx, msg, `游戏结束:回合数${this.round}`);
       cache[this.id] = new _Game(this.id);
     }
     //进入下一回合
@@ -484,9 +484,10 @@ ${player.hand.cards.join("\n")}`, player.id);
       }
       this.turn++;
     }
-    play(ctx, msg, name) {
+    play(ctx, msg, cmdArgs) {
+      const name = cmdArgs.getArgN(1).toUpperCase();
       if (ctx.player.userId !== this.curPlayerId) {
-        seal.replyToSender(ctx, msg, "\u4E0D\u662F\u5F53\u524D\u73A9\u5BB6");
+        seal.replyToSender(ctx, msg, "不是当前玩家");
         return;
       }
       const index = this.players.findIndex((player2) => player2.id === this.curPlayerId);
@@ -495,44 +496,44 @@ ${player.hand.cards.join("\n")}`, player.id);
       const anotherIndex = index < this.players.length - 1 ? index + 1 : 0;
       const anotherPlayer = this.players[anotherIndex];
       const anotherName = getName(ctx, anotherPlayer.id);
-      if (name == "SKIP" || name == "PASS" || name == "\u4E0D\u8981" || name == "\u8981\u4E0D\u8D77" || name == "\u8FC7" || name == "\u4E0D\u51FA") {
+      if (name == "SKIP" || name == "PASS" || name == "不要" || name == "要不起" || name == "过" || name == "不出") {
         if (this.curDeckInfo[2] == this.curPlayerId) {
-          seal.replyToSender(ctx, msg, "\u4E0D\u80FD\u8DF3\u8FC7");
+          seal.replyToSender(ctx, msg, "不能跳过");
           return;
         }
-        seal.replyToSender(ctx, msg, `${playerName}\u8DF3\u8FC7\u4E86\uFF0C\u4E0B\u4E00\u4F4D\u662F${anotherName}`);
+        seal.replyToSender(ctx, msg, `${playerName}跳过了，下一位是${anotherName}`);
         this.nextTurn(ctx, msg);
         return;
       }
       const [cards2, type, value] = getCards(name);
       if (!type) {
-        seal.replyToSender(ctx, msg, "\u4E0D\u5B58\u5728\u724C\u578B");
+        seal.replyToSender(ctx, msg, "不存在牌型");
         return;
       }
       if (!player.hand.check(cards2)) {
-        seal.replyToSender(ctx, msg, "\u624B\u724C\u4E0D\u8DB3");
+        seal.replyToSender(ctx, msg, "手牌不足");
         return;
       }
       if (this.curDeckInfo[2] !== this.curPlayerId && this.curDeckInfo) {
-        if (type !== "\u70B8\u5F39" && type !== this.curDeckInfo[0]) {
-          seal.replyToSender(ctx, msg, "\u724C\u578B\u9519\u8BEF");
+        if (type !== "炸弹" && type !== this.curDeckInfo[0]) {
+          seal.replyToSender(ctx, msg, "牌型错误");
           return;
         }
         if (type == this.curDeckInfo[0] && value <= this.curDeckInfo[1]) {
-          seal.replyToSender(ctx, msg, "\u724C\u4E0D\u591F\u5927");
+          seal.replyToSender(ctx, msg, "牌不够大");
           return;
         }
       }
       player.hand.remove(cards2);
       this.curDeckInfo = [type, value, this.curPlayerId];
       if (player.hand.cards.length == 0) {
-        seal.replyToSender(ctx, msg, `${player.data[0]}${playerName}\u80DC\u5229\u4E86`);
+        seal.replyToSender(ctx, msg, `${player.data[0]}${playerName}胜利了`);
         this.end(ctx, msg);
         return;
       }
-      replyPrivate(ctx, `\u60A8\u7684\u624B\u724C\u4E3A:
+      replyPrivate(ctx, `您的手牌为:
 ${player.hand.cards.join("\n")}`, player.id);
-      seal.replyToSender(ctx, msg, `${playerName}\u6253\u51FA\u4E86${name}\uFF0C\u8FD8\u5269${player.hand.cards.length}\u5F20\u724C\u3002\u4E0B\u4E00\u4F4D\u662F${anotherName}`);
+      seal.replyToSender(ctx, msg, `${playerName}打出了${name}，还剩${player.hand.cards.length}张牌。下一位是${anotherName}`);
       this.nextTurn(ctx, msg);
       return;
     }
@@ -542,27 +543,27 @@ ${player.hand.cards.join("\n")}`, player.id);
   function main() {
     let ext = seal.ext.find("FightWithLandlord2");
     if (!ext) {
-      ext = seal.ext.new("FightWithLandlord2", "\u9519\u8BEF", "2.0.0");
+      ext = seal.ext.new("FightWithLandlord2", "错误", "2.0.0");
       seal.ext.register(ext);
     }
     const cmdPlay = seal.ext.newCmdItemInfo();
     cmdPlay.name = "ddz";
-    cmdPlay.help = `\u5E2E\u52A9\uFF1A
-\u3010.ddz start\u3011
-\u3010.ddz end\u3011
-\u3010.ddz check\u3011\u67E5\u770B\u624B\u724C
-\u3010.ddz test \u724C\u578B\u540D\u79F0\u3011\u6D4B\u8BD5\u724C\u578B\u662F\u5426\u5B58\u5728
-\u3010.ddz \u724C\u578B\u540D\u79F0\u3011\u51FA\u724C
-\u3010.ddz \u4E0D\u8981\u3011\u8DF3\u8FC7
-\u51FA\u724C\u6559\u7A0B\uFF1Ax\u3001y\u3001z\u90FD\u4E3A\u724C\u540D
-\u738B\u70B8\u3001x\u3001\u5BF9x\u3001\u4E09x\u3001\u70B8\u5F39x
-\u4E09x\u5E26y\u3001\u4E09x\u5E26\u5BF9y
-\u56DBx\u5E26yz\u3001\u56DBx\u5E26\u5BF9yz
+    cmdPlay.help = `帮助：
+【.ddz start】
+【.ddz end】
+【.ddz check】查看手牌
+【.ddz test 牌型名称】测试牌型是否存在
+【.ddz 牌型名称】出牌
+【.ddz 不要】跳过
+出牌教程：x、y、z都为牌名
+王炸、x、对x、三x、炸弹x
+三x带y、三x带对y
+四x带yz、四x带对yz
 
-\u724C\u578B\u8FDE\u7EED\u65F6\uFF0Cn\u4F5C\u4E3A\u8FDE\u7EED\u90E8\u5206\u7684\u957F\u5EA6\uFF0Cx\u4F5C\u4E3A\u8D77\u5934\uFF1A
-n\u987Ax\u3001n\u8FDE\u5BF9x\u3001n\u98DE\u673Ax
-n\u98DE\u673Ax\u5E26yz...\u3001n\u98DE\u673Ax\u5E26\u5BF9yz...
-\u5982\uFF1A5\u98DE\u673A3\u5E268910AJ\u5C31\u662F
+牌型连续时，n作为连续部分的长度，x作为起头：
+n顺x、n连对x、n飞机x
+n飞机x带yz...、n飞机x带对yz...
+如：5飞机3带8910AJ就是
 3334445556667778910AJ`;
     cmdPlay.disabledInPrivate = true;
     cmdPlay.solve = (ctx, msg, cmdArgs) => {
@@ -585,10 +586,10 @@ n\u98DE\u673Ax\u5E26yz...\u3001n\u98DE\u673Ax\u5E26\u5BF9yz...
           const s = cmdArgs.getRestArgsFrom(2);
           const [cards2, type, value] = getCards(s);
           if (type) {
-            seal.replyToSender(ctx, msg, `${cards2.join("")}\u5B58\u5728${type}:${value}`);
+            seal.replyToSender(ctx, msg, `${cards2.join("")}存在${type}:${value}`);
             return seal.ext.newCmdExecuteResult(true);
           }
-          seal.replyToSender(ctx, msg, "\u4E0D\u5B58\u5728");
+          seal.replyToSender(ctx, msg, "不存在");
           return seal.ext.newCmdExecuteResult(true);
         }
         case "check": {
@@ -604,14 +605,14 @@ n\u98DE\u673Ax\u5E26yz...\u3001n\u98DE\u673Ax\u5E26\u5BF9yz...
         }
         default: {
           const game = Game.getData(ext, id);
-          const name = val.toUpperCase();
-          game.play(ctx, msg, name);
+          game.play(ctx, msg, cmdArgs);
           Game.saveData(ext, id);
           return seal.ext.newCmdExecuteResult(true);
         }
       }
     };
     ext.cmdMap["ddz"] = cmdPlay;
+    ext.cmdMap["斗地主"] = cmdPlay;
   }
   main();
 })();
