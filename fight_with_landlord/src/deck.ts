@@ -1,4 +1,3 @@
-import { Player } from "./player";
 import { Game } from "./game";
 
 export class Deck {
@@ -7,7 +6,7 @@ export class Deck {
     public type: string;//种类
     public cards: string[];//包含的卡牌
     public data: [];//数据
-    public solve: (ctx: seal.MsgContext, msg: seal.Message, game: Game, player: Player) => void;//方法
+    public solve: (ctx: seal.MsgContext, msg: seal.Message, cmdArgs: seal.CmdArgs, game: Game) => void;//方法
 
     constructor() {
         this.name = '';//名字

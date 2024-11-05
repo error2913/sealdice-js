@@ -77,8 +77,8 @@ export class Game {
     public check(ctx: seal.MsgContext, msg: seal.Message): void {
         const index = this.players.findIndex(player => player.id == ctx.player.userId);
         if (index == -1) {
-          seal.replyToSender(ctx, msg, '没有你的信息');
-          return;
+            seal.replyToSender(ctx, msg, '没有你的信息');
+            return;
         }
 
         replyPrivate(ctx, `您的手牌为:\n${this.players[index].hand.cards.join('\n')}`);
@@ -114,7 +114,7 @@ export class Game {
         this.status = true;
 
         //发牌等游戏开始前的逻辑
-        this.curDeckInfo[2]= this.players[0].id;
+        this.curDeckInfo[2] = this.players[0].id;
         this.mainDeck.shuffle();
 
         const cards = this.mainDeck.cards.splice(0, 3);
@@ -172,7 +172,9 @@ export class Game {
         this.turn++;
     }
 
-    public play(ctx: seal.MsgContext, msg: seal.Message, name: string): void {
+    public play(ctx: seal.MsgContext, msg: seal.Message, cmdArgs: seal.CmdArgs): void {
+        const name = cmdArgs.getArgN(1).toUpperCase();
+
         if (ctx.player.userId !== this.curPlayerId) {
             seal.replyToSender(ctx, msg, '不是当前玩家');
             return;

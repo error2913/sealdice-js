@@ -37,8 +37,7 @@ function main() {
       }
       case 'play': {
         const game = Game.getData(ext, id);
-        const name = cmdArgs.getArgN(2);
-        game.play(ctx, msg, name);
+        game.play(ctx, msg, cmdArgs);
         Game.saveData(ext, id);
         return seal.ext.newCmdExecuteResult(true);
       }

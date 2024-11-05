@@ -151,7 +151,9 @@ export class Game {
         this.turn++;
     }
 
-    public play(ctx: seal.MsgContext, msg: seal.Message, name: string):void {
+    public play(ctx: seal.MsgContext, msg: seal.Message, cmdArgs: seal.CmdArgs):void {
+        const name = cmdArgs.getArgN(2);
+        
         if (ctx.player.userId !== this.curPlayerId) {
             seal.replyToSender(ctx, msg, '不是当前玩家');
             return;
@@ -189,7 +191,7 @@ export class Game {
         this.discardDeck.add(deck.cards);
         this.curDeckInfo = [deck.data[0], deck.type, 0];
 
-        deck.solve(ctx, msg, this, player);
+        deck.solve(ctx, msg, cmdArgs, this);
         seal.replyToSender(ctx, msg, `${playerName}打出了${deck.name}，还剩${player.hand.cards.length}张牌。下一位是${anotherName}`);
         this.nextTurn(ctx, msg);//进入下一轮
         return;

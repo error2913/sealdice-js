@@ -3,7 +3,7 @@ import { Player } from "./player";
 import { deckMap } from "./deck";
 import { getName, replyPrivate } from "./utils";
 
-const cache:{[key: string]: Game} = {};
+const cache: { [key: string]: Game } = {};
 
 export class Game {
     private id: string;//id
@@ -37,16 +37,16 @@ export class Game {
             } catch (error) {
                 console.error(`从数据库中获取game_${id}失败:`, error);
             }
-        
+
             const game = this.parse(id, data);
-        
+
             cache[id] = game;
         }
-    
+
         return cache[id];
     }
-    
-    
+
+
     //保存数据
     public static saveData(ext: seal.ExtInfo, id: string): void {
         if (cache.hasOwnProperty(id)) {
@@ -80,8 +80,8 @@ export class Game {
     public check(ctx: seal.MsgContext, msg: seal.Message): void {
         const index = this.players.findIndex(player => player.id == ctx.player.userId);
         if (index == -1) {
-          seal.replyToSender(ctx, msg, '没有你的信息');
-          return;
+            seal.replyToSender(ctx, msg, '没有你的信息');
+            return;
         }
 
         replyPrivate(ctx, `您的手牌为:\n${this.players[index].hand.cards.join('\n')}`);
@@ -122,20 +122,20 @@ export class Game {
     }
 
     //结束游戏
-    public end(ctx: seal.MsgContext, msg: seal.Message):void {
+    public end(ctx: seal.MsgContext, msg: seal.Message): void {
         seal.replyToSender(ctx, msg, `游戏结束:回合数${this.round}`);
         cache[this.id] = new Game(this.id);
     }
 
     //进入下一回合
-    private nextRound(ctx: seal.MsgContext, msg: seal.Message):void {
+    private nextRound(ctx: seal.MsgContext, msg: seal.Message): void {
         this.turn = 0;
         this.round++;
         this.nextTurn(ctx, msg);
     }
 
     //进入下一轮
-    private nextTurn(ctx: seal.MsgContext, msg: seal.Message):void {
+    private nextTurn(ctx: seal.MsgContext, msg: seal.Message): void {
         if (this.turn == 0) {
             this.curPlayerId = this.players[0].id;
         } else {
@@ -151,7 +151,9 @@ export class Game {
         this.turn++;
     }
 
-    public play(ctx: seal.MsgContext, msg: seal.Message, name: string):void {
+    public play(ctx: seal.MsgContext, msg: seal.Message, cmdArgs: seal.CmdArgs): void {
+        const name = cmdArgs.getArgN(2);
+
         if (ctx.player.userId !== this.curPlayerId) {
             seal.replyToSender(ctx, msg, '不是当前玩家');
             return;
@@ -184,7 +186,7 @@ export class Game {
         this.discardDeck.add(deck.cards);
         this.curDeckInfo = [deck.type];
 
-        deck.solve(ctx, msg, this, player);
+        deck.solve(ctx, msg, cmdArgs, this);
         seal.replyToSender(ctx, msg, `${playerName}打出了${deck.name}，还剩${player.hand.cards.length}张牌。下一位是${anotherName}`);
         this.nextTurn(ctx, msg);//进入下一轮
         return;

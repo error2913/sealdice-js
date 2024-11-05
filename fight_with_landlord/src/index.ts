@@ -71,14 +71,14 @@ n飞机x带yz...、n飞机x带对yz...
       }
       default: {
         const game = Game.getData(ext, id);
-        const name = val.toUpperCase();
-        game.play(ctx, msg, name);
+        game.play(ctx, msg, cmdArgs);
         Game.saveData(ext, id);
         return seal.ext.newCmdExecuteResult(true);
       }
     }
   };
   ext.cmdMap['ddz'] = cmdPlay;
+  ext.cmdMap['斗地主'] = cmdPlay;
 }
 
 main();
