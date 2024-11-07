@@ -271,13 +271,13 @@ export class TeamManager {
         const callList = this.getCallList(id);
 
         if (callList.length == 0) {
-          return;
+            return;
         }
 
         const index = callList.indexOf(userId);
         if (index !== -1) {
-          callList.splice(index, 1);
-          this.saveCallList(id, callList);
+            callList.splice(index, 1);
+            this.saveCallList(id, callList);
         }
     }
 
@@ -330,6 +330,12 @@ export class TeamManager {
 
             keys.forEach(key => {
                 attr[key] = seal.vars.intGet(mctx, key)[0];
+
+                /* 防止用户查看豹的内置变量
+                if (key[0] == '$') {
+                    attr[key] = NaN;
+                }
+                */
             })
 
             return {
