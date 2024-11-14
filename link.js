@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LINK!!!
 // @author       错误
-// @version      1.0.0
+// @version      1.0.1
 // @description  连接群聊私聊，只适配了QQ。使用 .link 获取帮助。
 // @timestamp    1731573405
 // 2024-11-14 16:36:45
@@ -14,42 +14,24 @@
 // 首先检查是否已经存在
 let ext = seal.ext.find('link');
 if (!ext) {
-    ext = seal.ext.new('link', '错误', '1.0.0');
+    ext = seal.ext.new('link', '错误', '1.0.1');
     // 注册扩展
     seal.ext.register(ext);
 
-    const linkList = {};//反向映射
-    const data = getData();
-
-    function getData() {
-        let data = {};
-
-        try {
-            data = JSON.parse(ext.storageGet('data') || '{}');
-
-            for (const id in data) {
-                const link = data[id].link;
-    
-                for (let i = 0; i < link.length; i++) {
-                    const linkId = link[i];
-    
-                    if (!linkList.hasOwnProperty(linkId)) {
-                        linkList[linkId] = [];
-                    }
-    
-                    linkList[linkId].push(id);
-                }
-            }
-        } catch (err) {
-            console.error(`在获取data时出错:${err}`);
-            data = {};
-        }
-
-        return data;
+    let data1 = {}, data2 = {};
+    try {
+        data1 = JSON.parse(ext.storageGet('mainData') || '{}');
+        data2 = JSON.parse(ext.storageGet('linkData') || '{}');
+    } catch (err) {
+        console.error(`在获取data时出错:${err}`);
     }
 
+    const mainData = data1;
+    const linkData = data2;
+
     function saveData() {
-        ext.storageSet('data', JSON.stringify(data));
+        ext.storageSet('mainData', JSON.stringify(mainData));
+        ext.storageSet('linkData', JSON.stringify(linkData));
     }
 
     function getMsg(messageType, senderId, groupId = '') {
@@ -108,95 +90,197 @@ if (!ext) {
     cmd.name = 'link';
     cmd.help = `帮助
 【.link private QQ号】
-【.link group 群号】
-【.link show】
-【.link off】`;
+【.link group QQ群号】
+【.link show】展示连接状态，包括已连接和被连接
+【.link off】断开主动连接(静默执行)
+【.link quit】断开被动连接(通知被断开对象)
+【.link divert】转接当前录入的所有连接对象`;
     cmd.solve = (ctx, msg, cmdArgs) => {
-        if (ctx.privilegeLevel < 100) {
-            seal.replyToSender(ctx, msg, seal.formatTmpl(ctx, "核心:提示_无权限"));
-            return seal.ext.newCmdExecuteResult(true);
-        }
-
         let val = cmdArgs.getArgN(1);
         let val2 = cmdArgs.getArgN(2);
         const id = ctx.isPrivate ? ctx.player.userId : ctx.group.groupId;
 
         switch (val) {
             case 'private': {
+                if (ctx.privilegeLevel < 100) {
+                    seal.replyToSender(ctx, msg, seal.formatTmpl(ctx, "核心:提示_无权限"));
+                    return seal.ext.newCmdExecuteResult(true);
+                }
+
                 if (!/\d+/.test(val2)) {
                     seal.replyToSender(ctx, msg, '请输入数字群号');
                     return seal.ext.newCmdExecuteResult(true);
                 }
 
-                if (!data.hasOwnProperty(id)) {
-                    data[id] = {
-                        link: []
-                    }
-                }
-
                 const linkId = `QQ:${val2}`;
 
-                if (!linkList.hasOwnProperty(linkId)) {
-                    linkList[linkId] = [];
+                if (!mainData.hasOwnProperty(id)) {
+                    mainData[id] = [];
                 }
-                linkList[linkId].push(id);
-                data[id].link.push(linkId);
+                if (!linkData.hasOwnProperty(linkId)) {
+                    linkData[linkId] = [];
+                }
+
+                linkData[linkId].push(id);
+                mainData[id].push(linkId);
                 saveData();
 
                 seal.replyToSender(ctx, msg, `已连接了${linkId}`);
                 return seal.ext.newCmdExecuteResult(true);
             }
             case 'group': {
+                if (ctx.privilegeLevel < 100) {
+                    seal.replyToSender(ctx, msg, seal.formatTmpl(ctx, "核心:提示_无权限"));
+                    return seal.ext.newCmdExecuteResult(true);
+                }
+
                 if (!/\d+/.test(val2)) {
                     seal.replyToSender(ctx, msg, '请输入数字群号');
                     return seal.ext.newCmdExecuteResult(true);
                 }
 
-                if (!data.hasOwnProperty(id)) {
-                    data[id] = {
-                        link: []
-                    }
-                }
-
                 const linkId = `QQ-Group:${val2}`;
 
-                if (!linkList.hasOwnProperty(linkId)) {
-                    linkList[linkId] = [];
+                if (!mainData.hasOwnProperty(id)) {
+                    mainData[id] = [];
                 }
-                linkList[linkId].push(id);
-                data[id].link.push(linkId);
+                if (!linkData.hasOwnProperty(linkId)) {
+                    linkData[linkId] = [];
+                }
+
+                linkData[linkId].push(id);
+                mainData[id].push(linkId);
                 saveData();
 
                 seal.replyToSender(ctx, msg, `已连接了${linkId}`);
                 return seal.ext.newCmdExecuteResult(true);
             }
             case 'show': {
-                if (!data.hasOwnProperty(id)) {
-                    seal.replyToSender(ctx, msg, `你没有正在进行的连接`);
-                    return seal.ext.newCmdExecuteResult(true);
+                const arr = [];
+
+                if (mainData.hasOwnProperty(id)) {
+                    arr.push(`主动连接:\n${mainData[id].join('\n')}`);
                 }
 
-                seal.replyToSender(ctx, msg, `已连接:\n${data[id].link.join('\n')}`);
+                if (linkData.hasOwnProperty(id)) {
+                    arr.push(`被动连接:\n${linkData[id].join('\n')}`);
+                }
+
+                const s = arr.join('\n');
+
+                seal.replyToSender(ctx, msg, s || '你没有进行中的连接');
                 return seal.ext.newCmdExecuteResult(true);
             }
             case 'off': {
-                if (!data.hasOwnProperty(id)) {
+                if (!mainData.hasOwnProperty(id)) {
+                    seal.replyToSender(ctx, msg, `没有正在进行的主动连接`);
+                    return seal.ext.newCmdExecuteResult(true);
+                }
+
+                mainData[id].forEach(linkId => {
+                    if (linkData.hasOwnProperty(linkId)) {
+                        const index = linkData[linkId].indexOf(id);
+                        if (index !== -1) {
+                            linkData[linkId].splice(index, 1);
+
+                            if (linkData[linkId].length === 0) {
+                                delete linkData[linkId];
+                            }
+                        }
+                    }
+                });
+
+                delete mainData[id];
+                saveData();
+
+                seal.replyToSender(ctx, msg, `已解除连接`);
+                return seal.ext.newCmdExecuteResult(true);
+            }
+            case 'quit': {
+                if (!linkData.hasOwnProperty(id)) {
+                    seal.replyToSender(ctx, msg, `没有正在进行的被动连接`);
+                    return seal.ext.newCmdExecuteResult(true);
+                }
+
+                linkData[id].forEach(mainId => {
+                    //退出被主动连接的情况
+                    if (mainData.hasOwnProperty(mainId)) {
+                        const index = mainData[mainId].indexOf(id);
+                        if (index !== -1) {
+                            mainData[mainId].splice(index, 1);
+
+                            if (mainData[mainId].length === 0) {
+                                delete mainData[mainId];
+                            }
+
+                            replyById(ctx, `${id}已退出被连接状态`, mainId);
+                        }
+                    }
+
+                    //退出转接连接的情况
+                    const linkId = mainId;
+
+                    //判断是否为自己主动连接的
+                    if (mainData.hasOwnProperty(id) && mainData[id].includes(linkId)) {
+                        return;
+                    }
+
+                    if (linkData.hasOwnProperty(linkId)) {
+                        const index = linkData[linkId].indexOf(id);
+                        if (index !== -1) {
+                            linkData[linkId].splice(index, 1);
+
+                            if (linkData[linkId].length === 0) {
+                                delete linkData[linkId];
+                            }
+
+                            replyById(ctx, `${id}已退出转接连接状态`, mainId);
+                        }
+                    }
+                });
+
+                delete linkData[id];
+                saveData();
+
+                seal.replyToSender(ctx, msg, `已退出被连接`);
+                return seal.ext.newCmdExecuteResult(true);
+            }
+            case 'divert': {
+                if (ctx.privilegeLevel < 100) {
+                    seal.replyToSender(ctx, msg, seal.formatTmpl(ctx, "核心:提示_无权限"));
+                    return seal.ext.newCmdExecuteResult(true);
+                }
+
+                if (!mainData.hasOwnProperty(id)) {
                     seal.replyToSender(ctx, msg, `你没有正在进行的连接`);
                     return seal.ext.newCmdExecuteResult(true);
                 }
 
-                const link = data[id].link;
-
-                for (let i = 0; i < link.length; i++) {
-                    const linkId = link[i];
-                    const index = linkList[linkId].indexOf(id);
-                    linkList[linkId].splice(index, 1);
+                if (mainData[id].length < 2) {
+                    seal.replyToSender(ctx, msg, `连接对象应大于2个`);
+                    return seal.ext.newCmdExecuteResult(true);
                 }
 
-                delete data[id];
+                const s = `完成转接:\n${mainData[id].join('\n')}`;
+
+                mainData[id].forEach(linkId => {
+                    if (linkData.hasOwnProperty(linkId)) {
+                        const index = linkData[linkId].indexOf(id);
+                        if (index !== -1) {
+                            linkData[linkId].splice(index, 1);
+                        }
+                    }
+
+                    const link = mainData[id].filter(linkId2 => linkId2!== linkId);
+
+                    linkData[linkId].push(...link);
+                    replyById(ctx, `已与建立连接:\n${link.join('\n')}\n解除请使用【.link quit】`, linkId);
+                });
+
+                delete mainData[id];
                 saveData();
 
-                seal.replyToSender(ctx, msg, `已解除连接`);
+                seal.replyToSender(ctx, msg, s);
                 return seal.ext.newCmdExecuteResult(true);
             }
             case 'help':
@@ -212,32 +296,41 @@ if (!ext) {
     ext.onNotCommandReceived = (ctx, msg) => {
         const id = ctx.isPrivate ? ctx.player.userId : ctx.group.groupId;
 
-        if (linkList.hasOwnProperty(id)) {
-            const s = `来自${id},${msg.sender.nickname}(${ctx.player.userId})的消息:\n${msg.message}`;
+        if (mainData.hasOwnProperty(id)) {
+            const s = msg.message;
 
-            const list = linkList[id];
-
-            for (let i = 0; i < list.length; i++) {
-                const mainId = list[i];
-                replyById(ctx, s, mainId);
-            }
+            mainData[id].forEach(linkId => {
+                replyById(ctx, s, linkId);
+            });
         }
 
-        if (data.hasOwnProperty(id)) {
-            const link = data[id].link;
+        if (linkData.hasOwnProperty(id)) {
+            const prefix = id === ctx.player.userId ? `` : `来自${id},`;
+            const s = prefix + `${msg.sender.nickname}(${ctx.player.userId})的消息:\n${msg.message}`;
 
-            for (let i = 0; i < link.length; i++) {
-                const linkId = link[i];
-                replyById(ctx, msg.message, linkId);
-            }
+            linkData[id].forEach(mainId => {
+                replyById(ctx, s, mainId);
+            });
         }
     }
+
+    /* 指令消息，感觉不是很必要。
+    ext.onCommandReceived = (ctx, msg, cmdArgs) => {
+        const id = ctx.isPrivate ? ctx.player.userId : ctx.group.groupId;
+
+        if (linkData.hasOwnProperty(id)) {
+            const s = `来自${id},${msg.sender.nickname}(${ctx.player.userId})的指令消息:\n${msg.message}`;
+
+            linkData[id].forEach(mainId => {
+                replyById(ctx, s, mainId);
+            });
+        }
+    }
+    */
 }
 
 /* TODO:
-- 能转发指令到主窗口
-- 在主窗口发送指令到其他窗口
+- 在主窗口发送指令到其他窗口。想不到什么好的解决方案，搁置。
 - 记录聊天内容，进行AI总结
-- 背后操控，将多个聊天窗口连接到一个（电话转接？），不分主窗口
 - 适配其他平台
 */
