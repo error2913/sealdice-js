@@ -10,7 +10,7 @@ function main() {
 
   //注册指令
   const cmdGame = seal.ext.newCmdItemInfo();
-  cmdGame.name = 'game'; // 指令名字，可用中文
+  cmdGame.name = 'uno'; // 指令名字，可用中文
   cmdGame.help = `帮助：TODO`;
   cmdGame.disabledInPrivate = true;// 不允许私聊
   cmdGame.solve = (ctx, msg, cmdArgs) => {
@@ -18,6 +18,12 @@ function main() {
     const id = ctx.group.groupId;
 
     switch (val) {
+      case '':
+      case 'help': {
+        const ret = seal.ext.newCmdExecuteResult(true);
+        ret.showHelp = true;
+        return ret;
+      }
       case 'start': {
         const game = Game.getData(ext, id);
         game.start(ctx, msg);
@@ -35,21 +41,16 @@ function main() {
         game.check(ctx, msg);
         return seal.ext.newCmdExecuteResult(true);
       }
-      case 'play': {
+      default: {
         const game = Game.getData(ext, id);
         game.play(ctx, msg, cmdArgs);
         Game.saveData(ext, id);
         return seal.ext.newCmdExecuteResult(true);
       }
-      case 'help':
-      default: {
-        const ret = seal.ext.newCmdExecuteResult(true);
-        ret.showHelp = true;
-        return ret;
-      }
     }
   };
-  ext.cmdMap['game'] = cmdGame;
+  ext.cmdMap['uno'] = cmdGame;
+  ext.cmdMap['UNO'] = cmdGame;
 }
 
 main();

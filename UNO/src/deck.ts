@@ -110,95 +110,113 @@ export class Deck {
 
 const deckMap: { [key: string]: Deck } = {};
 
-const colors = ['红', '黄', '蓝', '绿'];
+export function load(): void {
+    const colors = ['红', '黄', '蓝', '绿'];
 
-const normalCards = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-
-for (let i = 0; i < colors.length; i++) {
-    const color = colors[i];
-
-    for (let j = 0; j < normalCards.length; j++) {
-        const card = color + normalCards[j];
-        const deck = new Deck();
-        deck.name = card;
-        deck.type = normalCards[j];
-        deck.cards = [card];
-        deck.data = [color];
-        deck.solve = (_, __, ___, ____) => {
+    const normalCards = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+    
+    for (let i = 0; i < colors.length; i++) {
+        const color = colors[i];
+    
+        for (let j = 0; j < normalCards.length; j++) {
+            const card = color + normalCards[j];
+            const deck = new Deck();
+            deck.name = card;
+            deck.type = normalCards[j];
+            deck.cards = [card];
+            deck.data = [color];
+            deck.solve = (_, __, ___, ____) => {
+                //TODO
+            }
+            deckMap[card] = deck;
+        }
+    
+        const cardSkip = color + '禁止';
+        const deckSkip = new Deck();
+        deckSkip.name = cardSkip;
+        deckSkip.type = 'skip';
+        deckSkip.cards = [cardSkip];
+        deckSkip.data = [color];
+        deckSkip.solve = (_, __, ___, ____) => {
             //TODO
         }
-        deckMap[card] = deck;
+        deckMap[cardSkip] = deckSkip;
+    
+        const cardReverse = color + '反转';
+        const deckReverse = new Deck();
+        deckReverse.name = cardReverse;
+        deckReverse.type = 'reverse';
+        deckReverse.cards = [cardReverse];
+        deckReverse.data = [color];
+        deckReverse.solve = (_, __, ___, ____) => {
+            //TODO
+        }
+        deckMap[cardReverse] = deckReverse;
+    
+        const cardTwo = color + '加二';
+        const deckTwo = new Deck();
+        deckTwo.name = cardTwo;
+        deckTwo.type = 'two';
+        deckTwo.cards = [cardTwo];
+        deckTwo.data = [color];
+        deckTwo.solve = (_, __, ___, ____) => {
+            //TODO
+        }
+        deckMap[cardTwo] = deckTwo;
     }
-
-    const cardBan = color + '禁止';
-    const deckBan = new Deck();
-    deckBan.name = cardBan;
-    deckBan.type = 'ban';
-    deckBan.cards = [cardBan];
-    deckBan.data = [color];
-    deckBan.solve = (_, __, ___, ____) => {
+    
+    const deckWild = new Deck();
+    deckWild.name = '万能';
+    deckWild.type = 'wild';
+    deckWild.cards = ['万能'];
+    deckWild.data = ['wild'];
+    deckWild.solve = (_, __, ___, ____) => {
         //TODO
     }
-    deckMap[cardBan] = deckBan;
-
-    const cardChange = color + '换向';
-    const deckChange = new Deck();
-    deckChange.name = cardChange;
-    deckChange.type = 'change';
-    deckChange.cards = [cardChange];
-    deckChange.data = [color];
-    deckChange.solve = (_, __, ___, ____) => {
+    deckMap['万能'] = deckWild;
+    
+    const deckFour = new Deck();
+    deckFour.name = '加四';
+    deckFour.type = 'four';
+    deckFour.cards = ['加四'];
+    deckFour.data = ['wild'];
+    deckFour.solve = (_, __, ___, ____) => {
         //TODO
     }
-    deckMap[cardChange] = deckChange;
-
-    const cardTwo = color + '加二';
-    const deckTwo = new Deck();
-    deckTwo.name = cardTwo;
-    deckTwo.type = 'two';
-    deckTwo.cards = [cardTwo];
-    deckTwo.data = [color];
-    deckTwo.solve = (_, __, ___, ____) => {
-        //TODO
-    }
-    deckMap[cardTwo] = deckTwo;
+    deckMap['加四'] = deckFour;
+    
+    
+    const cards = [
+        '红0', '黄0', '蓝0', '绿0',
+        '红1', '黄1', '蓝1', '绿1', '红1', '黄1', '蓝1', '绿1',
+        '红2', '黄2', '蓝2', '绿2', '红2', '黄2', '蓝2', '绿2',
+        '红3', '黄3', '蓝3', '绿3', '红3', '黄3', '蓝3', '绿3',
+        '红4', '黄4', '蓝4', '绿4', '红4', '黄4', '蓝4', '绿4',
+        '红5', '黄5', '蓝5', '绿5', '红5', '黄5', '蓝5', '绿5',
+        '红6', '黄6', '蓝6', '绿6', '红6', '黄6', '蓝6', '绿6',
+        '红7', '黄7', '蓝7', '绿7', '红7', '黄7', '蓝7', '绿7',
+        '红8', '黄8', '蓝8', '绿8', '红8', '黄8', '蓝8', '绿8',
+        '红9', '黄9', '蓝9', '绿9', '红9', '黄9', '蓝9', '绿9',
+        '红禁止', '黄禁止', '蓝禁止', '绿禁止', '红禁止', '黄禁止', '蓝禁止', '绿禁止',
+        '红反转', '黄反转', '蓝反转', '绿反转', '红反转', '黄反转', '蓝反转', '绿反转',
+        '红加二', '黄加二', '蓝加二', '绿加二', '红加二', '黄加二', '蓝加二', '绿加二',
+        '万能', '万能', '万能', '万能',
+        '加四', '加四', '加四', '加四'
+    ];
+    
+    //注册主牌堆
+    const deckMain = new Deck();
+    deckMain.name = '主牌堆';
+    deckMain.type = 'public';
+    deckMain.cards = cards;
+    deckMap['主牌堆'] = deckMain;
+    
+    //注册弃牌堆
+    const deckDiscard = new Deck();
+    deckDiscard.name = '弃牌堆';
+    deckDiscard.type = 'public';
+    deckDiscard.cards = [];
+    deckMap['弃牌堆'] = deckDiscard;
 }
-
-const deckAll = new Deck();
-deckAll.name = '万能';
-deckAll.type = 'all';
-deckAll.cards = ['万能'];
-deckAll.data = ['all'];
-deckAll.solve = (_, __, ___, ____) => {
-    //TODO
-}
-deckMap['万能'] = deckAll;
-
-const deckFour = new Deck();
-deckFour.name = '加四';
-deckFour.type = 'four';
-deckFour.cards = ['加四'];
-deckFour.data = ['all'];
-deckFour.solve = (_, __, ___, ____) => {
-    //TODO
-}
-deckMap['加四'] = deckFour;
-
-
-const cards = ['A', 'B', 'C'];
-
-//注册主牌堆
-const deckMain = new Deck();
-deckMain.name = '主牌堆';
-deckMain.type = 'public';
-deckMain.cards = cards;
-deckMap['主牌堆'] = deckMain;
-
-//注册弃牌堆
-const deckDiscard = new Deck();
-deckDiscard.name = '弃牌堆';
-deckDiscard.type = 'public';
-deckDiscard.cards = [];
-deckMap['弃牌堆'] = deckDiscard;
 
 export { deckMap };

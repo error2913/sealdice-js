@@ -1,3 +1,4 @@
+import { deckMap, load } from "./deck";
 import { Game } from "./game";
 import { getCards } from "./utils";
 
@@ -30,6 +31,11 @@ n飞机x带yz...、n飞机x带对yz...
 3334445556667778910AJ`;
   cmdPlay.disabledInPrivate = true;// 不允许私聊
   cmdPlay.solve = (ctx, msg, cmdArgs) => {
+    if (Object.keys(deckMap).length === 0) {
+      console.log('开始加载牌组');
+      load();
+    }
+
     let val = cmdArgs.getArgN(1);
     const id = ctx.group.groupId;
 

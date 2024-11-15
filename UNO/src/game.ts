@@ -179,11 +179,10 @@ export class Game {
         }
 
         if (
-            deck.data[0] !== 'all' &&
-            deck.data[0] !== this.curDeckInfo[0] &&
-            deck.type !== this.curDeckInfo[1]
+            deck.data[0] !== 'wild' &&
+            deck.data[0] !== this.curDeckInfo[0]
         ) {
-            seal.replyToSender(ctx, msg, '牌型错误');
+            seal.replyToSender(ctx, msg, '颜色错误');
             return;
         }
 

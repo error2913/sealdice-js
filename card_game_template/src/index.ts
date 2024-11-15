@@ -1,3 +1,4 @@
+import { deckMap, load } from "./deck";
 import { Game } from "./game";
 
 function main() {
@@ -14,6 +15,11 @@ function main() {
   cmdGame.help = `帮助：TODO`;
   cmdGame.disabledInPrivate = true;// 不允许私聊
   cmdGame.solve = (ctx, msg, cmdArgs) => {
+    if (Object.keys(deckMap).length === 0) {
+      console.log('开始加载牌组');
+      load();
+    }
+    
     const val = cmdArgs.getArgN(1);
     const id = ctx.group.groupId;
 
