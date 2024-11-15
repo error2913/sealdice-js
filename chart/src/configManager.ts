@@ -7,10 +7,10 @@ export class ConfigManager {
     }
 
     register() {
-        seal.ext.registerTemplateConfig(this.ext, '变量名', ['$m好感', '$m金币'], '');
-        seal.ext.registerTemplateConfig(this.ext, '变量对应名称', ['好感', '金币'], '与上边一一对应');
-        seal.ext.registerTemplateConfig(this.ext, '变量同步正则表达式', ['^晚安$'], '变量可能产生变化时，需要对插件内部数据进行同步，以便实现排行榜等功能');
-        seal.ext.registerTemplateConfig(this.ext, '变量同步指令名', ['jrrp'], '变量可能产生变化时，需要对插件内部数据进行同步，以便实现排行榜等功能');
+        seal.ext.registerTemplateConfig(this.ext, '变量名', ['$m好感', '$m金币'], '豹语变量');
+        seal.ext.registerTemplateConfig(this.ext, '变量对应名称', ['好感', '金币'], '与上边一一对应，用于查找');
+        seal.ext.registerTemplateConfig(this.ext, '变量同步正则表达式', ['^晚安$'], '变量可能产生变化时，需要对插件内部数据进行同步');
+        seal.ext.registerTemplateConfig(this.ext, '变量同步指令名', ['jrrp'], '变量可能产生变化时，需要对插件内部数据进行同步');
     }
 
     getVarName(s: string): string {
