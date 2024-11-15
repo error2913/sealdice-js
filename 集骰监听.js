@@ -2,7 +2,7 @@
 // @name         集骰监听
 // @author       错误
 // @version      1.0.1
-// @description  会把疑似集骰的群号发给通知列表，极大可能误报，仅作参考。\n个性化设置请移步 插件设置。\n白名单修改指令: .monitor
+// @description  会把疑似集骰的群号发给通知列表，极大可能误报，仅作参考。\n个性化设置请移步 插件设置。\n白名单修改指令: .monitor\n可前往 https://github.com/baiyu-yu/plug-in/blob/main/%E5%85%A8%E8%87%AA%E5%8A%A8%E9%9B%86%E9%AA%B0%E6%A3%80%E6%B5%8B%E5%92%8C%E7%9B%91%E5%90%AC.js 获取升级版本
 // @timestamp    1727866889
 // 2024-10-02 19:01:29
 // @license      MIT
