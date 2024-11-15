@@ -1,4 +1,4 @@
-var filename = '骰娘好感.js'
+var filename = 'chart.js'
 
 module.exports = {
   dev: {
