@@ -114,7 +114,6 @@ export class Game {
         this.status = true;
 
         //发牌等游戏开始前的逻辑
-        this.curDeckInfo[2] = this.players[0].id;
         this.mainDeck.shuffle();
 
         const cards = this.mainDeck.cards.splice(0, 3);
@@ -137,7 +136,10 @@ export class Game {
             replyPrivate(ctx, `您的手牌为:\n${player.hand.cards.join('\n')}`, player.id);
         }
 
-        const name = getName(ctx, this.players[0].id)
+        this.curDeckInfo[2] = this.players[0].id;
+        this.curPlayerId = this.players[0].id;
+
+        const name = getName(ctx, this.players[0].id);
         seal.replyToSender(ctx, msg, `游戏开始，从地主${name}开始`);
         this.nextRound(ctx, msg);//开始第一回合
     }
