@@ -108,7 +108,7 @@ export class Game {
 
         //发牌等游戏开始前的逻辑
         this.mainDeck.shuffle();
-        const n = Math.floor(this.mainDeck.cards.length / this.players.length);
+        const n = 7;
         for (let i = 0; i < this.players.length; i++) {
             const player = this.players[i];
             const cards = this.mainDeck.draw(0, n);
@@ -117,7 +117,26 @@ export class Game {
             replyPrivate(ctx, `您的手牌为:\n${player.hand.cards.join('\n')}`, player.id);
         }
 
-        seal.replyToSender(ctx, msg, '游戏开始');
+        function drawStartCard(): Deck {
+            const startCard = this.mainDeck.draw(0, 1)[0];
+            this.discardDeck.add([startCard]);
+
+            const deck = deckMap[startCard].clone();
+
+            if (deck.type !== 'number') {
+                return drawStartCard();
+            }
+
+            return deck;
+        }
+        
+        const startDeck = drawStartCard();
+
+        this.curPlayerId = this.players[0].id;
+        this.curDeckInfo = [startDeck.data[0], startDeck.type, 0];
+
+        const name = getName(ctx, this.players[0].id);
+        seal.replyToSender(ctx, msg, `游戏开始，第一张牌为${startDeck.name}。从${name}开始`);
         this.nextRound(ctx, msg);//开始第一回合
     }
 

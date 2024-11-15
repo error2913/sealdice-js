@@ -122,7 +122,7 @@ export function load(): void {
             const card = color + normalCards[j];
             const deck = new Deck();
             deck.name = card;
-            deck.type = normalCards[j];
+            deck.type = 'number';
             deck.cards = [card];
             deck.data = [color];
             deck.solve = (_, __, ___, ____) => {
