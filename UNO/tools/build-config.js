@@ -1,4 +1,4 @@
-var filename = 'cardGame.js'
+var filename = 'UNO.js'
 
 module.exports = {
   dev: {

@@ -1,4 +1,5 @@
 import { Game } from "./game";
+import { getName, replyPrivate } from "./utils";
 
 export class Deck {
     public name: string;//名字
@@ -6,7 +7,7 @@ export class Deck {
     public type: string;//种类
     public cards: string[];//包含的卡牌
     public data: [string];//数据color
-    public solve: (ctx: seal.MsgContext, msg: seal.Message, cmdArgs: seal.CmdArgs, game: Game) => void;//方法
+    public solve: (ctx: seal.MsgContext, msg: seal.Message, cmdArgs: seal.CmdArgs, game: Game) => boolean;//方法
 
     constructor() {
         this.name = '';//名字
@@ -14,7 +15,9 @@ export class Deck {
         this.type = '';//种类
         this.cards = [];//包含的卡牌
         this.data = [''];//数据
-        this.solve = (_, __, ___, ____) => { }//方法
+        this.solve = (_, __, ___, ____): boolean => {
+            return true;
+        }
     }
 
     public static parse(data: any): Deck {
@@ -113,21 +116,16 @@ const deckMap: { [key: string]: Deck } = {};
 export function load(): void {
     const colors = ['红', '黄', '蓝', '绿'];
 
-    const normalCards = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-    
     for (let i = 0; i < colors.length; i++) {
         const color = colors[i];
     
-        for (let j = 0; j < normalCards.length; j++) {
-            const card = color + normalCards[j];
+        for (let j = 0; j < 10; j++) {
+            const card = color + j;
             const deck = new Deck();
             deck.name = card;
             deck.type = 'number';
             deck.cards = [card];
             deck.data = [color];
-            deck.solve = (_, __, ___, ____) => {
-                //TODO
-            }
             deckMap[card] = deck;
         }
     
@@ -137,8 +135,25 @@ export function load(): void {
         deckSkip.type = 'skip';
         deckSkip.cards = [cardSkip];
         deckSkip.data = [color];
-        deckSkip.solve = (_, __, ___, ____) => {
-            //TODO
+        deckSkip.solve = (ctx, msg, cmdArgs, game) => {
+            const name = cmdArgs.getArgN(2);
+            const deck = deckMap[name].clone();
+
+            const index = game.players.findIndex(player => player.id === game.curPlayerId);
+            const player = game.players[index];
+            const playerName = getName(ctx, game.curPlayerId);
+    
+            const anotherIndex = index < game.players.length - 1 ? (index + 1) : 0;
+            const anotherPlayer = game.players[anotherIndex];
+            game.curPlayerId = anotherPlayer.id;
+
+            const anotheranotherIndex = anotherIndex < game.players.length - 1 ? (anotherIndex + 1) : 0;
+            const anotheranotherPlayer = game.players[anotheranotherIndex];
+            const anotheranotherName = getName(ctx, anotheranotherPlayer.id);
+
+            seal.replyToSender(ctx, msg, `${playerName}打出了${deck.name}，还剩${player.hand.cards.length}张牌。下一位是${anotheranotherName}`);
+            this.nextTurn(ctx, msg);//进入下一轮
+            return false;
         }
         deckMap[cardSkip] = deckSkip;
     
@@ -148,8 +163,23 @@ export function load(): void {
         deckReverse.type = 'reverse';
         deckReverse.cards = [cardReverse];
         deckReverse.data = [color];
-        deckReverse.solve = (_, __, ___, ____) => {
-            //TODO
+        deckReverse.solve = (ctx, msg, cmdArgs, game) => {
+            const name = cmdArgs.getArgN(2);
+            const deck = deckMap[name].clone();
+
+            game.players.reverse();
+
+            const index = game.players.findIndex(player => player.id === game.curPlayerId);
+            const player = game.players[index];
+            const playerName = getName(ctx, game.curPlayerId);
+
+            const anotherIndex = index < game.players.length - 1 ? (index + 1) : 0;
+            const anotherPlayer = game.players[anotherIndex];
+            const anotherName = getName(ctx, anotherPlayer.id);
+            
+            seal.replyToSender(ctx, msg, `${playerName}打出了${deck.name}，还剩${player.hand.cards.length}张牌。下一位是${anotherName}`);
+            this.nextTurn(ctx, msg);//进入下一轮
+            return false;
         }
         deckMap[cardReverse] = deckReverse;
     
@@ -159,8 +189,35 @@ export function load(): void {
         deckTwo.type = 'two';
         deckTwo.cards = [cardTwo];
         deckTwo.data = [color];
-        deckTwo.solve = (_, __, ___, ____) => {
-            //TODO
+        deckTwo.solve = (ctx, msg, cmdArgs, game) => {
+            const name = cmdArgs.getArgN(2);
+            const deck = deckMap[name].clone();
+
+            const index = game.players.findIndex(player => player.id === game.curPlayerId);
+            const player = game.players[index];
+            const playerName = getName(ctx, game.curPlayerId);
+    
+            const anotherIndex = index < game.players.length - 1 ? (index + 1) : 0;
+            const anotherPlayer = game.players[anotherIndex];
+            game.curPlayerId = anotherPlayer.id;
+
+            if (game.mainDeck.cards.length < 2) {
+                const cards= game.discardDeck.cards;
+                game.discardDeck.cards = [];
+                game.mainDeck.add(cards);
+                game.mainDeck.shuffle();
+            }
+            const cards = game.mainDeck.draw(0, 2);
+            anotherPlayer.hand.add(cards);
+            replyPrivate(ctx, `您摸到了${cards.join(',')}\n您的手牌为:\n${anotherPlayer.hand.cards.join('\n')}`, anotherPlayer.id);
+
+            const anotheranotherIndex = anotherIndex < game.players.length - 1 ? (anotherIndex + 1) : 0;
+            const anotheranotherPlayer = game.players[anotheranotherIndex];
+            const anotheranotherName = getName(ctx, anotheranotherPlayer.id);
+
+            seal.replyToSender(ctx, msg, `${playerName}打出了${deck.name}，还剩${player.hand.cards.length}张牌。下一位是${anotheranotherName}`);
+            this.nextTurn(ctx, msg);//进入下一轮
+            return false;
         }
         deckMap[cardTwo] = deckTwo;
     }
@@ -170,8 +227,15 @@ export function load(): void {
     deckWild.type = 'wild';
     deckWild.cards = ['万能'];
     deckWild.data = ['wild'];
-    deckWild.solve = (_, __, ___, ____) => {
-        //TODO
+    deckWild.solve = (ctx, msg, cmdArgs, game) => {
+        const color = cmdArgs.getArgN(3);
+        if (!colors.includes(color)) {
+            seal.replyToSender(ctx, msg, `颜色${color}不存在或未指定`);
+            return false;
+        }
+
+        game.curDeckInfo = [color, '', 0];
+        return true;
     }
     deckMap['万能'] = deckWild;
     
@@ -180,8 +244,43 @@ export function load(): void {
     deckFour.type = 'four';
     deckFour.cards = ['加四'];
     deckFour.data = ['wild'];
-    deckFour.solve = (_, __, ___, ____) => {
-        //TODO
+    deckFour.solve = (ctx, msg, cmdArgs, game) => {
+        const color = cmdArgs.getArgN(3);
+        if (!colors.includes(color)) {
+            seal.replyToSender(ctx, msg, `颜色${color}不存在或未指定`);
+            return false;
+        }
+
+        game.curDeckInfo = [color, '', 0];
+
+        const name = cmdArgs.getArgN(2);
+        const deck = deckMap[name].clone();
+
+        const index = game.players.findIndex(player => player.id === game.curPlayerId);
+        const player = game.players[index];
+        const playerName = getName(ctx, game.curPlayerId);
+
+        const anotherIndex = index < game.players.length - 1 ? (index + 1) : 0;
+        const anotherPlayer = game.players[anotherIndex];
+        game.curPlayerId = anotherPlayer.id;
+
+        if (game.mainDeck.cards.length < 4) {
+            const cards= game.discardDeck.cards;
+            game.discardDeck.cards = [];
+            game.mainDeck.add(cards);
+            game.mainDeck.shuffle();
+        }
+        const cards = game.mainDeck.draw(0, 4);
+        anotherPlayer.hand.add(cards);
+        replyPrivate(ctx, `您摸到了${cards.join(',')}\n您的手牌为:\n${anotherPlayer.hand.cards.join('\n')}`, anotherPlayer.id);
+
+        const anotheranotherIndex = anotherIndex < game.players.length - 1 ? (anotherIndex + 1) : 0;
+        const anotheranotherPlayer = game.players[anotheranotherIndex];
+        const anotheranotherName = getName(ctx, anotheranotherPlayer.id);
+
+        seal.replyToSender(ctx, msg, `${playerName}打出了${deck.name}，还剩${player.hand.cards.length}张牌。下一位是${anotheranotherName}`);
+        this.nextTurn(ctx, msg);//进入下一轮
+        return false;
     }
     deckMap['加四'] = deckFour;
     

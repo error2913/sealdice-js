@@ -6,15 +6,15 @@ import { getName, replyPrivate } from "./utils";
 const cache:{[key: string]: Game} = {};
 
 export class Game {
-    private id: string;//id
-    private status: boolean;//游戏状态
-    private players: Player[];//玩家对象的数组
-    private round: number;//回合数
-    private turn: number;//一个回合内的轮次数
-    private curPlayerId: string;//当前需要做出动作的玩家
-    private curDeckInfo: [string, string, number];//当前场上的牌组的一些信息color,type,add
-    private mainDeck: Deck;//包含所有卡牌的牌组
-    private discardDeck: Deck;//丢弃的卡牌
+    id: string;//id
+    status: boolean;//游戏状态
+    players: Player[];//玩家对象的数组
+    round: number;//回合数
+    turn: number;//一个回合内的轮次数
+    curPlayerId: string;//当前需要做出动作的玩家
+    curDeckInfo: [string, string, number];//当前场上的牌组的一些信息color,type,add
+    mainDeck: Deck;//包含所有卡牌的牌组
+    discardDeck: Deck;//丢弃的卡牌
 
     constructor(id: string) {
         this.id = id//一般是群号
@@ -171,11 +171,45 @@ export class Game {
     }
 
     public play(ctx: seal.MsgContext, msg: seal.Message, cmdArgs: seal.CmdArgs):void {
-        const name = cmdArgs.getArgN(2);
+        let name = cmdArgs.getArgN(2);
         
         if (ctx.player.userId !== this.curPlayerId) {
             seal.replyToSender(ctx, msg, '不是当前玩家');
             return;
+        }
+
+        if (name.toUpperCase() === 'SKIP') {
+            const index = this.players.findIndex(player => player.id === this.curPlayerId);
+            const player = this.players[index];
+            const playerName = getName(ctx, this.curPlayerId);
+    
+            const anotherIndex = index < this.players.length - 1 ? (index + 1) : 0;
+            const anotherPlayer = this.players[anotherIndex];
+            const anotherName = getName(ctx, anotherPlayer.id);
+
+            if (this.mainDeck.cards.length < 1) {
+                const cards= this.discardDeck.cards;
+                this.discardDeck.cards = [];
+                this.mainDeck.add(cards);
+                this.mainDeck.shuffle();
+            }
+            const cards = this.mainDeck.draw(0, 1);
+            player.hand.add(cards);
+            replyPrivate(ctx, `您摸到了${cards.join(',')}\n您的手牌为:\n${player.hand.cards.join('\n')}`, player.id);
+
+            name = cards[0];
+            const deck = deckMap[name].clone();
+
+            if (
+                this.curDeckInfo[0] && this.curDeckInfo[1] &&
+                deck.data[0] !== 'wild' &&
+                deck.data[0] !== this.curDeckInfo[0] &&
+                deck.type !== this.curDeckInfo[1]
+            ) {
+                seal.replyToSender(ctx, msg, `${playerName}摸了一张牌，还剩${player.hand.cards.length}张牌。下一位是${anotherName}`);
+                this.nextTurn(ctx, msg);//进入下一轮
+                return;
+            }
         }
 
         if (!deckMap.hasOwnProperty(name)) {
@@ -198,10 +232,12 @@ export class Game {
         }
 
         if (
+            this.curDeckInfo[0] && this.curDeckInfo[1] &&
             deck.data[0] !== 'wild' &&
-            deck.data[0] !== this.curDeckInfo[0]
+            deck.data[0] !== this.curDeckInfo[0] &&
+            deck.type !== this.curDeckInfo[1]
         ) {
-            seal.replyToSender(ctx, msg, '颜色错误');
+            seal.replyToSender(ctx, msg, '没有匹配的颜色或符号，请重新出牌');
             return;
         }
 
@@ -209,7 +245,11 @@ export class Game {
         this.discardDeck.add(deck.cards);
         this.curDeckInfo = [deck.data[0], deck.type, 0];
 
-        deck.solve(ctx, msg, cmdArgs, this);
+        const result = deck.solve(ctx, msg, cmdArgs, this);
+        if (!result) {
+            return;
+        }
+
         seal.replyToSender(ctx, msg, `${playerName}打出了${deck.name}，还剩${player.hand.cards.length}张牌。下一位是${anotherName}`);
         this.nextTurn(ctx, msg);//进入下一轮
         return;
