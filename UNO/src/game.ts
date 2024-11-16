@@ -13,7 +13,7 @@ export class Game {
     turn: number;//一个回合内的轮次数
     info: {
         id: string,
-        type: 'number' | 'skip' | 'reverse' | 'two' | 'wild' | 'four' | '',
+        type: string,
         color: '红' | '黄' | '蓝' | '绿' | 'wild' | '',
         draw: boolean
     }
@@ -130,13 +130,11 @@ export class Game {
             const startCard = game.mainDeck.draw(0, 1)[0];
             game.discardDeck.add([startCard]);
 
-            const deck = deckMap[startCard].clone();
-
-            if (deck.info.type !== 'number') {
+            if (['禁止', '反转', '加二', '万能', '加四'].includes(deckMap[startCard].info.type)) {
                 return drawStartCard(game);
             }
 
-            return deck;
+            return deckMap[startCard].clone();
         }
         
         const startDeck = drawStartCard(this);
@@ -217,7 +215,7 @@ export class Game {
             const cards = this.mainDeck.draw(0, 1);
             player.hand.add(cards);
             replyPrivate(ctx, `您摸到了${cards.join(',')}\n您的手牌为:\n${player.hand.cards.join('\n')}`);
-            
+
             seal.replyToSender(ctx, msg, `${playerName}摸了一张牌，还剩${player.hand.cards.length}张牌。请决定是否出牌。`);
             this.info.draw = true;
             return;
@@ -248,20 +246,29 @@ export class Game {
             return;
         }
 
+        this.info.type = deck.info.type;
+        this.info.color = deck.info.color === 'wild'? this.info.color : deck.info.color;
+        this.info.draw = false;
+
         player.hand.remove(deck.cards);
         this.discardDeck.add(deck.cards);
-        this.info = {
-            id: this.info.id,
-            type: deck.info.type,
-            color: deck.info.color,
-            draw: false
+
+        let prefix = '';
+        if (player.hand.cards.length === 1) {
+            prefix = 'UNO!';
+        }
+
+        if (player.hand.cards.length === 0) {
+            seal.replyToSender(ctx, msg, `${playerName}胜利！`);
+            this.end(ctx, msg);
+            return;
         }
 
         const anotherIndex = index < this.players.length - 1 ? (index + 1) : 0;
         const anotherPlayer = this.players[anotherIndex];
         const anotherName = getName(ctx, anotherPlayer.id);
 
-        seal.replyToSender(ctx, msg, `${playerName}打出了${deck.name}，还剩${player.hand.cards.length}张牌。下一位是${anotherName}`);
+        seal.replyToSender(ctx, msg, prefix + `${playerName}打出了${deck.name}，还剩${player.hand.cards.length}张牌。下一位是${anotherName}`);
         replyPrivate(ctx, `您的手牌为:\n${player.hand.cards.join('\n')}`, player.id);
         this.nextTurn(ctx, msg);//进入下一轮
         return;
