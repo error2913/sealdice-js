@@ -6,15 +6,15 @@ import { getName, replyPrivate } from "./utils";
 const cache: { [key: string]: Game } = {};
 
 export class Game {
-    private id: string;//id
-    private status: boolean;//游戏状态
-    private players: Player[];//玩家对象的数组
-    private round: number;//回合数
-    private turn: number;//一个回合内的轮次数
-    private curPlayerId: string;//当前需要做出动作的玩家
-    private curDeckInfo: [string];//当前场上的牌组的一些信息比如type,value,id,可以改
-    private mainDeck: Deck;//包含所有卡牌的牌组
-    private discardDeck: Deck;//丢弃的卡牌
+    id: string;//id
+    status: boolean;//游戏状态
+    players: Player[];//玩家对象的数组
+    round: number;//回合数
+    turn: number;//一个回合内的轮次数
+    curPlayerId: string;//当前需要做出动作的玩家
+    curDeckInfo: [string];//当前场上的牌组的一些信息比如type,value,id,可以改
+    mainDeck: Deck;//包含所有卡牌的牌组
+    discardDeck: Deck;//丢弃的卡牌
 
     constructor(id: string) {
         this.id = id//一般是群号
@@ -186,7 +186,11 @@ export class Game {
         this.discardDeck.add(deck.cards);
         this.curDeckInfo = [deck.type];
 
-        deck.solve(ctx, msg, cmdArgs, this);
+        const result = deck.solve(ctx, msg, cmdArgs, this);
+        if (!result) {
+            return;
+        }
+        
         seal.replyToSender(ctx, msg, `${playerName}打出了${deck.name}，还剩${player.hand.cards.length}张牌。下一位是${anotherName}`);
         this.nextTurn(ctx, msg);//进入下一轮
         return;

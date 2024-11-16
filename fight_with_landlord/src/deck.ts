@@ -6,7 +6,7 @@ export class Deck {
     public type: string;//种类
     public cards: string[];//包含的卡牌
     public data: [];//数据
-    public solve: (ctx: seal.MsgContext, msg: seal.Message, cmdArgs: seal.CmdArgs, game: Game) => void;//方法
+    public solve: (ctx: seal.MsgContext, msg: seal.Message, cmdArgs: seal.CmdArgs, game: Game) => boolean;//方法
 
     constructor() {
         this.name = '';//名字
@@ -14,7 +14,9 @@ export class Deck {
         this.type = '';//种类
         this.cards = [];//包含的卡牌
         this.data = [];//数据
-        this.solve = (_, __, ___, ____) => { }//方法
+        this.solve = (_, __, ___, ____): boolean => {
+            return true;
+        }
     }
 
     public static parse(data: any): Deck {

@@ -6,14 +6,14 @@ import { getCards, getName, replyPrivate } from "./utils";
 const cache: { [key: string]: Game } = {};
 
 export class Game {
-    private id: string;//id
-    private status: boolean;//游戏状态
-    private players: Player[];//玩家对象的数组
-    private round: number;//回合数
-    private turn: number;//一个回合内的轮次数
-    private curPlayerId: string;//当前需要做出动作的玩家
-    private curDeckInfo: [string, number, string];//当前场上的牌组type,value,id
-    private mainDeck: Deck;//包含所有卡牌的牌组
+    id: string;//id
+    status: boolean;//游戏状态
+    players: Player[];//玩家对象的数组
+    round: number;//回合数
+    turn: number;//一个回合内的轮次数
+    curPlayerId: string;//当前需要做出动作的玩家
+    curDeckInfo: [string, number, string];//当前场上的牌组type,value,id
+    mainDeck: Deck;//包含所有卡牌的牌组
 
     constructor(id: string) {
         this.id = id//一般是群号
