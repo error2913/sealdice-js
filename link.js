@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LINK!!!
 // @author       错误
-// @version      1.0.1
+// @version      1.0.2
 // @description  连接群聊私聊，只适配了QQ。使用 .link 获取帮助。
 // @timestamp    1731573405
 // 2024-11-14 16:36:45
@@ -14,7 +14,7 @@
 // 首先检查是否已经存在
 let ext = seal.ext.find('link');
 if (!ext) {
-    ext = seal.ext.new('link', '错误', '1.0.1');
+    ext = seal.ext.new('link', '错误', '1.0.2');
     // 注册扩展
     seal.ext.register(ext);
 
@@ -305,8 +305,12 @@ if (!ext) {
         }
 
         if (linkData.hasOwnProperty(id)) {
-            const prefix = id === ctx.player.userId ? `` : `来自${id},`;
-            const s = prefix + `${msg.sender.nickname}(${ctx.player.userId})的消息:\n${msg.message}`;
+            if (msg.message.startsWith('<LinkMsg>')) {
+                return;
+            }
+
+            const prefix = id === ctx.player.userId ? `` : `来自${id.replace(/\D+/, '')},`;
+            const s = `<LinkMsg>` + prefix + `${msg.sender.nickname}(${ctx.player.userId.replace(/\D+/, '')})的消息:\n${msg.message}`;
 
             linkData[id].forEach(mainId => {
                 replyById(ctx, s, mainId);
