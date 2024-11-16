@@ -184,21 +184,29 @@ export class Game {
     }
 
     public play(ctx: seal.MsgContext, msg: seal.Message, cmdArgs: seal.CmdArgs):void {
-        let name = cmdArgs.getArgN(1);
+        const name = cmdArgs.getArgN(1);
         
         if (ctx.player.userId !== this.info.id) {
             seal.replyToSender(ctx, msg, '不是当前玩家');
             return;
         }
 
+        const index = this.players.findIndex(player => player.id === this.info.id);
+        const player = this.players[index];
+        const playerName = getName(ctx, this.info.id);
+
         if (name.toUpperCase() === 'SKIP') {
-            const index = this.players.findIndex(player => player.id === this.info.id);
-            const player = this.players[index];
-            const playerName = getName(ctx, this.info.id);
-    
-            const anotherIndex = index < this.players.length - 1 ? (index + 1) : 0;
-            const anotherPlayer = this.players[anotherIndex];
-            const anotherName = getName(ctx, anotherPlayer.id);
+            if (this.info.draw) {
+                const anotherIndex = index < this.players.length - 1 ? (index + 1) : 0;
+                const anotherPlayer = this.players[anotherIndex];
+                const anotherName = getName(ctx, anotherPlayer.id);
+
+                this.info.draw = false;
+
+                seal.replyToSender(ctx, msg, `${playerName}跳过了，下一位是${anotherName}`);
+                this.nextTurn(ctx, msg);//进入下一轮
+                return;
+            }
 
             if (this.mainDeck.cards.length < 1) {
                 const cards= this.discardDeck.cards;
@@ -208,32 +216,17 @@ export class Game {
             }
             const cards = this.mainDeck.draw(0, 1);
             player.hand.add(cards);
-            replyPrivate(ctx, `您摸到了${cards.join(',')}\n您的手牌为:\n${player.hand.cards.join('\n')}`, player.id);
-
-            name = cards[0];
-            const deck = deckMap[name].clone();
-///////////////////////注意
-            if (
-                deck.info.type !== this.info.type &&
-                this.info.color &&
-                deck.info.color !== 'wild' &&
-                deck.info.color !== this.info.color
-            ) {
-                seal.replyToSender(ctx, msg, `${playerName}摸了一张牌，还剩${player.hand.cards.length}张牌。下一位是${anotherName}`);
-                this.nextTurn(ctx, msg);//进入下一轮
-                return;
-            }
+            replyPrivate(ctx, `您摸到了${cards.join(',')}\n您的手牌为:\n${player.hand.cards.join('\n')}`);
+            
+            seal.replyToSender(ctx, msg, `${playerName}摸了一张牌，还剩${player.hand.cards.length}张牌。请决定是否出牌。`);
+            this.info.draw = true;
+            return;
         }
 
         if (!deckMap.hasOwnProperty(name)) {
             seal.replyToSender(ctx, msg, '未注册牌组');
             return;
         }
-
-        const index = this.players.findIndex(player => player.id === this.info.id);
-        const player = this.players[index];
-        const playerName = getName(ctx, this.info.id);
-
         const deck = deckMap[name].clone();
         if (!player.hand.check(deck.cards)) {
             seal.replyToSender(ctx, msg, '手牌不足');
