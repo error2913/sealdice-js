@@ -123,18 +123,12 @@ export function load(): void {
     const deckMain = new Deck();
     deckMain.name = '主牌堆';
     deckMain.cards = cards;
-    deckMain.info = {
-        type: 'public'
-    }
     deckMap['主牌堆'] = deckMain;
 
     //注册弃牌堆
     const deckDiscard = new Deck();
     deckDiscard.name = '弃牌堆';
     deckDiscard.cards = [];
-    deckDiscard.info = {
-        type: 'public'
-    }
     deckMap['弃牌堆'] = deckDiscard;
 }
 
