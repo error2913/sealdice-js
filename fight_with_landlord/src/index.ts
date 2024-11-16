@@ -13,7 +13,7 @@ function main() {
   const cmdPlay = seal.ext.newCmdItemInfo();
   cmdPlay.name = 'ddz'; // 指令名字，可用中文
   cmdPlay.help = `帮助：
-【.ddz start】
+【.ddz start】使用team里的成员创建游戏
 【.ddz end】
 【.ddz check】查看手牌
 【.ddz test 牌型名称】测试牌型是否存在
