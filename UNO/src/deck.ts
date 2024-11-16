@@ -152,7 +152,12 @@ export function load(): void {
             const anotheranotherPlayer = game.players[anotheranotherIndex];
             const anotheranotherName = getName(ctx, anotheranotherPlayer.id);
 
+            player.hand.remove(deck.cards);
+            game.discardDeck.add(deck.cards);
+            game.curInfo = [deck.data[0], deck.type, false];
+
             seal.replyToSender(ctx, msg, `${playerName}打出了${deck.name}，还剩${player.hand.cards.length}张牌。${anotherName}跳过了，下一位是${anotheranotherName}`);
+            replyPrivate(ctx, `您的手牌为:\n${player.hand.cards.join('\n')}`, player.id);
             game.nextTurn(ctx, msg);//进入下一轮
             return false;
         }
@@ -177,8 +182,13 @@ export function load(): void {
             const anotherIndex = index < game.players.length - 1 ? (index + 1) : 0;
             const anotherPlayer = game.players[anotherIndex];
             const anotherName = getName(ctx, anotherPlayer.id);
+
+            player.hand.remove(deck.cards);
+            game.discardDeck.add(deck.cards);
+            game.curInfo = [deck.data[0], deck.type, false];
             
             seal.replyToSender(ctx, msg, `${playerName}打出了${deck.name}，还剩${player.hand.cards.length}张牌。下一位是${anotherName}`);
+            replyPrivate(ctx, `您的手牌为:\n${player.hand.cards.join('\n')}`, player.id);
             game.nextTurn(ctx, msg);//进入下一轮
             return false;
         }
@@ -216,7 +226,12 @@ export function load(): void {
             const anotheranotherPlayer = game.players[anotheranotherIndex];
             const anotheranotherName = getName(ctx, anotheranotherPlayer.id);
 
+            player.hand.remove(deck.cards);
+            game.discardDeck.add(deck.cards);
+            game.curInfo = [deck.data[0], deck.type, false];
+
             seal.replyToSender(ctx, msg, `${playerName}打出了${deck.name}，还剩${player.hand.cards.length}张牌。下一位是${anotheranotherName}`);
+            replyPrivate(ctx, `您的手牌为:\n${player.hand.cards.join('\n')}`, player.id);
             game.nextTurn(ctx, msg);//进入下一轮
             return false;
         }
@@ -235,7 +250,7 @@ export function load(): void {
             return false;
         }
 
-        game.curDeckInfo = [color, '', 0];
+        game.curInfo = [color, '', false];
         return true;
     }
     deckMap['万能'] = deckWild;
@@ -252,7 +267,7 @@ export function load(): void {
             return false;
         }
 
-        game.curDeckInfo = [color, '', 0];
+        game.curInfo = [color, '', false];
 
         const name = cmdArgs.getArgN(1);
         const deck = deckMap[name].clone();
@@ -279,7 +294,12 @@ export function load(): void {
         const anotheranotherPlayer = game.players[anotheranotherIndex];
         const anotheranotherName = getName(ctx, anotheranotherPlayer.id);
 
+        player.hand.remove(deck.cards);
+        game.discardDeck.add(deck.cards);
+        game.curInfo = [deck.data[0], deck.type, false];
+
         seal.replyToSender(ctx, msg, `${playerName}打出了${deck.name}，还剩${player.hand.cards.length}张牌。下一位是${anotheranotherName}`);
+        replyPrivate(ctx, `您的手牌为:\n${player.hand.cards.join('\n')}`, player.id);
         game.nextTurn(ctx, msg);//进入下一轮
         return false;
     }

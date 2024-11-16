@@ -3,17 +3,19 @@ import { Game } from "./game";
 export class Deck {
     public name: string;//名字
     public desc: string;//描述
-    public type: string;//种类
     public cards: string[];//包含的卡牌
-    public data: [];//数据
+    public info: {
+        type: string
+    }
     public solve: (ctx: seal.MsgContext, msg: seal.Message, cmdArgs: seal.CmdArgs, game: Game) => boolean;//方法
 
     constructor() {
         this.name = '';//名字
         this.desc = '';//描述
-        this.type = '';//种类
         this.cards = [];//包含的卡牌
-        this.data = [];//数据
+        this.info = {
+            type: ''
+        };
         this.solve = (_, __, ___, ____): boolean => {
             return true;
         }
@@ -29,15 +31,18 @@ export class Deck {
         try {
             if (deckMap.hasOwnProperty(data.name)) {
                 const deck = deckMap[data.name].clone();
-                deck.data = data.data || [];
+                for (const key in deck.info) {
+                    deck.info[key] = data.info[key];
+                }
                 return deck;
             }
 
             deck.name = data.name;
             deck.desc = data.desc;
-            deck.type = data.type;
             deck.cards = data.cards;
-            deck.data = data.data;
+            for (const key in deck.info) {
+                deck.info[key] = data.info[key];
+            }
         } catch (err) {
             console.error(`解析牌组失败:`, err);
             deck.name = '未知牌堆';
@@ -99,9 +104,8 @@ export class Deck {
         const deck = new Deck();
         deck.name = this.name;
         deck.desc = this.desc;
-        deck.type = this.type;
         deck.cards = this.cards.slice();
-        deck.data = JSON.parse(JSON.stringify(this.data)); // 深拷贝data对象
+        deck.info = JSON.parse(JSON.stringify(this.info)); // 深拷贝data对象
         if (typeof this.solve === 'function') {
             deck.solve = this.solve.bind(deck); // 绑定新实例到方法
         }
@@ -118,15 +122,19 @@ export function load(): void {
     //注册主牌堆
     const deckMain = new Deck();
     deckMain.name = '主牌堆';
-    deckMain.type = 'public';
     deckMain.cards = cards;
+    deckMain.info = {
+        type: 'public'
+    }
     deckMap['主牌堆'] = deckMain;
 
     //注册弃牌堆
     const deckDiscard = new Deck();
     deckDiscard.name = '弃牌堆';
-    deckDiscard.type = 'public';
     deckDiscard.cards = [];
+    deckDiscard.info = {
+        type: 'public'
+    }
     deckMap['弃牌堆'] = deckDiscard;
 }
 

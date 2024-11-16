@@ -13,10 +13,11 @@ function main() {
   const cmdGame = seal.ext.newCmdItemInfo();
   cmdGame.name = 'uno'; // 指令名字，可用中文
   cmdGame.help = `帮助：
-  【.uno start】
-  【.uno end】
-  【.uno check】
-  【.uno <牌名>】`;
+【.uno start】
+【.uno end】
+【.uno check】
+【.uno skip】
+【.uno <牌名>】`;
   cmdGame.disabledInPrivate = true;// 不允许私聊
   cmdGame.solve = (ctx, msg, cmdArgs) => {
     if (Object.keys(deckMap).length === 0) {

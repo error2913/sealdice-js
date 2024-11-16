@@ -2,14 +2,18 @@ import { Deck } from "./deck";
 
 export class Player {
     public id: string;//userId
-    public data: [string];//玩家数据，身份
+    public info: {
+        class: string
+    }
     public hand: Deck;//手牌
     public show: Deck;//明牌
     public hide: Deck;//暗牌
 
     constructor(id: string) {
         this.id = id;
-        this.data = [''];
+        this.info = {
+            class: ''
+        }
 
         this.hand = new Deck();
         this.hand.name = '手牌';
@@ -32,7 +36,9 @@ export class Player {
 
         try {
             player = new Player(data.id);
-            player.data = data.data;
+            for (const key in player.info) {
+                player.info[key] = data.info[key];
+            }
             player.hand = Deck.parse(data.hand);
             player.show = Deck.parse(data.show);
             player.hide = Deck.parse(data.hide);
@@ -41,6 +47,6 @@ export class Player {
             player = new Player('QQ:114514');
         }
 
-        return player
+        return player;
     }
 }

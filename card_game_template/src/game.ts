@@ -11,8 +11,10 @@ export class Game {
     players: Player[];//玩家对象的数组
     round: number;//回合数
     turn: number;//一个回合内的轮次数
-    curPlayerId: string;//当前需要做出动作的玩家
-    curDeckInfo: [string];//当前场上的牌组的一些信息比如type,value,id,可以改
+    info: {
+        id: string,
+        type: string
+    };
     mainDeck: Deck;//包含所有卡牌的牌组
     discardDeck: Deck;//丢弃的卡牌
 
@@ -22,8 +24,10 @@ export class Game {
         this.players = [];//玩家对象的数组
         this.round = 0;//回合数
         this.turn = 0;//一个回合内的轮次数
-        this.curPlayerId = '';//当前需要做出动作的玩家
-        this.curDeckInfo = [''];//当前场上的牌组
+        this.info = {
+            id: '',
+            type: ''
+        }
         this.mainDeck = deckMap['主牌堆'].clone();//包含所有卡牌的牌组
         this.discardDeck = deckMap['弃牌堆'].clone();//丢弃的卡牌
     }
@@ -66,8 +70,9 @@ export class Game {
             game.players = data.players.map(player => Player.parse(player));
             game.round = data.round;
             game.turn = data.turn;
-            game.curPlayerId = data.curPlayerId;
-            game.curDeckInfo = data.curDeckInfo;
+            for (const key in game.info) {
+                game.info[key] = data.info[key];
+            }
             game.mainDeck = Deck.parse(data.mainDeck);
             game.discardDeck = Deck.parse(data.discardDeck);
         } catch (err) {
@@ -137,15 +142,15 @@ export class Game {
     //进入下一轮
     private nextTurn(ctx: seal.MsgContext, msg: seal.Message): void {
         if (this.turn == 0) {
-            this.curPlayerId = this.players[0].id;
+            this.info.id = this.players[0].id;
         } else {
-            const index = this.players.findIndex(player => player.id === this.curPlayerId);
+            const index = this.players.findIndex(player => player.id === this.info.id);
             if (index == this.players.length - 1) {
                 this.nextRound(ctx, msg);
                 return;
             }
 
-            this.curPlayerId = this.players[index + 1].id;
+            this.info.id = this.players[index + 1].id;
         }
 
         this.turn++;
@@ -154,7 +159,7 @@ export class Game {
     public play(ctx: seal.MsgContext, msg: seal.Message, cmdArgs: seal.CmdArgs): void {
         const name = cmdArgs.getArgN(2);
 
-        if (ctx.player.userId !== this.curPlayerId) {
+        if (ctx.player.userId !== this.info.id) {
             seal.replyToSender(ctx, msg, '不是当前玩家');
             return;
         }
@@ -164,9 +169,9 @@ export class Game {
             return;
         }
 
-        const index = this.players.findIndex(player => player.id === this.curPlayerId);
+        const index = this.players.findIndex(player => player.id === this.info.id);
         const player = this.players[index];
-        const playerName = getName(ctx, this.curPlayerId);
+        const playerName = getName(ctx, this.info.id);
 
         const anotherIndex = index < this.players.length - 1 ? (index + 1) : 0;
         const anotherPlayer = this.players[anotherIndex];
@@ -178,10 +183,6 @@ export class Game {
             return;
         }
 
-        if (this.curDeckInfo) {
-            //一些逻辑
-        }
-
         const result = deck.solve(ctx, msg, cmdArgs, this);
         if (!result) {
             return;
@@ -189,7 +190,7 @@ export class Game {
 
         player.hand.remove(deck.cards);
         this.discardDeck.add(deck.cards);
-        this.curDeckInfo = [deck.type];
+        this.info.type = deck.info.type;
         
         seal.replyToSender(ctx, msg, `${playerName}打出了${deck.name}，还剩${player.hand.cards.length}张牌。下一位是${anotherName}`);
         this.nextTurn(ctx, msg);//进入下一轮
