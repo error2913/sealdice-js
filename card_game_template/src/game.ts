@@ -182,14 +182,14 @@ export class Game {
             //一些逻辑
         }
 
-        player.hand.remove(deck.cards);
-        this.discardDeck.add(deck.cards);
-        this.curDeckInfo = [deck.type];
-
         const result = deck.solve(ctx, msg, cmdArgs, this);
         if (!result) {
             return;
         }
+
+        player.hand.remove(deck.cards);
+        this.discardDeck.add(deck.cards);
+        this.curDeckInfo = [deck.type];
         
         seal.replyToSender(ctx, msg, `${playerName}打出了${deck.name}，还剩${player.hand.cards.length}张牌。下一位是${anotherName}`);
         this.nextTurn(ctx, msg);//进入下一轮

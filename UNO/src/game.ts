@@ -117,20 +117,20 @@ export class Game {
             replyPrivate(ctx, `您的手牌为:\n${player.hand.cards.join('\n')}`, player.id);
         }
 
-        function drawStartCard(): Deck {
-            const startCard = this.mainDeck.draw(0, 1)[0];
-            this.discardDeck.add([startCard]);
+        function drawStartCard(game: Game): Deck {
+            const startCard = game.mainDeck.draw(0, 1)[0];
+            game.discardDeck.add([startCard]);
 
             const deck = deckMap[startCard].clone();
 
             if (deck.type !== 'number') {
-                return drawStartCard();
+                return drawStartCard(game);
             }
 
             return deck;
         }
         
-        const startDeck = drawStartCard();
+        const startDeck = drawStartCard(this);
 
         this.curPlayerId = this.players[0].id;
         this.curDeckInfo = [startDeck.data[0], startDeck.type, 0];
@@ -154,7 +154,7 @@ export class Game {
     }
 
     //进入下一轮
-    private nextTurn(ctx: seal.MsgContext, msg: seal.Message):void {
+    nextTurn(ctx: seal.MsgContext, msg: seal.Message):void {
         if (this.turn == 0) {
             this.curPlayerId = this.players[0].id;
         } else {
@@ -171,7 +171,7 @@ export class Game {
     }
 
     public play(ctx: seal.MsgContext, msg: seal.Message, cmdArgs: seal.CmdArgs):void {
-        let name = cmdArgs.getArgN(2);
+        let name = cmdArgs.getArgN(1);
         
         if (ctx.player.userId !== this.curPlayerId) {
             seal.replyToSender(ctx, msg, '不是当前玩家');
@@ -241,14 +241,14 @@ export class Game {
             return;
         }
 
-        player.hand.remove(deck.cards);
-        this.discardDeck.add(deck.cards);
-        this.curDeckInfo = [deck.data[0], deck.type, 0];
-
         const result = deck.solve(ctx, msg, cmdArgs, this);
         if (!result) {
             return;
         }
+
+        player.hand.remove(deck.cards);
+        this.discardDeck.add(deck.cards);
+        this.curDeckInfo = [deck.data[0], deck.type, 0];
 
         seal.replyToSender(ctx, msg, `${playerName}打出了${deck.name}，还剩${player.hand.cards.length}张牌。下一位是${anotherName}`);
         this.nextTurn(ctx, msg);//进入下一轮
