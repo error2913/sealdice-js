@@ -4,9 +4,9 @@ import { getName } from "./utils";
 
 function main() {
   // 注册扩展
-  let ext = seal.ext.find('cardGameTemplate');
+  let ext = seal.ext.find('UNO');
   if (!ext) {
-    ext = seal.ext.new('cardGameTemplate', '错误', '1.0.0');
+    ext = seal.ext.new('UNO', '错误', '1.0.0');
     seal.ext.register(ext);
   }
 
