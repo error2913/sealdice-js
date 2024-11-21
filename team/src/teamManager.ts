@@ -375,6 +375,10 @@ export class TeamManager {
             }
             */
 
+            if (['+', '-', '*', '/'].includes(valueText[0])) {
+                valueText = key + valueText;
+            }
+
             let value = parseInt(seal.format(mctx, `{${valueText}}`));
             value = isNaN(value) ? 0 : value;
 

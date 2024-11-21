@@ -5,7 +5,7 @@ function main() {
   // 注册扩展
   let ext = seal.ext.find('team');
   if (!ext) {
-    ext = seal.ext.new('team', '错误', '4.0.0');
+    ext = seal.ext.new('team', '错误', '4.0.1');
     seal.ext.register(ext);
   }
 
@@ -16,19 +16,19 @@ function main() {
   const cmdteam = seal.ext.newCmdItemInfo();
   cmdteam.name = 'team';
   cmdteam.help = `帮助：
-【.team bind 队伍名字】绑定/新建队伍
-【.team del 队伍名字】删除队伍
+【.team bind <队伍名字>】绑定/新建队伍
+【.team del <队伍名字>】删除队伍
 【.team del --all】删除所有队伍
 【.team del --now】删除当前队伍
-【.team lst】队伍列表
-【.team add @xx@xxx...】添加若干成员
-【.team rm @xx@xxx...】删除若干成员
+【.team list】查看队伍列表
+【.team add ...@玩家】添加若干成员
+【.team rm ...@玩家】删除若干成员
 【.team rm --all】删除所有成员
-【.team draw (抽取数量)】随机抽取队伍内成员
-【.team call】调查员集结！
-【.team show (属性名)】查看属性
-【.team st <属性名> <表达式>】修改属性
-【.team sort 属性名】对成员的该项属性排序`;
+【.team draw <抽取数量=1>】随机抽取队伍内成员
+【.team call】限时呼叫队内成员
+【.team show ...<属性名>】查看队内成员属性
+【.team st <属性名> <表达式>】修改队内成员属性
+【.team sort <属性名>】对队内成员属性进行排序`;
   cmdteam.allowDelegate = true;
   cmdteam.disabledInPrivate = true;
   cmdteam.solve = (ctx, msg, cmdArgs) => {
@@ -39,13 +39,12 @@ function main() {
     const id = ctx.group.groupId
 
     switch (val) {
-      case 'b':
       case 'bd':
       case 'bind': {
         const name = cmdArgs.getRestArgsFrom(2);
 
         if (!name) {
-          seal.replyToSender(ctx, msg, "参数错误，【.team bind 队伍名字】绑定/新建队伍")
+          seal.replyToSender(ctx, msg, "提示:【.team bind <队伍名字>】队伍名字缺失");
           return seal.ext.newCmdExecuteResult(true);
         }
 
@@ -61,7 +60,7 @@ function main() {
         const kwargs = cmdArgs.kwargs;
 
         if (!name && kwargs.length == 0) {
-          seal.replyToSender(ctx, msg, "参数错误，【.team del 队伍名字】删除队伍")
+          seal.replyToSender(ctx, msg, "提示:【.team del <队伍名字>】队伍名字缺失");
           return seal.ext.newCmdExecuteResult(true);
         }
 
@@ -71,7 +70,6 @@ function main() {
         seal.replyToSender(ctx, msg, reply);
         return seal.ext.newCmdExecuteResult(true);
       }
-      case 'l':
       case 'lst':
       case 'list': {
         const teamList = teamManager.getTeamList(id);
@@ -80,7 +78,6 @@ function main() {
         seal.replyToSender(ctx, msg, reply);
         return seal.ext.newCmdExecuteResult(true);
       }
-      case 'a':
       case 'add': {
         let atList = cmdArgs.at
         .filter(item => item.userId !== ctx.endPoint.userId)
@@ -92,7 +89,6 @@ function main() {
         seal.replyToSender(ctx, msg, reply);
         return seal.ext.newCmdExecuteResult(true);
       }
-      case 'r':
       case 'rm':
       case 'remove': {
         let atList = cmdArgs.at
@@ -126,7 +122,6 @@ function main() {
         seal.replyToSender(ctx, msg, reply);
         return seal.ext.newCmdExecuteResult(true);
       }
-      case 'c':
       case 'call': {
         const teamList = teamManager.getTeamList(id);
         if (teamList[0].members.length === 0) {
@@ -168,8 +163,7 @@ function main() {
         seal.replyToSender(ctx, msg, reply);
         return seal.ext.newCmdExecuteResult(true);
       }
-      case 'st':
-      case 'set': {
+      case 'st': {
         const teamList = teamManager.getTeamList(id);
         if (teamList[0].members.length === 0) {
           const reply = configManager.emptyText();
@@ -181,8 +175,8 @@ function main() {
         const key = cmdArgs.getArgN(2);
         const valueText = cmdArgs.getArgN(3);
 
-        if (!key || !valueText) {
-          seal.replyToSender(ctx, msg, "参数错误，【.team st <属性名> <表达式>】修改属性")
+        if (!valueText) {
+          seal.replyToSender(ctx, msg, "提示:【.team st <属性名> <表达式>】表达式缺失");
           return seal.ext.newCmdExecuteResult(true);
         }
 
@@ -204,7 +198,7 @@ function main() {
         const key = cmdArgs.getArgN(2);
 
         if (!key) {
-          seal.replyToSender(ctx, msg, "参数错误，【.team sort 属性名】对成员的该项属性排序")
+          seal.replyToSender(ctx, msg, "提示:【.team sort 属性名】属性名缺失");
           return seal.ext.newCmdExecuteResult(true);
         }
 
