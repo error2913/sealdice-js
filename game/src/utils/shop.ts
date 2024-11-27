@@ -1,4 +1,4 @@
-import { Backpack } from "./backpackManager";
+import { Backpack } from "./backpack";
 
 export class shop {
     name: string;

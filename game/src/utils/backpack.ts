@@ -1,5 +1,5 @@
 export interface Backpack {
-    [key: string]: [string, number]//[type, value]
+    [key: string]: [string, number]//[class, count]
 }
 
 export class BackpackManager {
