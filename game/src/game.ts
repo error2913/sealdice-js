@@ -37,7 +37,7 @@ export class GameManager {
      * @param v 类型和默认值
      * @returns 
      */
-    register(k: string, ext: seal.ExtInfo, v: any) {
+    register(ext: seal.ExtInfo, k: string, v: any) {
         if (this.map.hasOwnProperty(k)) {
             console.error(`注册游戏信息${k}时出现错误:该名字已被占用`);
             return;
@@ -51,12 +51,34 @@ export class GameManager {
         this.map[k] = {
             ext: ext,
             varsInfo: v,
-            player: new PlayerManager(ext),
+            player: new PlayerManager(ext, k),
             propMap: {}
         }
     }
 
-    parse(id: string, data: any, v: varsInfo): Game {
+    registerPlayer(gk: string, pk: string, v: varsInfo) {
+        if (!this.map.hasOwnProperty(gk)) {
+            console.error(`注册玩家信息${pk}时出现错误:${gk}未注册`);
+            return;
+        }
+
+        this.map[gk].player.register(pk, v);
+    }
+
+    newPropItem() {
+        return new Prop();
+    }
+
+    registerProp(k: string, prop: Prop) {
+        if (this.map.hasOwnProperty(k)) {
+            console.error(`注册道具${prop.name}时出现错误:${k}未注册`);
+            return;
+        }
+
+        this.map[k].propMap[prop.name] = prop;
+    }
+
+    parse(id: string, data: any, k: string, v: varsInfo): Game {
         if (!data.hasOwnProperty(id)) {
             console.log(`创建新游戏:${id}`);
         }
@@ -64,9 +86,9 @@ export class GameManager {
         const game = new Game(id);
 
         if (data.hasOwnProperty('varsMap')) {
-            game.varsMap = varsManager.parse(data.varsMap, v);
+            game.varsMap = varsManager.parse(k, '', data.varsMap, v);
         } else {
-            game.varsMap = varsManager.parse(null, v);
+            game.varsMap = varsManager.parse(k, '', null, v);
         }
 
         return game;
@@ -88,7 +110,7 @@ export class GameManager {
         }
 
         const v = this.map[k].varsInfo;
-        const game = this.parse(id, data, v);
+        const game = this.parse(id, data, k, v);
 
         return game;
     }

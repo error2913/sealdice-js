@@ -3,24 +3,28 @@ import { varsInfo, varsManager, varsMap } from "./vars";
 
 export class Player {
     id: string;
+    GameKey: string;
+    PlayerKey: string;
     backpack: Backpack;
     varsMap: varsMap;
 
-    constructor(id: string) {
+    constructor(id: string, gk: string, pk: string) {
         this.id = id;
-        this.backpack = new Backpack({});
+        this.backpack = new Backpack(gk, pk, {});
         this.varsMap = {};
     }
 }
 
 export class PlayerManager {
     ext: seal.ExtInfo;
+    gameKey: string;
     map: {
         [key: string]: varsInfo
     }
 
-    constructor(ext: seal.ExtInfo) {
+    constructor(ext: seal.ExtInfo, k: string) {
         this.ext = ext;
+        this.gameKey = k;
         this.map = {};
     }
 
@@ -55,21 +59,21 @@ export class PlayerManager {
         this.map[k] = v;
     }
 
-    parse(id: string, data: any, v: varsInfo): Player {
+    parse(id: string, data: any, k: string, v: varsInfo): Player {
         if (!data.hasOwnProperty(id)) {
             console.log(`创建新玩家:${id}`);
         }
 
-        const player = new Player(id);
+        const player = new Player(id, this.gameKey, k);
 
         if (data.hasOwnProperty('backpack')) {
-            player.backpack = new Backpack(data.backpack);
+            player.backpack = new Backpack(this.gameKey, k, data.backpack);
         }
 
         if (data.hasOwnProperty('varsMap')) {
-            player.varsMap = varsManager.parse(data.varsMap, v);
+            player.varsMap = varsManager.parse(data.varsMap, this.gameKey, k, v);
         } else {
-            player.varsMap = varsManager.parse(null, v);
+            player.varsMap = varsManager.parse(null, this.gameKey, k, v);
         }
 
         return player;
@@ -90,7 +94,7 @@ export class PlayerManager {
         }
 
         const v = this.map[k];
-        const player = this.parse(id, data, v);
+        const player = this.parse(id, data, k, v);
 
         return player;
     }

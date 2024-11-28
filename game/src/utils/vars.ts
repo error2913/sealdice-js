@@ -6,12 +6,12 @@ export interface varsMap {
 
 export interface varsInfo {
     [key: string]:
-        ['boolean', boolean] |
-        ['string', string] |
-        ['number', number] |
-        ['backpack', {
-            [key: string]: number
-        }]
+    ['boolean', boolean] |
+    ['string', string] |
+    ['number', number] |
+    ['backpack', {
+        [key: string]: number
+    }]
 }
 
 export class varsManager {
@@ -36,7 +36,7 @@ export class varsManager {
         return true;
     }
 
-    static parse(data: any, v: varsInfo): varsMap {
+    static parse(data: any, gk: string, pk: string, v: varsInfo): varsMap {
         const result: varsMap = {};
 
         if (data === null || typeof data !== 'object' || Array.isArray(data)) {
@@ -58,9 +58,9 @@ export class varsManager {
 
             if (v[key][0] == 'backpack') {
                 if (data.hasOwnProperty(key)) {
-                    result[key] = new Backpack(data[key], v[key][1]);
+                    result[key] = new Backpack(gk, pk, data[key], v[key][1]);
                 } else {
-                    result[key] = new Backpack(null, v[key][1]);
+                    result[key] = new Backpack(gk, pk, null, v[key][1]);
                 }
             }
         }

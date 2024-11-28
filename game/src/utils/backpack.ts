@@ -1,12 +1,17 @@
 
 export class Backpack {
+    gameKey: string;
+    playerKey: string;
     props: {
         [key: string]: number
     }
 
-    constructor(backpackData: any, defaultProps: {
+    constructor(gk: string, pk: string, backpackData: any, defaultProps: {
         [key: string]: number
     } = {}) {
+        this.gameKey = gk;
+        this.playerKey = pk;
+
         if (
             !backpackData.hasOwnProperty('backpack') ||
             backpackData.backpack === null ||
@@ -54,6 +59,25 @@ export class Backpack {
         return count;
     }
 
+    getTotalCountByTypes(types: string[]): number {
+        const propMap = globalThis.game.map[this.gameKey].propMap;
+        let count = 0;
+
+        for (let name of Object.keys(this.props)) {
+            if (!propMap.hasOwnProperty(name)) {
+                continue;
+            }
+
+            const type = propMap[name].type;
+
+            if (types.includes(type)) {
+                count += this.props[name];
+            }
+        }
+
+        return count;
+    }
+
     add(name: string, count: number) {
         if (!this.props.hasOwnProperty(name)) {
             this.props[name] = count;
@@ -85,7 +109,7 @@ export class Backpack {
     }
 
     draw(n: number): Backpack {
-        const result = new Backpack({});
+        const result = new Backpack(this.gameKey, this.playerKey, {});
         let totalCount = this.getTotalCount();
 
         if (totalCount < n) {
@@ -117,14 +141,18 @@ export class Backpack {
         return result;
     }
 
-    /*
     findByTypes(types: string[]): string[] {
+        const propMap = globalThis.game.map[this.gameKey].propMap;
         const result = [];
 
         for (let name of Object.keys(this.props)) {
-            const propInfo = this.props[name];
+            if (!propMap.hasOwnProperty(name)) {
+                continue;
+            }
 
-            if (types.includes(propInfo.type)) {
+            const type = propMap[name].type;
+
+            if (types.includes(type)) {
                 result.push(name);
             }
         }
@@ -136,9 +164,7 @@ export class Backpack {
         const result = [];
 
         for (let name of Object.keys(this.props)) {
-            const propInfo = this.props[name];
-
-            if (propInfo.count >= min && propInfo.count <= max) {
+            if (this.props[name] >= min && this.props[name] <= max) {
                 result.push(name);
             }
         }
@@ -146,40 +172,22 @@ export class Backpack {
         return result;
     }
 
-    getTotalCountByTypes(types: string[]): number {
-        let count = 0;
-
-        for (let name of Object.keys(this.props)) {
-            const propInfo = this.props[name];
-
-            if (types.includes(propInfo.type)) {
-                count += propInfo.count;
-            }
-        }
-
-        return count;
-    }
-
     getTypes(): string[] {
+        const propMap = globalThis.game.map[this.gameKey].propMap;
         const result = [];
 
         for (let name of Object.keys(this.props)) {
-            const propInfo = this.props[name];
+            if (!propMap.hasOwnProperty(name)) {
+                continue;
+            }
 
-            if (!result.includes(propInfo.type)) {
-                result.push(propInfo.type);
+            const type = propMap[name].type;
+
+            if (!result.includes(type)) {
+                result.push(type);
             }
         }
 
         return result;
     }
-
-    changeType(name: string, type: string) {
-        if (!this.props.hasOwnProperty(name)) {
-            return;
-        }
-
-        this.props[name].type = type;
-    }
-        */
 }
