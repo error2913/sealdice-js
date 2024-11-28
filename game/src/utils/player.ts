@@ -1,12 +1,10 @@
 import { Backpack } from "./backpack";
-import { varsInfo, varsManager } from "./vars";
+import { varsInfo, varsManager, varsMap } from "./vars";
 
 export class Player {
     id: string;
     backpack: Backpack;
-    varsMap: {
-        [key: string]: boolean | string | number | Backpack
-    }
+    varsMap: varsMap;
 
     constructor(id: string) {
         this.id = id;
@@ -36,8 +34,8 @@ export class PlayerManager {
      *              "nickname":['string','错误'],
      *              "coin":['number',114514],
      *              "bag":['backpack',{
-     *                  "炸弹":['道具',999],
-     *                  "钻石":['宝石',666]
+     *                  "炸弹":999,
+     *                  "钻石":666
      *              }]
      * }
      * ```
@@ -57,9 +55,9 @@ export class PlayerManager {
         this.map[k] = v;
     }
 
-    parse(k: string, id: string, data: any): Player {
+    parse(id: string, data: any, v: varsInfo): Player {
         if (!data.hasOwnProperty(id)) {
-            console.log(`创建新玩家:${k}_${id}`);
+            console.log(`创建新玩家:${id}`);
         }
 
         const player = new Player(id);
@@ -68,7 +66,6 @@ export class PlayerManager {
             player.backpack = new Backpack(data.backpack);
         }
 
-        const v = this.map[k];
         if (data.hasOwnProperty('varsMap')) {
             player.varsMap = varsManager.parse(data.varsMap, v);
         } else {
@@ -87,17 +84,18 @@ export class PlayerManager {
         let data = {};
 
         try {
-            data = JSON.parse(this.ext.storageGet(`${k}_${id}`) || '{}');
+            data = JSON.parse(this.ext.storageGet(`player_${k}_${id}`) || '{}');
         } catch (error) {
-            console.error(`从数据库中获取${`${k}_${id}`}失败:`, error);
+            console.error(`从数据库中获取${`player_${k}_${id}`}失败:`, error);
         }
 
-        const player = this.parse(k, id, data);
+        const v = this.map[k];
+        const player = this.parse(id, data, v);
 
         return player;
     }
 
     save(k: string, id: string, player: Player) {
-        this.ext.storageSet(`${k}_${id}`, JSON.stringify(player));
+        this.ext.storageSet(`player_${k}_${id}`, JSON.stringify(player));
     }
 }

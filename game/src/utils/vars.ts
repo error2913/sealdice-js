@@ -1,5 +1,4 @@
 import { Backpack } from "./backpack"
-import { PropInfo } from "./prop"
 
 export interface varsMap {
     [key: string]: boolean | string | number | Backpack
@@ -11,7 +10,7 @@ export interface varsInfo {
         ['string', string] |
         ['number', number] |
         ['backpack', {
-            [key: string]: PropInfo
+            [key: string]: number
         }]
 }
 

@@ -1,12 +1,11 @@
-import { Prop, PropInfo } from "./prop";
 
 export class Backpack {
-    backpack: {
-        [key: string]: PropInfo
+    props: {
+        [key: string]: number
     }
 
-    constructor(backpackData: any, defaultData: {
-        [key: string]: PropInfo
+    constructor(backpackData: any, defaultProps: {
+        [key: string]: number
     } = {}) {
         if (
             !backpackData.hasOwnProperty('backpack') ||
@@ -14,21 +13,18 @@ export class Backpack {
             typeof backpackData.backpack !== 'object' ||
             Array.isArray(backpackData.backpack)
         ) {
-            this.backpack = defaultData;
+            this.props = defaultProps;
             return;
         }
 
-        const backpack = backpackData.backpack;
-        this.backpack = {};
+        const props = backpackData.props;
+        this.props = {};
 
-        for (let name of Object.keys(backpack)) {
-            const propInfo = Prop.parseInfo(backpack[name]);
-
-            if (!propInfo) {
-                continue;
+        for (let name of Object.keys(props)) {
+            const count = props[name];
+            if (typeof count == 'number') {
+                this.props[name] = count;
             }
-
-            this.backpack[name] = propInfo;
         }
     }
 
@@ -38,122 +34,53 @@ export class Backpack {
         }
 
         for (let name of Object.keys(data)) {
-            const propInfo = Prop.parseInfo(data[name]);
-
-            if (!propInfo) {
-                return false;
+            const count = data[name];
+            if (typeof count == 'number') {
+                continue;
             }
+            return false;
         }
 
         return true;
     }
 
-    findByTypes(types: string[]): string[] {
-        const result = [];
-
-        for (let name of Object.keys(this.backpack)) {
-            const propInfo = this.backpack[name];
-
-            if (types.includes(propInfo.type)) {
-                result.push(name);
-            }
-        }
-
-        return result;
-    }
-
-    findByCountRange(min: number, max: number): string[] {
-        const result = [];
-
-        for (let name of Object.keys(this.backpack)) {
-            const propInfo = this.backpack[name];
-
-            if (propInfo.count >= min && propInfo.count <= max) {
-                result.push(name);
-            }
-        }
-
-        return result;
-    }
-
     getTotalCount(): number {
         let count = 0;
 
-        for (let name of Object.keys(this.backpack)) {
-            count += this.backpack[name].count;
+        for (let name of Object.keys(this.props)) {
+            count += this.props[name];
         }
 
         return count;
     }
 
-    getTotalCountByTypes(types: string[]): number {
-        let count = 0;
-
-        for (let name of Object.keys(this.backpack)) {
-            const propInfo = this.backpack[name];
-
-            if (types.includes(propInfo.type)) {
-                count += propInfo.count;
-            }
-        }
-
-        return count;
-    }
-
-    getTypes(): string[] {
-        const result = [];
-
-        for (let name of Object.keys(this.backpack)) {
-            const propInfo = this.backpack[name];
-
-            if (!result.includes(propInfo.type)) {
-                result.push(propInfo.type);
-            }
-        }
-
-        return result;
-    }
-
-    add(name: string, count: number, type: string = 'unknown') {
-        if (!this.backpack.hasOwnProperty(name)) {
-            this.backpack[name] = {
-                type: type,
-                count: count
-            };
+    add(name: string, count: number) {
+        if (!this.props.hasOwnProperty(name)) {
+            this.props[name] = count;
         } else {
-            this.backpack[name].count += count;
+            this.props[name] += count;
         }
     }
 
     remove(name: string, count: number) {
-        if (!this.backpack.hasOwnProperty(name)) {
+        if (!this.props.hasOwnProperty(name)) {
             return;
         }
 
-        this.backpack[name].count -= count;
+        this.props[name] -= count;
 
-        if (this.backpack[name].count <= 0) {
-            delete this.backpack[name];
+        if (this.props[name] <= 0) {
+            delete this.props[name];
         }
-    }
-
-    changeType(name: string, type: string) {
-        if (!this.backpack.hasOwnProperty(name)) {
-            return;
-        }
-
-        this.backpack[name].type = type;
     }
 
     clear() {
-        this.backpack = {};
+        this.props = {};
     }
 
     merge(backpack: Backpack) {
-        for (let name of Object.keys(backpack.backpack)) {
-            const count = backpack.backpack[name].count;
-            const type = backpack.backpack[name].type;
-            this.add(name, count, type);
+        for (let name of Object.keys(backpack.props)) {
+            this.add(name, backpack.props[name]);
         }
     }
 
@@ -167,15 +94,14 @@ export class Backpack {
 
         for (let i = 0; i < n; i++) {
             const index = Math.ceil(Math.random() * totalCount);
-            const names = Object.keys(this.backpack);
+            const names = Object.keys(this.props);
 
             let tempCount = 0;
             for (let name of names) {
-                tempCount += this.backpack[name].count;
+                tempCount += this.props[name];
 
                 if (tempCount >= index) {
-                    const type = this.backpack[name].type;
-                    result.add(name, 1, type);
+                    result.add(name, 1);
                     this.remove(name, 1);
                     break;
                 }
@@ -190,4 +116,70 @@ export class Backpack {
 
         return result;
     }
+
+    /*
+    findByTypes(types: string[]): string[] {
+        const result = [];
+
+        for (let name of Object.keys(this.props)) {
+            const propInfo = this.props[name];
+
+            if (types.includes(propInfo.type)) {
+                result.push(name);
+            }
+        }
+
+        return result;
+    }
+
+    findByCountRange(min: number, max: number): string[] {
+        const result = [];
+
+        for (let name of Object.keys(this.props)) {
+            const propInfo = this.props[name];
+
+            if (propInfo.count >= min && propInfo.count <= max) {
+                result.push(name);
+            }
+        }
+
+        return result;
+    }
+
+    getTotalCountByTypes(types: string[]): number {
+        let count = 0;
+
+        for (let name of Object.keys(this.props)) {
+            const propInfo = this.props[name];
+
+            if (types.includes(propInfo.type)) {
+                count += propInfo.count;
+            }
+        }
+
+        return count;
+    }
+
+    getTypes(): string[] {
+        const result = [];
+
+        for (let name of Object.keys(this.props)) {
+            const propInfo = this.props[name];
+
+            if (!result.includes(propInfo.type)) {
+                result.push(propInfo.type);
+            }
+        }
+
+        return result;
+    }
+
+    changeType(name: string, type: string) {
+        if (!this.props.hasOwnProperty(name)) {
+            return;
+        }
+
+        this.props[name].type = type;
+    }
+        */
 }
