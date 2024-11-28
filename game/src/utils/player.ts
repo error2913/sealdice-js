@@ -1,15 +1,27 @@
 import { Backpack } from "./backpack";
+import { PropInfo } from "./prop";
 
-export interface Player {
-    id: string,
-    [key: string]: boolean | string | number | Backpack
+export class Player {
+    id: string;
+    backpack: Backpack;
+    attr: {
+        [key: string]: boolean | string | number | Backpack
+    }
+
+    constructor(id: string) {
+        this.id = id;
+        this.backpack = new Backpack({});
+        this.attr = {};
+    }
 }
 
 export class PlayerManager {
     ext: seal.ExtInfo;
     map: {
         [key: string]: {
-            [key: string]: ['boolean', boolean] | ['string', string] | ['number', number] | ['backpack', Backpack]
+            [key: string]: ['boolean', boolean] | ['string', string] | ['number', number] | ['backpack', {
+                [key: string]: PropInfo
+            }]
         }
     }
 
@@ -35,40 +47,25 @@ export class PlayerManager {
      * ```
      * @returns 
      */
-    register(k: string, v: {
-        [key: string]: ['boolean', boolean] | ['string', string] | ['number', number] | ['backpack', Backpack]
-    }) {
+    register(k: string, v: any) {
         if (this.map.hasOwnProperty(k)) {
             console.error(`注册玩家信息${k}时出现错误:该名字已被占用`);
             return;
         }
 
-        for (let key in v) {
+        if (v === null || typeof v !== 'object' || Array.isArray(v)) {
+            console.error(`注册玩家信息${k}时出现错误:${v}不是合法的类型`);
+            return;
+        }
+
+        for (let key of Object.keys(v)) {
             if (
                 (v[key][0] == 'boolean' && typeof v[key][1] == 'boolean') ||
-                (v[key][0] =='string' && typeof v[key][1] =='string') ||
-                (v[key][0] =='number' && typeof v[key][1] =='number')
+                (v[key][0] == 'string' && typeof v[key][1] == 'string') ||
+                (v[key][0] == 'number' && typeof v[key][1] == 'number') ||
+                v[key][0] == 'backpack' && Backpack.checkType(v[key][1])
             ) {
                 continue;
-            }
-
-            if (v[key][0] == 'backpack' || typeof v[key][1] == 'object') {
-                let flag = true;
-
-                for (let i in v[key][1]) {
-                    const prop = v[key][1][i];
-
-                    if (typeof prop[0] =='string' && typeof prop[1] == 'number') {
-                        continue;
-                    }
-                    
-                    flag = false;
-                    break;
-                }
-
-                if (flag) {
-                    continue;
-                }
             }
 
             console.error(`注册玩家信息${k}时出现错误:${v[key]}不是合法的类型，或者值的类型出错`);
@@ -80,40 +77,34 @@ export class PlayerManager {
 
     parse(k: string, id: string, data: any): Player {
         if (!data.hasOwnProperty(id)) {
-            console.log(`创建新玩家:${k}`);
+            console.log(`创建新玩家:${k}_${id}`);
         }
 
         const v = this.map[k];
-        const player = {
-            id: id
+        const player = new Player(id);
+
+        if (data.hasOwnProperty('backpack')) {
+            player.backpack = new Backpack(data.backpack);
         }
 
-        for (let key in v) {
+        for (let key of Object.keys(v)) {
             if (
                 v[key][0] == 'boolean' ||
-                v[key][0] =='string' ||
-                v[key][0] =='number'
+                v[key][0] == 'string' ||
+                v[key][0] == 'number'
             ) {
                 if (data.hasOwnProperty(key) && typeof data[key] == v[key][0]) {
-                    player[key] = data[key];
+                    player.attr[key] = data[key];
                 } else {
-                    player[key] = v[key][1];
+                    player.attr[key] = v[key][1];
                 }
             }
 
             if (v[key][0] == 'backpack') {
-                if (data.hasOwnProperty(key) && typeof data[key] == 'object') {
-                    player[key] = {};
-
-                    for (let i in data[key]) {
-                        const prop = data[key][i];
-    
-                        if (typeof prop[0] =='string' && typeof prop[1] == 'number') {
-                            player[key][i] = prop;
-                        }
-                    }
+                if (data.hasOwnProperty(key)) {
+                    player.attr[key] = new Backpack(data[key], v[key][1]);
                 } else {
-                    player[key] = v[key][1];
+                    player.attr[key] = new Backpack(null, v[key][1]);
                 }
             }
         }
@@ -127,14 +118,12 @@ export class PlayerManager {
             return undefined;
         }
 
-        const s = `${k}_${id}`;
-
         let data = {};
 
         try {
-            data = JSON.parse(this.ext.storageGet(s) || '{}');
+            data = JSON.parse(this.ext.storageGet(`${k}_${id}`) || '{}');
         } catch (error) {
-            console.error(`从数据库中获取${s}失败:`, error);
+            console.error(`从数据库中获取${`${k}_${id}`}失败:`, error);
         }
 
         const player = this.parse(k, id, data);
@@ -143,7 +132,6 @@ export class PlayerManager {
     }
 
     save(k: string, id: string, player: Player) {
-        const s = `${k}_${id}`;
-        this.ext.storageSet(s, JSON.stringify(player));
+        this.ext.storageSet(`${k}_${id}`, JSON.stringify(player));
     }
 }
