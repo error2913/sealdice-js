@@ -2,14 +2,14 @@ import { Backpack } from "./backpack";
 import { varsInfo, varsManager, varsMap } from "./vars";
 
 export class Player {
-    id: string;
+    uid: string;
     GameKey: string;
     PlayerKey: string;
     backpack: Backpack;
     varsMap: varsMap;
 
-    constructor(id: string, gk: string, pk: string) {
-        this.id = id;
+    constructor(uid: string, gk: string, pk: string) {
+        this.uid = uid;
         this.backpack = new Backpack(gk, pk, {});
         this.varsMap = {};
     }
@@ -19,7 +19,12 @@ export class PlayerManager {
     ext: seal.ExtInfo;
     gameKey: string;
     map: {
-        [key: string]: varsInfo
+        [key: string]: {
+            varsInfo:varsInfo,
+            cache: {
+                [key: string]: Player
+            }
+        }
     }
 
     constructor(ext: seal.ExtInfo, k: string) {
@@ -56,15 +61,18 @@ export class PlayerManager {
             return;
         }
 
-        this.map[k] = v;
+        this.map[k] = {
+            varsInfo: v,
+            cache: {}
+        }
     }
 
-    parse(id: string, data: any, k: string, v: varsInfo): Player {
-        if (!data.hasOwnProperty(id)) {
-            console.log(`创建新玩家:${id}`);
+    parse(uid: string, data: any, k: string, v: varsInfo): Player {
+        if (!data.hasOwnProperty(uid)) {
+            console.log(`创建新玩家:${uid}`);
         }
 
-        const player = new Player(id, this.gameKey, k);
+        const player = new Player(uid, this.gameKey, k);
 
         if (data.hasOwnProperty('backpack')) {
             player.backpack = new Backpack(this.gameKey, k, data.backpack);
@@ -79,27 +87,38 @@ export class PlayerManager {
         return player;
     }
 
-    getPlayer(k: string, id: string): Player | undefined {
+    getPlayer(k: string, uid: string): Player | undefined {
         if (!this.map.hasOwnProperty(k)) {
             console.error(`获取玩家信息${k}时出现错误:该名字未注册`);
             return undefined;
         }
 
-        let data = {};
+        if (!this.map[k].cache.hasOwnProperty(uid)) {
+            let data = {};
 
-        try {
-            data = JSON.parse(this.ext.storageGet(`player_${k}_${id}`) || '{}');
-        } catch (error) {
-            console.error(`从数据库中获取${`player_${k}_${id}`}失败:`, error);
+            try {
+                data = JSON.parse(this.ext.storageGet(`player_${k}_${uid}`) || '{}');
+            } catch (error) {
+                console.error(`从数据库中获取${`player_${k}_${uid}`}失败:`, error);
+            }
+    
+            const v = this.map[k].varsInfo;
+            this.map[k].cache[uid] = this.parse(uid, data, k, v);
         }
 
-        const v = this.map[k];
-        const player = this.parse(id, data, k, v);
-
-        return player;
+        return this.map[k].cache[uid];
     }
 
-    save(k: string, id: string, player: Player) {
-        this.ext.storageSet(`player_${k}_${id}`, JSON.stringify(player));
+    save(k: string, uid: string) {
+        if (!this.map.hasOwnProperty(k)) {
+            console.error(`保存玩家信息${k}时出现错误:该名字未注册`);
+            return;
+        }
+
+        if (!this.map[k].cache.hasOwnProperty(uid)) {
+            this.getPlayer(k, uid);
+        }
+
+        this.ext.storageSet(`player_${k}_${uid}`, JSON.stringify(this.map[k].cache[uid]));
     }
 }

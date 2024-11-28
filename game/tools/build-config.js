@@ -1,4 +1,4 @@
-var filename = 'sealdice-js-ext.js'
+var filename = 'game依赖.js'
 
 module.exports = {
   dev: {

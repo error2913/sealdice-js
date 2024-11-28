@@ -4,11 +4,13 @@ import { Prop } from "./utils/prop";
 import { varsInfo, varsManager, varsMap } from "./utils/vars";
 
 export class Game {
-    id: string;
+    gid: string;
+    GameKey: string;
     varsMap: varsMap;
 
-    constructor(id: string) {
-        this.id = id;
+    constructor(gid: string, gk: string) {
+        this.gid = gid;
+        this.GameKey = gk;
         this.varsMap = {};
     }
 }
@@ -22,6 +24,9 @@ export class GameManager {
             player: PlayerManager,
             propMap: {
                 [key: string]: Prop
+            }
+            cache: {
+                [key: string]: Game
             }
         }
     }
@@ -52,7 +57,8 @@ export class GameManager {
             ext: ext,
             varsInfo: v,
             player: new PlayerManager(ext, k),
-            propMap: {}
+            propMap: {},
+            cache: {}
         }
     }
 
@@ -78,12 +84,12 @@ export class GameManager {
         this.map[k].propMap[prop.name] = prop;
     }
 
-    parse(id: string, data: any, k: string, v: varsInfo): Game {
-        if (!data.hasOwnProperty(id)) {
-            console.log(`创建新游戏:${id}`);
+    parse(gid: string, data: any, k: string, v: varsInfo): Game {
+        if (!data.hasOwnProperty(gid)) {
+            console.log(`创建新游戏:${gid}`);
         }
 
-        const game = new Game(id);
+        const game = new Game(gid, k);
 
         if (data.hasOwnProperty('varsMap')) {
             game.varsMap = varsManager.parse(k, '', data.varsMap, v);
@@ -94,29 +100,40 @@ export class GameManager {
         return game;
     }
 
-    getGame(k: string, id: string): Game | undefined {
+    getGame(k: string, gid: string): Game | undefined {
         if (!this.map.hasOwnProperty(k)) {
             console.error(`获取游戏信息${k}时出现错误:该名字未注册`);
             return undefined;
         }
 
-        let data = {};
+        if (!this.map.cache.hasOwnProperty(gid)) {
+            let data = {};
 
-        try {
-            const ext = this.map[k].ext;
-            data = JSON.parse(ext.storageGet(`game_${k}_${id}`) || '{}');
-        } catch (error) {
-            console.error(`从数据库中获取${`game_${k}_${id}`}失败:`, error);
+            try {
+                const ext = this.map[k].ext;
+                data = JSON.parse(ext.storageGet(`game_${k}_${gid}`) || '{}');
+            } catch (error) {
+                console.error(`从数据库中获取${`game_${k}_${gid}`}失败:`, error);
+            }
+    
+            const v = this.map[k].varsInfo;
+            this.map[k].cache[gid] = this.parse(gid, data, k, v);
         }
 
-        const v = this.map[k].varsInfo;
-        const game = this.parse(id, data, k, v);
-
-        return game;
+        return this.map[k].cache[gid];
     }
 
-    save(k: string, id: string, game: Game) {
+    save(k: string, gid: string) {
+        if (!this.map.hasOwnProperty(k)) {
+            console.error(`保存游戏信息${k}时出现错误:该名字未注册`);
+            return;
+        }
+
+        if (!this.map.cache.hasOwnProperty(gid)) {
+            this.getGame(k, gid);
+        }
+
         const ext = this.map[k].ext;
-        ext.storageSet(`game_${k}_${id}`, JSON.stringify(game));
+        ext.storageSet(`game_${k}_${gid}`, JSON.stringify(this.map[k].cache[gid]));
     }
 }
