@@ -12,7 +12,7 @@ export class varsManager {
     map: {
         [key: string]: {
             check: (data: any) => boolean,
-            parse: (data: any, defaultData: any, gk: string, pk: string) => any
+            parse: (data: any, defaultData: any, gk: string) => any
         }
     }
 
@@ -21,7 +21,7 @@ export class varsManager {
 
         this.registerVarsType('boolean', (data: any) => {
             return typeof data === 'boolean';
-        }, (data: any, defaultData: any, _: string, __: string) => {
+        }, (data: any, defaultData: any, _: string) => {
             if (typeof data === 'boolean') {
                 return data;
             }
@@ -31,7 +31,7 @@ export class varsManager {
 
         this.registerVarsType('string', (data: any) => {
             return typeof data === 'string';
-        }, (data: any, defaultData: any, _: string, __: string) => {
+        }, (data: any, defaultData: any, _: string) => {
             if (typeof data === 'string') {
                 return data;
             }
@@ -41,7 +41,7 @@ export class varsManager {
 
         this.registerVarsType('number', (data: any) => {
             return typeof data === 'number';
-        }, (data: any, defaultData: any, _: string, __: string) => {
+        }, (data: any, defaultData: any, _: string) => {
             if (typeof data === 'number') {
                 return data;
             }
@@ -50,16 +50,16 @@ export class varsManager {
         });
 
         this.registerVarsType('backpack', (data: any) => {
-            return Backpack.checkTypeProps(data);
-        }, (data: any, defaultData: any, gk: string, pk: string) => {
-            return new Backpack(gk, pk, data, defaultData);
+            return Backpack.checkTypeItems(data);
+        }, (data: any, defaultData: any, gk: string) => {
+            return Backpack.parse(data, defaultData, gk);
         });
     }
 
     registerVarsType(
         type: string,
         checkFunc: (data: any) => boolean,
-        parseFunc: (data: any, defaultData: any, gk: string, pk: string) => any
+        parseFunc: (data: any, defaultData: any, gk: string) => any
     ) {
         if (this.map.hasOwnProperty(type)) {
             console.error(`注册变量解析器${type}时出现错误:该名字已注册`);
@@ -91,7 +91,7 @@ export class varsManager {
         return true;
     }
 
-    parse(data: any, gk: string, pk: string, v: varsInfo): varsMap {
+    parse(data: any, gk: string, v: varsInfo): varsMap {
         const result: varsMap = {};
 
         if (data === null || typeof data !== 'object' || Array.isArray(data)) {
@@ -104,10 +104,12 @@ export class varsManager {
 
             if (this.map.hasOwnProperty(type)) {
                 if (data.hasOwnProperty(key)) {
-                    result[key] = this.map[type].parse(data[key], defaultData, gk, pk);
+                    result[key] = this.map[type].parse(data[key], defaultData, gk);
                 } else {
-                    result[key] = this.map[type].parse(null, defaultData, gk, pk);
+                    result[key] = this.map[type].parse(null, defaultData, gk);
                 }
+            } else {
+                console.error(`解析变量${key}时出现错误:未注册${type}类型的解析器`);
             }
         }
 

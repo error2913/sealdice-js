@@ -1,17 +1,17 @@
-import { ChartManager } from "./utils/chart";
+import { Chart, ChartManager } from "./utils/chart";
 import { Player, PlayerManager } from "./utils/player";
 import { Prop } from "./utils/prop";
 import { varsInfo, varsManager, varsMap } from "./utils/vars";
 
 export class Game {
     gid: string;
-    gameKey: string;
     varsMap: varsMap;
+    gameKey: string;
 
-    constructor(gid: string, gk: string, v: varsInfo) {
+    constructor(gid: string, v: varsInfo, gk: string,) {
         this.gid = gid;
+        this.varsMap = globalThis.game.vars.parse(null, gk, v);
         this.gameKey = gk;
-        this.varsMap = globalThis.game.vars.parse(null, gk, '', v);
     }
 }
 
@@ -37,15 +37,15 @@ export class GameManager {
         this.map = {};
     }
 
-    parse(gid: string, data: any, gk: string, v: varsInfo): Game {
+    private parse(gid: string, data: any, gk: string, v: varsInfo): Game {
         if (!data.hasOwnProperty(gid)) {
             console.log(`创建新游戏:${gid}`);
         }
 
-        const game = new Game(gid, gk, v);
+        const game = new Game(gid, v, gk);
 
         if (data.hasOwnProperty('varsMap')) {
-            game.varsMap = globalThis.game.vars.parse(data.varsMap, gk, '', v);
+            game.varsMap = globalThis.game.vars.parse(data.varsMap, gk, v);
         }
 
         return game;
@@ -101,7 +101,7 @@ export class GameManager {
 
         if (gid === '') {
             const v = this.map[gk].varsInfo;
-            const game = new Game(gid, gk, v);
+            const game = new Game(gid, v, gk);
             return game;
         }
 
@@ -122,18 +122,18 @@ export class GameManager {
         return this.map[gk].cache[gid];
     }
 
-    saveGame(k: string, gid: string) {
-        if (!this.map.hasOwnProperty(k)) {
-            console.error(`保存游戏信息${k}时出现错误:该名字未注册`);
+    saveGame(gk: string, gid: string) {
+        if (!this.map.hasOwnProperty(gk)) {
+            console.error(`保存游戏信息${gk}时出现错误:该名字未注册`);
             return;
         }
 
         if (!this.map.cache.hasOwnProperty(gid)) {
-            this.getGame(k, gid);
+            this.getGame(gk, gid);
         }
 
-        const ext = this.map[k].ext;
-        ext.storageSet(`game_${k}_${gid}`, JSON.stringify(this.map[k].cache[gid]));
+        const ext = this.map[gk].ext;
+        ext.storageSet(`game_${gk}_${gid}`, JSON.stringify(this.map[gk].cache[gid]));
     }
 
     registerPlayer(gk: string, pk: string, v: varsInfo) {
@@ -145,22 +145,22 @@ export class GameManager {
         this.map[gk].player.registerPlayer(pk, v);
     }
 
-    getPlayer(gk: string, pk: string, uid: string): Player | undefined {
+    getPlayer(gk: string, pk: string, uid: string, name: string): Player | undefined {
         if (!this.map.hasOwnProperty(gk)) {
             console.error(`获取玩家信息${pk}时出现错误:${gk}未注册`);
             return undefined;
         }
 
-        return this.map[gk].player.getPlayer(pk, uid);
+        return this.map[gk].player.getPlayer(pk, uid, name);
     }
 
-    savePlayer(gk: string, pk: string, uid: string) {
+    savePlayer(gk: string, pk: string, uid: string, name: string) {
         if (!this.map.hasOwnProperty(gk)) {
             console.error(`保存玩家信息${pk}时出现错误:${gk}未注册`);
             return;
         }
 
-        this.map[gk].player.savePlayer(pk, uid);
+        this.map[gk].player.savePlayer(pk, uid, name);
     }
 
     newPropItem(gk: string) {
@@ -220,5 +220,32 @@ export class GameManager {
         player.backpack.remove(name, 1);
 
         return true;
+    }
+
+    registerChart(gk: string, name: string, vn: string) {
+        if (!this.map.hasOwnProperty(gk)) {
+            console.error(`注册排行榜${name}时出现错误:${gk}未注册`);
+            return;
+        }
+
+        this.map[gk].chart.registerChart(name, vn);
+    }
+
+    getChart(gk: string, name: string): Chart | undefined {
+        if (!this.map.hasOwnProperty(gk)) {
+            console.error(`获取排行榜${name}时出现错误:${gk}未注册`);
+            return undefined;
+        }
+
+        return this.map[gk].chart.getChart(name);
+    }
+
+    updateChart(gk: string, name: string, player: Player) {
+        if (!this.map.hasOwnProperty(gk)) {
+            console.error(`更新排行榜${name}时出现错误:${gk}未注册`);
+            return;
+        }
+
+        this.map[gk].chart.updateChart(name, player);
     }
 }

@@ -1,39 +1,17 @@
 
+
 export class Backpack {
+    items: {
+        [key: string]: number
+    }
     gameKey: string;
-    playerKey: string;
-    props: {
-        [key: string]: number
-    }
 
-    constructor(gk: string, pk: string, backpackData: any, defaultProps: {
-        [key: string]: number
-    } = null) {
+    constructor(gk: string) {
+        this.items = {};
         this.gameKey = gk;
-        this.playerKey = pk;
-
-        if (
-            backpackData === null ||
-            typeof backpackData !== 'object' ||
-            Array.isArray(backpackData) ||
-            !Backpack.checkTypeProps(backpackData.props)
-        ) {
-            this.props = defaultProps || {};
-            return;
-        }
-
-        const props = backpackData.props;
-        this.props = {};
-
-        for (let name of Object.keys(props)) {
-            const count = props[name];
-            if (typeof count == 'number') {
-                this.props[name] = count;
-            }
-        }
     }
 
-    static checkTypeProps(data: any): boolean {
+    static checkTypeItems(data: any): boolean {
         if (data === null || typeof data !== 'object' || Array.isArray(data)) {
             return false;
         }
@@ -49,15 +27,44 @@ export class Backpack {
         return true;
     }
 
+    static parse(
+        data: any,
+        defaultData: {
+            [key: string]: number
+        },
+        gk: string
+    ): Backpack {
+        const backpack = new Backpack(gk);
+
+        if (
+            data === null || typeof data !== 'object' || Array.isArray(data) ||
+            data.items === null || typeof data.items !== 'object' || Array.isArray(data.items)
+        ) {
+            backpack.items = defaultData || {};
+            return backpack;
+        }
+
+        const items = data.items;
+
+        for (let name of Object.keys(items)) {
+            const count = items[name];
+            if (typeof count == 'number') {
+                backpack.items[name] = count;
+            }
+        }
+
+        return backpack;
+    }
+
     checkExist(name: string): boolean {
-        return this.props.hasOwnProperty(name);
+        return this.items.hasOwnProperty(name);
     }
 
     getTotalCount(): number {
         let count = 0;
 
-        for (let name of Object.keys(this.props)) {
-            count += this.props[name];
+        for (let name of Object.keys(this.items)) {
+            count += this.items[name];
         }
 
         return count;
@@ -67,7 +74,7 @@ export class Backpack {
         const propMap = globalThis.game.map[this.gameKey].propMap;
         let count = 0;
 
-        for (let name of Object.keys(this.props)) {
+        for (let name of Object.keys(this.items)) {
             if (!propMap.hasOwnProperty(name)) {
                 continue;
             }
@@ -75,7 +82,7 @@ export class Backpack {
             const type = propMap[name].type;
 
             if (types.includes(type)) {
-                count += this.props[name];
+                count += this.items[name];
             }
         }
 
@@ -83,37 +90,37 @@ export class Backpack {
     }
 
     add(name: string, count: number) {
-        if (!this.props.hasOwnProperty(name)) {
-            this.props[name] = count;
+        if (!this.items.hasOwnProperty(name)) {
+            this.items[name] = count;
         } else {
-            this.props[name] += count;
+            this.items[name] += count;
         }
     }
 
     remove(name: string, count: number) {
-        if (!this.props.hasOwnProperty(name)) {
+        if (!this.items.hasOwnProperty(name)) {
             return;
         }
 
-        this.props[name] -= count;
+        this.items[name] -= count;
 
-        if (this.props[name] <= 0) {
-            delete this.props[name];
+        if (this.items[name] <= 0) {
+            delete this.items[name];
         }
     }
 
     clear() {
-        this.props = {};
+        this.items = {};
     }
 
     merge(backpack: Backpack) {
-        for (let name of Object.keys(backpack.props)) {
-            this.add(name, backpack.props[name]);
+        for (let name of Object.keys(backpack.items)) {
+            this.add(name, backpack.items[name]);
         }
     }
 
     draw(n: number): Backpack {
-        const result = new Backpack(this.gameKey, this.playerKey, {});
+        const result = new Backpack(this.gameKey);
         let totalCount = this.getTotalCount();
 
         if (totalCount < n) {
@@ -122,11 +129,11 @@ export class Backpack {
 
         for (let i = 0; i < n; i++) {
             const index = Math.ceil(Math.random() * totalCount);
-            const names = Object.keys(this.props);
+            const names = Object.keys(this.items);
 
             let tempCount = 0;
             for (let name of names) {
-                tempCount += this.props[name];
+                tempCount += this.items[name];
 
                 if (tempCount >= index) {
                     result.add(name, 1);
@@ -149,7 +156,7 @@ export class Backpack {
         const propMap = globalThis.game.map[this.gameKey].propMap;
         const result = [];
 
-        for (let name of Object.keys(this.props)) {
+        for (let name of Object.keys(this.items)) {
             if (!propMap.hasOwnProperty(name)) {
                 continue;
             }
@@ -167,8 +174,8 @@ export class Backpack {
     findByCountRange(min: number, max: number): string[] {
         const result = [];
 
-        for (let name of Object.keys(this.props)) {
-            if (this.props[name] >= min && this.props[name] <= max) {
+        for (let name of Object.keys(this.items)) {
+            if (this.items[name] >= min && this.items[name] <= max) {
                 result.push(name);
             }
         }
@@ -180,7 +187,7 @@ export class Backpack {
         const propMap = globalThis.game.map[this.gameKey].propMap;
         const result = [];
 
-        for (let name of Object.keys(this.props)) {
+        for (let name of Object.keys(this.items)) {
             if (!propMap.hasOwnProperty(name)) {
                 continue;
             }

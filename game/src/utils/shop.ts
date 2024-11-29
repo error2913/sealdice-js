@@ -1,14 +1,33 @@
-import { Backpack } from "./backpack";
+export interface goodsInfo {
+    name: string;
+    price: {
+        base: number,
+        delta: number
+    }
+    count: {
+        base: number,
+        delta: number
+    }
+    prob: number
+}
+
+export interface Goods {
+    price: number;
+    count: number;
+}
 
 export class shop {
     name: string;
-    goods: Backpack;
+    goodsInfoArray: goodsInfo[];
+    goods: {
+        [key: string]: Goods
+    }
 
     constructor() {
 
     }
 
-    update() {
+    updateShop() {
         
     }
 }
