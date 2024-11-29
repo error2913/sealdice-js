@@ -15,7 +15,7 @@ export interface varsInfo {
 }
 
 export class varsManager {
-    static checkType(data: any): boolean {
+    static checkTypeVarsInfo(data: any): boolean {
         if (data === null || typeof data !== 'object' || Array.isArray(data)) {
             return false;
         }
@@ -25,7 +25,7 @@ export class varsManager {
                 (data[key][0] == 'boolean' && typeof data[key][1] == 'boolean') ||
                 (data[key][0] == 'string' && typeof data[key][1] == 'string') ||
                 (data[key][0] == 'number' && typeof data[key][1] == 'number') ||
-                data[key][0] == 'backpack' && Backpack.checkType(data[key][1])
+                data[key][0] == 'backpack' && Backpack.checkTypeProps(data[key][1])
             ) {
                 continue;
             }

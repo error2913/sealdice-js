@@ -8,17 +8,17 @@ export class Backpack {
 
     constructor(gk: string, pk: string, backpackData: any, defaultProps: {
         [key: string]: number
-    } = {}) {
+    } = null) {
         this.gameKey = gk;
         this.playerKey = pk;
 
         if (
-            !backpackData.hasOwnProperty('backpack') ||
-            backpackData.backpack === null ||
-            typeof backpackData.backpack !== 'object' ||
-            Array.isArray(backpackData.backpack)
+            backpackData === null ||
+            typeof backpackData !== 'object' ||
+            Array.isArray(backpackData) ||
+            !Backpack.checkTypeProps(backpackData.props)
         ) {
-            this.props = defaultProps;
+            this.props = defaultProps || {};
             return;
         }
 
@@ -33,7 +33,7 @@ export class Backpack {
         }
     }
 
-    static checkType(data: any): boolean {
+    static checkTypeProps(data: any): boolean {
         if (data === null || typeof data !== 'object' || Array.isArray(data)) {
             return false;
         }
@@ -47,6 +47,10 @@ export class Backpack {
         }
 
         return true;
+    }
+
+    checkExist(name: string): boolean {
+        return this.props.hasOwnProperty(name);
     }
 
     getTotalCount(): number {
