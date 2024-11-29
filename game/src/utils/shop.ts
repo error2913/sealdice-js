@@ -12,3 +12,7 @@ export class shop {
         
     }
 }
+
+export class shopManager {
+
+}

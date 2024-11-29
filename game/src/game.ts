@@ -1,4 +1,4 @@
-
+import { ChartManager } from "./utils/chart";
 import { Player, PlayerManager } from "./utils/player";
 import { Prop } from "./utils/prop";
 import { varsInfo, varsManager, varsMap } from "./utils/vars";
@@ -22,6 +22,7 @@ export class GameManager {
             ext: seal.ExtInfo,
             varsInfo: varsInfo,
             player: PlayerManager,
+            chart: ChartManager,
             propMap: {
                 [key: string]: Prop
             }
@@ -86,6 +87,7 @@ export class GameManager {
             ext: ext,
             varsInfo: v,
             player: new PlayerManager(ext, gk),
+            chart: new ChartManager(ext, gk),
             propMap: {},
             cache: {}
         }
