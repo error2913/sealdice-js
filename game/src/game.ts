@@ -11,7 +11,7 @@ export class Game {
     constructor(gid: string, gk: string, v: varsInfo) {
         this.gid = gid;
         this.gameKey = gk;
-        this.varsMap = varsManager.parse(null, gk, '', v);
+        this.varsMap = globalThis.game.vars.parse(null, gk, '', v);
     }
 }
 
@@ -32,7 +32,7 @@ export class GameManager {
     }
 
     constructor() {
-        this.vars = varsManager;
+        this.vars = new varsManager();
         this.map = {};
     }
 
@@ -44,10 +44,25 @@ export class GameManager {
         const game = new Game(gid, gk, v);
 
         if (data.hasOwnProperty('varsMap')) {
-            game.varsMap = varsManager.parse(data.varsMap, gk, '', v);
+            game.varsMap = globalThis.game.vars.parse(data.varsMap, gk, '', v);
         }
 
         return game;
+    }
+
+    clearCache(gk: string) {
+        if (!this.map.hasOwnProperty(gk)) {
+            console.error(`清除游戏缓存时出现错误:${gk}未注册`);
+            return;
+        }
+
+        this.map[gk].cache = {};
+    }
+
+    clearAllCache() {
+        for (const gk of Object.keys(this.map)) {
+            this.map[gk].cache = {};
+        }
     }
 
     /**
@@ -62,7 +77,7 @@ export class GameManager {
             return;
         }
 
-        if (!varsManager.checkTypeVarsInfo(v)) {
+        if (!globalThis.game.vars.checkTypeVarsInfo(v)) {
             console.error(`注册游戏信息${gk}时出现错误:${v}不是合法的类型，或含有不合法类型`);
             return;
         }

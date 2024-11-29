@@ -1,32 +1,87 @@
 import { Backpack } from "./backpack"
 
 export interface varsMap {
-    [key: string]: boolean | string | number | Backpack
+    [key: string]: any
 }
 
 export interface varsInfo {
-    [key: string]:
-    ['boolean', boolean] |
-    ['string', string] |
-    ['number', number] |
-    ['backpack', {
-        [key: string]: number
-    }]
+    [key: string]: [string, any]// 类型和默认值
 }
 
 export class varsManager {
-    static checkTypeVarsInfo(data: any): boolean {
+    map: {
+        [key: string]: {
+            check: (data: any) => boolean,
+            parse: (data: any, defaultData: any, gk: string, pk: string) => any
+        }
+    }
+
+    constructor() {
+        this.map = {};
+
+        this.registerVarsType('boolean', (data: any) => {
+            return typeof data === 'boolean';
+        }, (data: any, defaultData: any, _: string, __: string) => {
+            if (typeof data === 'boolean') {
+                return data;
+            }
+
+            return defaultData;
+        });
+
+        this.registerVarsType('string', (data: any) => {
+            return typeof data === 'string';
+        }, (data: any, defaultData: any, _: string, __: string) => {
+            if (typeof data === 'string') {
+                return data;
+            }
+
+            return defaultData;
+        });
+
+        this.registerVarsType('number', (data: any) => {
+            return typeof data === 'number';
+        }, (data: any, defaultData: any, _: string, __: string) => {
+            if (typeof data === 'number') {
+                return data;
+            }
+
+            return defaultData;
+        });
+
+        this.registerVarsType('backpack', (data: any) => {
+            return Backpack.checkTypeProps(data);
+        }, (data: any, defaultData: any, gk: string, pk: string) => {
+            return new Backpack(gk, pk, data, defaultData);
+        });
+    }
+
+    registerVarsType(
+        type: string,
+        checkFunc: (data: any) => boolean,
+        parseFunc: (data: any, defaultData: any, gk: string, pk: string) => any
+    ) {
+        if (this.map.hasOwnProperty(type)) {
+            console.error(`注册变量解析器${type}时出现错误:该名字已注册`);
+            return;
+        }
+
+        this.map[type] = {
+            check: checkFunc,
+            parse: parseFunc
+        }
+    }
+    
+    checkTypeVarsInfo(data: any): boolean {
         if (data === null || typeof data !== 'object' || Array.isArray(data)) {
             return false;
         }
 
         for (let key of Object.keys(data)) {
-            if (
-                (data[key][0] == 'boolean' && typeof data[key][1] == 'boolean') ||
-                (data[key][0] == 'string' && typeof data[key][1] == 'string') ||
-                (data[key][0] == 'number' && typeof data[key][1] == 'number') ||
-                data[key][0] == 'backpack' && Backpack.checkTypeProps(data[key][1])
-            ) {
+            const type = data[key][0];
+            const defaultData = data[key][1];
+
+            if (this.map.hasOwnProperty(type) && this.map[type].check(defaultData)) {
                 continue;
             }
 
@@ -36,7 +91,7 @@ export class varsManager {
         return true;
     }
 
-    static parse(data: any, gk: string, pk: string, v: varsInfo): varsMap {
+    parse(data: any, gk: string, pk: string, v: varsInfo): varsMap {
         const result: varsMap = {};
 
         if (data === null || typeof data !== 'object' || Array.isArray(data)) {
@@ -44,23 +99,14 @@ export class varsManager {
         }
 
         for (let key of Object.keys(v)) {
-            if (
-                v[key][0] == 'boolean' ||
-                v[key][0] == 'string' ||
-                v[key][0] == 'number'
-            ) {
-                if (data.hasOwnProperty(key) && typeof data[key] == v[key][0]) {
-                    result[key] = data[key];
-                } else {
-                    result[key] = v[key][1];
-                }
-            }
+            const type = v[key][0];
+            const defaultData = v[key][1];
 
-            if (v[key][0] == 'backpack') {
+            if (this.map.hasOwnProperty(type)) {
                 if (data.hasOwnProperty(key)) {
-                    result[key] = new Backpack(gk, pk, data[key], v[key][1]);
+                    result[key] = this.map[type].parse(data[key], defaultData, gk, pk);
                 } else {
-                    result[key] = new Backpack(gk, pk, null, v[key][1]);
+                    result[key] = this.map[type].parse(null, defaultData, gk, pk);
                 }
             }
         }

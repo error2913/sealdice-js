@@ -1,5 +1,5 @@
 import { Backpack } from "./backpack";
-import { varsInfo, varsManager, varsMap } from "./vars";
+import { varsInfo, varsMap } from "./vars";
 
 export class Player {
     uid: string;
@@ -13,7 +13,7 @@ export class Player {
         this.gameKey = gk;
         this.playerKey = pk;
         this.backpack = new Backpack(gk, pk, null);
-        this.varsMap = varsManager.parse(null, gk, pk, v);
+        this.varsMap = globalThis.game.vars.parse(null, gk, pk, v);
     }
 }
 
@@ -48,27 +48,31 @@ export class PlayerManager {
         }
 
         if (data.hasOwnProperty('varsMap')) {
-            player.varsMap = varsManager.parse(data.varsMap, gk, pk, v);
+            player.varsMap = globalThis.game.vars.parse(data.varsMap, gk, pk, v);
         }
 
         return player;
     }
 
+    clearCache(pk: string) {
+        if (!this.map.hasOwnProperty(pk)) {
+            console.error(`清除玩家缓存时出现错误:${pk}未注册`);
+            return;
+        }
+
+        this.map[pk].cache = {};
+    }
+
+    clearAllCache() {
+        for (const pk in this.map) {
+            this.map[pk].cache = {};
+        }
+    }
+
     /**
      * 
      * @param pk 键
-     * @param v 类型和默认值，例如
-     * ```
-     * {
-     *              "good":['boolean',false],
-     *              "nickname":['string','错误'],
-     *              "coin":['number',114514],
-     *              "bag":['backpack',{
-     *                  "炸弹":999,
-     *                  "钻石":666
-     *              }]
-     * }
-     * ```
+     * @param v 类型和默认值的varsInfo
      * @returns 
      */
     registerPlayer(pk: string, v: any) {
@@ -77,7 +81,7 @@ export class PlayerManager {
             return;
         }
 
-        if (!varsManager.checkTypeVarsInfo(v)) {
+        if (!globalThis.game.vars.checkTypeVarsInfo(v)) {
             console.error(`注册玩家信息${pk}时出现错误:${v}不是合法的类型，或含有不合法类型`);
             return;
         }
