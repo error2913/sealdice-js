@@ -75,7 +75,10 @@ if (!ext) {
                 const player = globalThis.game.getPlayer(gk, pk1, uid);
                 const game = globalThis.game.getGame(gk, '');
                 globalThis.game.useProp(ctx, msg, cmdArgs, player, game, '核弹');
-                globalThis.game.savePlayer(gk, pk1, uid);
+
+                setTimeout(() => {
+                    globalThis.game.savePlayer(gk, pk1, uid);
+                }, 1000);
                 return seal.ext.newCmdExecuteResult(true);
             }
             default: {
