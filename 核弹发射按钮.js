@@ -29,7 +29,10 @@ if (!ext) {
         pollution:['number', 0],
         money:['number', 0],
         develop:['number', 0],
-        haveN:['boolean', false]
+        haveN:['boolean', false],
+        entry:['backpack', {
+            '普通':1
+        }]
     }
     globalThis.game.registerPlayer(gk, pk1, pv)
 
@@ -43,6 +46,8 @@ if (!ext) {
     }
     globalThis.game.registerProp(gk, propTest);
 
+    globalThis.game.registerChart(gk, '一个排行榜', 'pollution');
+
 
     const cmd = seal.ext.newCmdItemInfo();
     cmd.name = 'nu';
@@ -50,6 +55,7 @@ if (!ext) {
     cmd.solve = (ctx, msg, cmdArgs) => {
         let val = cmdArgs.getArgN(1);
         const uid = ctx.player.userId;
+        const un = ctx.player.name;
         const gid = ctx.group.groupId;
 
         switch (val) {
@@ -60,25 +66,31 @@ if (!ext) {
                 return ret;
             }
             case 'show': {
-                const player = globalThis.game.getPlayer(gk, pk1, uid);
+                const player = globalThis.game.getPlayer(gk, pk1, uid, un);
                 seal.replyToSender(ctx, msg, JSON.stringify(player));
                 return seal.ext.newCmdExecuteResult(true);
             }
             case 'get': {
-                const player = globalThis.game.getPlayer(gk, pk1, uid);
+                const player = globalThis.game.getPlayer(gk, pk1, uid, un);
                 player.backpack.add('核弹', 1);
                 seal.replyToSender(ctx, msg, '获得了核弹');
-                globalThis.game.savePlayer(gk, pk1, uid);
+                globalThis.game.savePlayer(gk, pk1, uid, un);
                 return seal.ext.newCmdExecuteResult(true);
             }
             case 'use': {
-                const player = globalThis.game.getPlayer(gk, pk1, uid);
+                const player = globalThis.game.getPlayer(gk, pk1, uid, un);
                 const game = globalThis.game.getGame(gk, '');
                 globalThis.game.useProp(ctx, msg, cmdArgs, player, game, '核弹');
 
                 setTimeout(() => {
-                    globalThis.game.savePlayer(gk, pk1, uid);
+                    globalThis.game.savePlayer(gk, pk1, uid, un);
+                    globalThis.game.updateChart(gk, '一个排行榜', player);
                 }, 1000);
+                return seal.ext.newCmdExecuteResult(true);
+            }
+            case 'chart': {
+                const chart = globalThis.game.getChart(gk, '一个排行榜');
+                seal.replyToSender(ctx, msg, JSON.stringify(chart));
                 return seal.ext.newCmdExecuteResult(true);
             }
             default: {
