@@ -65,7 +65,7 @@ export class MarketManager {
             return false;
         }
 
-        if (player.backpack.checkExist(name, count)) {
+        if (!player.backpack.checkExist(name, count)) {
             return false;
         }
 
