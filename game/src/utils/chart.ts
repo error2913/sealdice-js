@@ -32,11 +32,19 @@ export class Chart {
                 name: player.name,
                 value: player.varsMap[vn]
             }
-    
+
             this.list.push(pi);
         } else {
             this.list[index].name = player.name;
-            this.list[index].value = player.varsMap[vn];
+
+            const value = player.varsMap[vn];
+
+            if (typeof value !== 'number') {
+                console.error(`更新排行榜${this.name}时出现错误:变量${vn}的值不是数字`);
+                return;
+            }
+            
+            this.list[index].value = value;
         }
 
         this.list.sort((a, b) => {
@@ -85,7 +93,7 @@ export class ChartManager {
         this.map[name] = vn;
     }
 
-    getChart(name: string): Chart | undefined  {
+    getChart(name: string): Chart | undefined {
         if (!this.map.hasOwnProperty(name)) {
             console.error(`获取排行榜${name}时出现错误:该名字未注册`);
             return undefined;
@@ -131,7 +139,7 @@ export class ChartManager {
         if (!chart) {
             return;
         }
-        
+
         chart.updateChart(player);
         this.saveChart(name);
     }
