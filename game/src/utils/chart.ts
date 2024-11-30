@@ -10,19 +10,17 @@ export class Chart {
     name: string;
     varName: string;
     list: PlayerInfo[];
-    gameKey: string;
 
-    constructor(name: string, vn: string, gk: string) {
+    constructor(name: string, vn: string) {
         this.name = name;
         this.varName = vn;
         this.list = [];
-        this.gameKey = gk;
     }
 
     updateChart(player: Player) {
         const vn = this.varName;
         if (!player.varsMap.hasOwnProperty(vn)) {
-            console.error(`更新排行榜${this.name}时出现错误:变量${vn}未注册`);
+            console.error(`更新排行榜${this.name}时出现错误:变量${vn}不存在`);
             return;
         }
 
@@ -51,15 +49,13 @@ export class Chart {
 
 export class ChartManager {
     ext: seal.ExtInfo;
-    gameKey: string;
-    map: {
-        [key: string]: string// 变量名
-    }
+    map: { [key: string]: string } // 排行榜名字和变量名的映射
+    cache: { [key: string]: Chart }
 
-    constructor(ext: seal.ExtInfo, gk: string) {
+    constructor(ext: seal.ExtInfo) {
         this.ext = ext;
-        this.gameKey = gk;
         this.map = {};
+        this.cache = {};
     }
 
     private parse(data: any, name: string, vn: string): Chart {
@@ -67,14 +63,17 @@ export class ChartManager {
             console.log(`创建新排行榜:${name}`);
         }
 
-        const gk = this.gameKey;
-        const chart = new Chart(name, vn, gk);
+        const chart = new Chart(name, vn);
 
         if (data.hasOwnProperty('list') && Array.isArray(data.list)) {
             chart.list = data.list;
         }
 
         return chart;
+    }
+
+    clearCache() {
+        this.cache = {};
     }
 
     registerChart(name: string, vn: string) {
@@ -92,32 +91,33 @@ export class ChartManager {
             return undefined;
         }
 
-        let data = {};
+        if (!this.cache.hasOwnProperty(name)) {
+            let data = {};
 
-        try {
-            data = JSON.parse(this.ext.storageGet(`chart_${name}`) || '{}');
-        } catch (error) {
-            console.error(`从数据库中获取${`chart_${name}`}失败:`, error);
+            try {
+                data = JSON.parse(this.ext.storageGet(`chart_${name}`) || '{}');
+            } catch (error) {
+                console.error(`从数据库中获取${`chart_${name}`}失败:`, error);
+            }
+
+            const vn = this.map[name];
+            this.cache[name] = this.parse(data, name, vn);
         }
 
-        const vn = this.map[name];
-        const chart = this.parse(data, name, vn);
 
-        return chart;
+        return this.cache[name];
     }
 
-    saveChart(name: string, chart: Chart) {
+    saveChart(name: string) {
         if (!this.map.hasOwnProperty(name)) {
             console.error(`保存排行榜${name}时出现错误:该名字未注册`);
             return;
         }
 
-        if (name !== chart.name) {
-            console.error(`保存排行榜${name}时出现错误:排行榜名字不匹配`);
-            return;
+        if (this.cache.hasOwnProperty(name)) {
+            const chart = this.cache[name];
+            this.ext.storageSet(`chart_${name}`, JSON.stringify(chart));
         }
-
-        this.ext.storageSet(`chart_${name}`, JSON.stringify(chart));
     }
 
     updateChart(name: string, player: Player) {
@@ -127,14 +127,18 @@ export class ChartManager {
         }
 
         const chart = this.getChart(name);
+
+        if (!chart) {
+            return;
+        }
+        
         chart.updateChart(player);
-        this.saveChart(name, chart);
+        this.saveChart(name);
     }
 
     updateAllChart(player: Player) {
         for (const name of Object.keys(this.map)) {
-            const chart = this.getChart(name);
-            chart.updateChart(player);
+            this.updateChart(name, player);
         }
     }
 }

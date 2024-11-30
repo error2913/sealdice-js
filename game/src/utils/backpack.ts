@@ -1,14 +1,10 @@
-
+import { GameManager } from "../game";
 
 export class Backpack {
-    items: {
-        [key: string]: number
-    }
-    gameKey: string;
+    items: { [key: string]: number };
 
-    constructor(gk: string) {
+    constructor() {
         this.items = {};
-        this.gameKey = gk;
     }
 
     static checkTypeItems(data: any): boolean {
@@ -27,14 +23,8 @@ export class Backpack {
         return true;
     }
 
-    static parse(
-        data: any,
-        defaultData: {
-            [key: string]: number
-        },
-        gk: string
-    ): Backpack {
-        const backpack = new Backpack(gk);
+    static parse(data: any, defaultData: { [key: string]: number }): Backpack {
+        const backpack = new Backpack();
 
         if (
             data === null || typeof data !== 'object' || Array.isArray(data) ||
@@ -56,8 +46,12 @@ export class Backpack {
         return backpack;
     }
 
-    checkExist(name: string): boolean {
-        return this.items.hasOwnProperty(name);
+    checkExist(name: string, count: number): boolean {
+        if (!this.items.hasOwnProperty(name) || this.items[name] < count) {
+            return false;
+        }
+
+        return true;
     }
 
     getTotalCount(): number {
@@ -70,8 +64,8 @@ export class Backpack {
         return count;
     }
 
-    getTotalCountByTypes(types: string[]): number {
-        const propMap = globalThis.game.map[this.gameKey].propMap;
+    getTotalCountByTypes(gm: GameManager, types: string[]): number {
+        const propMap = gm.propMap;
         let count = 0;
 
         for (let name of Object.keys(this.items)) {
@@ -120,7 +114,7 @@ export class Backpack {
     }
 
     draw(n: number): Backpack {
-        const result = new Backpack(this.gameKey);
+        const result = new Backpack();
         let totalCount = this.getTotalCount();
 
         if (totalCount < n) {
@@ -152,8 +146,8 @@ export class Backpack {
         return result;
     }
 
-    findByTypes(types: string[]): string[] {
-        const propMap = globalThis.game.map[this.gameKey].propMap;
+    findByTypes(gm: GameManager, types: string[]): string[] {
+        const propMap = gm.propMap;
         const result = [];
 
         for (let name of Object.keys(this.items)) {
@@ -183,8 +177,8 @@ export class Backpack {
         return result;
     }
 
-    getTypes(): string[] {
-        const propMap = globalThis.game.map[this.gameKey].propMap;
+    getTypes(gm: GameManager): string[] {
+        const propMap = gm.propMap;
         const result = [];
 
         for (let name of Object.keys(this.items)) {

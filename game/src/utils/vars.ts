@@ -1,65 +1,81 @@
 import { Backpack } from "./backpack"
 
-export interface varsMap {
+export interface VarsMap {
     [key: string]: any
 }
 
-export interface varsInfo {
+export interface VarsInfo {
     [key: string]: [string, any]// 类型和默认值
 }
 
-export class varsManager {
+export class VarsManager {
     map: {
         [key: string]: {
             check: (data: any) => boolean,
-            parse: (data: any, defaultData: any, gk: string) => any
+            parse: (data: any, defaultData: any) => any
         }
     }
 
     constructor() {
         this.map = {};
 
-        this.registerVarsType('boolean', (data: any) => {
+        this.registerVarsType(
+            'boolean',
+            (data: any) => {
             return typeof data === 'boolean';
-        }, (data: any, defaultData: any, _: string) => {
+            }, 
+            (data: any, defaultData: any) => {
             if (typeof data === 'boolean') {
                 return data;
             }
 
             return defaultData;
-        });
-
-        this.registerVarsType('string', (data: any) => {
-            return typeof data === 'string';
-        }, (data: any, defaultData: any, _: string) => {
-            if (typeof data === 'string') {
-                return data;
             }
+        );
 
-            return defaultData;
-        });
+        this.registerVarsType(
+            'string',
+            (data: any) => {
+                return typeof data === 'string';
+            }, 
+            (data: any, defaultData: any) => {
+                if (typeof data === 'string') {
+                    return data;
+                }
 
-        this.registerVarsType('number', (data: any) => {
-            return typeof data === 'number';
-        }, (data: any, defaultData: any, _: string) => {
-            if (typeof data === 'number') {
-                return data;
+                return defaultData;
             }
+        );
 
-            return defaultData;
-        });
+        this.registerVarsType(
+            'number',
+            (data: any) => {
+                return typeof data === 'number';
+            },
+            (data: any, defaultData: any) => {
+                if (typeof data === 'number') {
+                    return data;
+                }
 
-        this.registerVarsType('backpack', (data: any) => {
-            return Backpack.checkTypeItems(data);
-        }, (data: any, defaultData: any, gk: string) => {
-            return Backpack.parse(data, defaultData, gk);
-        });
+                return defaultData;
+            }
+        );
+
+        this.registerVarsType(
+            'backpack',
+            (data: any) => {
+                return Backpack.checkTypeItems(data);
+            },
+            (data: any, defaultData: any) => {
+                return Backpack.parse(data, defaultData);
+            }
+        );
     }
 
     registerVarsType(
         type: string,
         checkFunc: (data: any) => boolean,
-        parseFunc: (data: any, defaultData: any, gk: string) => any
+        parseFunc: (data: any, defaultData: any) => any
     ) {
         if (this.map.hasOwnProperty(type)) {
             console.error(`注册变量解析器${type}时出现错误:该名字已注册`);
@@ -91,26 +107,27 @@ export class varsManager {
         return true;
     }
 
-    parse(data: any, gk: string, v: varsInfo): varsMap {
-        const result: varsMap = {};
+    parse(data: any, vi: VarsInfo): VarsMap {
+        const result: VarsMap = {};
 
         if (data === null || typeof data !== 'object' || Array.isArray(data)) {
             data = {};
         }
 
-        for (let key of Object.keys(v)) {
-            const type = v[key][0];
-            const defaultData = v[key][1];
+        for (let key of Object.keys(vi)) {
+            const type = vi[key][0];
+            const defaultData = vi[key][1];
 
-            if (this.map.hasOwnProperty(type)) {
-                if (data.hasOwnProperty(key)) {
-                    result[key] = this.map[type].parse(data[key], defaultData, gk);
-                } else {
-                    result[key] = this.map[type].parse(null, defaultData, gk);
-                }
-            } else {
+            if (!this.map.hasOwnProperty(type)) {
                 console.error(`解析变量${key}时出现错误:未注册${type}类型的解析器`);
+                continue;
             }
+            
+            if (!data.hasOwnProperty(key)) {
+                data[key] = null;
+            }
+            
+            result[key] = this.map[type].parse(data[key], defaultData);
         }
 
         return result;

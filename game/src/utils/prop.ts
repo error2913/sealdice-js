@@ -6,17 +6,15 @@ export class Prop {
     desc: string;
     type: string;
     reply: string;
-    solve: (ctx: seal.MsgContext, msg: seal.Message, cmdArgs: seal.CmdArgs, player: Player, game: Game) => void
-    gameKey: string;
+    solve: (ctx: seal.MsgContext, msg: seal.Message, cmdArgs: seal.CmdArgs, player: Player, count: number, game?: Game) => void;
 
-    constructor(gk: string) {
+    constructor() {
         this.name = '';
         this.desc = '';
         this.type = '';
         this.reply = '';
-        this.solve = (_, __, ___, ____, _____) => {
+        this.solve = (_, __, ___, ____, _____, ______) => {
             return;
         }
-        this.gameKey = gk;
     }
 }
