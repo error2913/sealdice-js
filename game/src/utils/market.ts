@@ -1,12 +1,12 @@
 import { Player } from "./player";
-import { Goods } from "./shop";
 
 export interface SellInfo {
     id: number;
     title: string;
     content: string;
     name: string;
-    goods: Goods;
+    price: number;
+    count: number;
     uid: string;
 }
 
@@ -26,7 +26,38 @@ export class MarketManager {
             return [];
         }
 
-        return data;
+        const list = [];
+
+        for (let i = 0; i < data.length; i++) {
+            const item = data[i];
+
+            if (
+                !item.hasOwnProperty('id') || typeof item.id !== 'number' ||
+                !item.hasOwnProperty('title') || typeof item.title !== 'string' ||
+                !item.hasOwnProperty('content') || typeof item.content !== 'string' ||
+                !item.hasOwnProperty('name') || typeof item.name !== 'string' ||
+                !item.hasOwnProperty('price') || typeof item.price !== 'number' ||
+                !item.hasOwnProperty('count') || typeof item.count !== 'number' ||
+                !item.hasOwnProperty('uid') || typeof item.uid !== 'string'
+            ) {
+                console.error(`解析市场数据时出现错误:数据错误`);
+                return [];
+            }
+
+            const si = {
+                id: item.id,
+                title: item.title,
+                content: item.content,
+                name: item.name,
+                price: item.price,
+                count: item.count,
+                uid: item.uid
+            }
+
+            list.push(si);
+        }
+
+        return list;
     }
 
     getMarket(): SellInfo[] | undefined {
@@ -69,16 +100,13 @@ export class MarketManager {
             return false;
         }
 
-        const goods = {
-            price: price,
-            count: count
-        }
         const sellInfo = {
             id: this.createNewId(),
             title: title,
             content: content,
             name: name,
-            goods: goods,
+            price: price,
+            count: count,
             uid: player.uid
         }
 
