@@ -7,12 +7,10 @@ export interface PlayerInfo {
 }
 
 export class Chart {
-    name: string;
     varName: string;
     list: PlayerInfo[];
 
-    constructor(name: string, vn: string) {
-        this.name = name;
+    constructor(vn: string) {
         this.varName = vn;
         this.list = [];
     }
@@ -20,7 +18,7 @@ export class Chart {
     updateChart(player: Player) {
         const vn = this.varName;
         if (!player.varsMap.hasOwnProperty(vn)) {
-            console.error(`更新排行榜${this.name}时出现错误:变量${vn}不存在`);
+            console.error(`更新排行榜时出现错误:变量${vn}不存在`);
             return;
         }
 
@@ -40,10 +38,10 @@ export class Chart {
             const value = player.varsMap[vn];
 
             if (typeof value !== 'number') {
-                console.error(`更新排行榜${this.name}时出现错误:变量${vn}的值不是数字`);
+                console.error(`更新排行榜时出现错误:变量${vn}的值不是数字`);
                 return;
             }
-            
+
             this.list[index].value = value;
         }
 
@@ -56,9 +54,9 @@ export class Chart {
 }
 
 export class ChartManager {
-    ext: seal.ExtInfo;
-    map: { [key: string]: string } // 排行榜名字和变量名的映射
-    cache: { [key: string]: Chart }
+    private ext: seal.ExtInfo;
+    private map: { [key: string]: string } // 排行榜名字和变量名的映射
+    private cache: { [key: string]: Chart }
 
     constructor(ext: seal.ExtInfo) {
         this.ext = ext;
@@ -71,7 +69,7 @@ export class ChartManager {
             console.log(`创建新排行榜:${name}`);
         }
 
-        const chart = new Chart(name, vn);
+        const chart = new Chart(vn);
 
         if (data.hasOwnProperty('list') && Array.isArray(data.list)) {
             chart.list = data.list;

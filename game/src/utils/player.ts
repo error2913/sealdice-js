@@ -16,9 +16,9 @@ export class Player {
 }
 
 export class PlayerManager {
-    ext: seal.ExtInfo;
-    varsInfo:VarsInfo;
-    cache: { [key: string]: Player };
+    private ext: seal.ExtInfo;
+    private varsInfo:VarsInfo;
+    private cache: { [key: string]: Player };
 
     constructor(ext: seal.ExtInfo, vi: VarsInfo) {
         this.ext = ext;

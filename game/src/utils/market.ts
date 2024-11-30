@@ -17,6 +17,8 @@ export class MarketManager {
     constructor(ext: seal.ExtInfo) {
         this.ext = ext;
         this.list = [];
+
+        this.getMarket();
     }
 
     private parse(data: any): SellInfo[] {

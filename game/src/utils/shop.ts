@@ -17,14 +17,12 @@ export interface Goods {
 }
 
 export class Shop {
-    name: string;
-    goodsInfoArray: GoodsInfo[];// 基于此数据生成goods
+    private goodsInfoArray: GoodsInfo[];// 基于此数据生成goods
     goods: {
         [key: string]: Goods
     }
 
-    constructor(name: string, giArr: GoodsInfo[]) {
-        this.name = name;
+    constructor(giArr: GoodsInfo[]) {
         this.goodsInfoArray = giArr;
         this.goods = {};
     }
@@ -83,9 +81,9 @@ export class Shop {
 }
 
 export class ShopManager {
-    ext: seal.ExtInfo;
-    map: { [key: string]: GoodsInfo[] } // 基于此数据生成shop
-    cache: { [key: string]: Shop }
+    private ext: seal.ExtInfo;
+    private map: { [key: string]: GoodsInfo[] } // 基于此数据生成shop
+    private cache: { [key: string]: Shop }
 
     constructor(ext: seal.ExtInfo) {
         this.ext = ext;
@@ -97,7 +95,7 @@ export class ShopManager {
             console.log(`创建新商店:${name}`);
         }
 
-        const shop = new Shop(name, giArr);
+        const shop = new Shop(giArr);
 
         if (data.hasOwnProperty('goods') && typeof data.goods === 'object') {
             shop.goods = data.goods;

@@ -7,13 +7,13 @@ export class Backpack {
         this.items = {};
     }
 
-    static checkTypeItems(data: any): boolean {
-        if (data === null || typeof data !== 'object' || Array.isArray(data)) {
+    static check(defaultData: any): boolean {
+        if (defaultData === null || typeof defaultData !== 'object' || Array.isArray(defaultData)) {
             return false;
         }
 
-        for (let name of Object.keys(data)) {
-            const count = data[name];
+        for (let name of Object.keys(defaultData)) {
+            const count = defaultData[name];
             if (typeof count == 'number') {
                 continue;
             }

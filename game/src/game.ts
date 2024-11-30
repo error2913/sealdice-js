@@ -16,14 +16,14 @@ export class Game {
 }
 
 export class GameManager {
-    ext: seal.ExtInfo;
-    varsInfo: VarsInfo;
+    private ext: seal.ExtInfo;
+    private varsInfo: VarsInfo;
     player: PlayerManager;
     chart: ChartManager;
     shop: ShopManager;
     market: MarketManager;
     propMap: { [key: string]: Prop };
-    cache: { [key: string]: Game };
+    private cache: { [key: string]: Game };
 
     constructor(ext: seal.ExtInfo, gvi: VarsInfo, pvi: VarsInfo) {
         this.ext = ext;
@@ -78,7 +78,7 @@ export class GameManager {
         }
     }
 
-    newPropItem() {
+    newPropItem(): Prop {
         return new Prop();
     }
 

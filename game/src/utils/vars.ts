@@ -9,9 +9,9 @@ export interface VarsInfo {
 }
 
 export class VarsManager {
-    map: {
+    private map: {
         [key: string]: {
-            check: (data: any) => boolean,
+            check: (defaultData: any) => boolean,
             parse: (data: any, defaultData: any) => any
         }
     }
@@ -21,8 +21,8 @@ export class VarsManager {
 
         this.registerVarsType(
             'boolean',
-            (data: any) => {
-            return typeof data === 'boolean';
+            (defaultData: any) => {
+            return typeof defaultData === 'boolean';
             }, 
             (data: any, defaultData: any) => {
             if (typeof data === 'boolean') {
@@ -35,8 +35,8 @@ export class VarsManager {
 
         this.registerVarsType(
             'string',
-            (data: any) => {
-                return typeof data === 'string';
+            (defaultData: any) => {
+                return typeof defaultData === 'string';
             }, 
             (data: any, defaultData: any) => {
                 if (typeof data === 'string') {
@@ -49,8 +49,8 @@ export class VarsManager {
 
         this.registerVarsType(
             'number',
-            (data: any) => {
-                return typeof data === 'number';
+            (defaultData: any) => {
+                return typeof defaultData === 'number';
             },
             (data: any, defaultData: any) => {
                 if (typeof data === 'number') {
@@ -63,8 +63,8 @@ export class VarsManager {
 
         this.registerVarsType(
             'backpack',
-            (data: any) => {
-                return Backpack.checkTypeItems(data);
+            (defaultData: any) => {
+                return Backpack.check(defaultData);
             },
             (data: any, defaultData: any) => {
                 return Backpack.parse(data, defaultData);
@@ -74,7 +74,7 @@ export class VarsManager {
 
     registerVarsType(
         type: string,
-        checkFunc: (data: any) => boolean,
+        checkFunc: (defaultData: any) => boolean,
         parseFunc: (data: any, defaultData: any) => any
     ) {
         if (this.map.hasOwnProperty(type)) {
