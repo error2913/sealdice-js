@@ -47,6 +47,7 @@ if (!ext) {
 
             if (data === null || typeof data !== 'object' || Array.isArray(data)) {
                 pollution.level = defaultData;
+                return pollution;
             }
 
             if (data.hasOwnProperty('time') && typeof data.time == 'number') {
@@ -84,7 +85,7 @@ if (!ext) {
     }
     const pvi = {
         pollution: ['pollution', '低'],
-        pullutionValue: ['number', 0],
+        pollutionValue: ['number', 0],
         money: ['number', 0],
         develop: ['number', 0],
         haveNuke: ['boolean', false],
@@ -142,7 +143,15 @@ if (!ext) {
 
     const cmd = seal.ext.newCmdItemInfo();
     cmd.name = 'nu';
-    cmd.help = '还没写';
+    cmd.help = `帮助:
+help
+show
+get <道具名> <数量>
+use <道具名> <数量>
+chart
+shop
+sell <道具名> <数量> <价格>
+market`;
     cmd.solve = (ctx, msg, cmdArgs) => {
         let val = cmdArgs.getArgN(1);
         const uid = ctx.player.userId;
@@ -161,15 +170,43 @@ if (!ext) {
                 return seal.ext.newCmdExecuteResult(true);
             }
             case 'get': {
+                const name = cmdArgs.getArgN(2);
+                if (!name) {
+                    seal.replyToSender(ctx, msg, '请输入道具名');
+                    return seal.ext.newCmdExecuteResult(true);
+                }
+
+                const count = parseInt(cmdArgs.getArgN(3));
+                if (isNaN(count) || count < 1) {
+                    seal.replyToSender(ctx, msg, '请输入数量');
+                    return seal.ext.newCmdExecuteResult(true);
+                }
+
                 const player = gm.player.getPlayer(uid, un);
-                player.backpack.add('核弹', 1);
-                seal.replyToSender(ctx, msg, '获得了核弹');
+
+                player.backpack.add(name, count);
+
+                seal.replyToSender(ctx, msg, `你获得了${count}个${name}`);
+
                 gm.player.savePlayer(uid);
                 return seal.ext.newCmdExecuteResult(true);
             }
             case 'use': {
+                const name = cmdArgs.getArgN(2);
+                if (!name) {
+                    seal.replyToSender(ctx, msg, '请输入道具名');
+                    return seal.ext.newCmdExecuteResult(true);
+                }
+
+                const count = parseInt(cmdArgs.getArgN(3));
+                if (isNaN(count) || count < 1) {
+                    seal.replyToSender(ctx, msg, '请输入数量');
+                    return seal.ext.newCmdExecuteResult(true);
+                }
+
                 const player = gm.player.getPlayer(uid, un);
-                gm.useProp(ctx, msg, cmdArgs, player, '核弹', 1, game);
+
+                gm.useProp(ctx, msg, cmdArgs, player, name, count, game);
 
                 setTimeout(() => {
                     gm.player.savePlayer(uid);
@@ -187,6 +224,40 @@ if (!ext) {
                 shop.updateShop();
                 seal.replyToSender(ctx, msg, JSON.stringify(shop));
                 gm.shop.saveShop('普通');
+                return seal.ext.newCmdExecuteResult(true);
+            }
+            case 'sell': {
+                const name = cmdArgs.getArgN(2);
+                if (!name) {
+                    seal.replyToSender(ctx, msg, '请输入道具名');
+                    return seal.ext.newCmdExecuteResult(true);
+                }
+
+                const count = parseInt(cmdArgs.getArgN(3));
+                if (isNaN(count) || count < 1) {
+                    seal.replyToSender(ctx, msg, '请输入数量');
+                    return seal.ext.newCmdExecuteResult(true);
+                }
+
+                const price = parseInt(cmdArgs.getArgN(4));
+                if (isNaN(price) || price < 1) {
+                    seal.replyToSender(ctx, msg, '请输入价格');
+                    return seal.ext.newCmdExecuteResult(true);
+                }
+
+                const title = '测试';
+                const content = `这是一个测试道具`;
+
+                const player = gm.player.getPlayer(uid, un);
+                const result = gm.market.sell(player, title, content, name, price, count);
+
+                if (result) {
+                    seal.replyToSender(ctx, msg, `你出售了${count}个${title}，价格为${price}`);
+                } else {
+                    seal.replyToSender(ctx, msg, `你没有${title}`);
+                }
+
+                gm.player.savePlayer(uid);
                 return seal.ext.newCmdExecuteResult(true);
             }
             case 'market': {
