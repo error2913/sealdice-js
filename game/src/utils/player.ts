@@ -27,7 +27,7 @@ export class PlayerManager {
     }
 
     parse(data: any, uid: string, name: string, vi: VarsInfo): Player {
-        if (!data.hasOwnProperty(uid)) {
+        if (!data.hasOwnProperty('uid')) {
             console.log(`创建新玩家:${uid}`);
         }
 

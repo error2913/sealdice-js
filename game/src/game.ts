@@ -37,7 +37,7 @@ export class GameManager {
     }
 
     private parse(data: any, gid: string, vi: VarsInfo): Game {
-        if (!data.hasOwnProperty(gid)) {
+        if (!data.hasOwnProperty('gid')) {
             console.log(`创建新游戏:${gid}`);
         }
 

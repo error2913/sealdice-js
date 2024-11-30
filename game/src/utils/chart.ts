@@ -64,11 +64,7 @@ export class ChartManager {
         this.cache = {};
     }
 
-    private parse(data: any, name: string, vn: string): Chart {
-        if (!data.hasOwnProperty(name)) {
-            console.log(`创建新排行榜:${name}`);
-        }
-
+    private parse(data: any, vn: string): Chart {
         const chart = new Chart(vn);
 
         if (data.hasOwnProperty('list') && Array.isArray(data.list)) {
@@ -107,7 +103,7 @@ export class ChartManager {
             }
 
             const vn = this.map[name];
-            this.cache[name] = this.parse(data, name, vn);
+            this.cache[name] = this.parse(data, vn);
         }
 
 

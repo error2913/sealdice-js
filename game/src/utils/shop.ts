@@ -88,13 +88,10 @@ export class ShopManager {
     constructor(ext: seal.ExtInfo) {
         this.ext = ext;
         this.map = {};
+        this.cache = {};
     }
 
-    private parse(data: any, name: string, giArr: GoodsInfo[]): Shop {
-        if (!data.hasOwnProperty(name)) {
-            console.log(`创建新商店:${name}`);
-        }
-
+    private parse(data: any, giArr: GoodsInfo[]): Shop {
         const shop = new Shop(giArr);
 
         if (data.hasOwnProperty('goods') && typeof data.goods === 'object') {
@@ -129,7 +126,7 @@ export class ShopManager {
             }
     
             const giArr = this.map[name];
-            this.cache[name] = this.parse(data, name, giArr);
+            this.cache[name] = this.parse(data, giArr);
         }
 
         return this.cache[name];

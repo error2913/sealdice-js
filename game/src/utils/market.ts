@@ -113,6 +113,10 @@ export class MarketManager {
     }
 
     showSellInfo(): string[] {
+        if (this.list.length === 0) {
+            return ['市场暂无商品'];
+        }
+
         const pageSize = 10;
         const totalPages = Math.ceil(this.list.length / pageSize);
         const pages = [];
