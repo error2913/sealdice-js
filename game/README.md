@@ -43,6 +43,7 @@ class Pollution {
 
         if (data === null || typeof data !== 'object' || Array.isArray(data)) {
             pollution.level = defaultData;
+            return pollution;
         }
 
         if (data.hasOwnProperty('time') && typeof data.time == 'number') {
