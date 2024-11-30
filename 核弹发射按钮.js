@@ -245,8 +245,8 @@ market`;
                     return seal.ext.newCmdExecuteResult(true);
                 }
 
-                const title = '测试';
-                const content = `这是一个测试道具`;
+                const title = name;
+                const content = `${count}个${name}，价格为${price}`;
 
                 const player = gm.player.getPlayer(uid, un);
                 const result = gm.market.sell(player, title, content, name, price, count);
