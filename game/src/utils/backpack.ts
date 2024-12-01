@@ -54,6 +54,24 @@ export class Backpack {
         return true;
     }
 
+    checkTypesExist(gm: GameManager, types: string[]): boolean {
+        const propMap = gm.propMap;
+
+        for (let name of Object.keys(this.items)) {
+            if (!propMap.hasOwnProperty(name)) {
+                continue;
+            }
+
+            const type = propMap[name].type;
+
+            if (types.includes(type)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     getTotalCount(): number {
         let count = 0;
 
@@ -83,6 +101,41 @@ export class Backpack {
         return count;
     }
 
+    getTypes(gm: GameManager): string[] {
+        const propMap = gm.propMap;
+        const result = [];
+
+        for (let name of Object.keys(this.items)) {
+            if (!propMap.hasOwnProperty(name)) {
+                continue;
+            }
+
+            const type = propMap[name].type;
+
+            if (!result.includes(type)) {
+                result.push(type);
+            }
+        }
+
+        return result;
+    }
+
+    getNames(): string[] {
+        return Object.keys(this.items);
+    }
+
+    getCount(name: string): number {
+        if (!this.items.hasOwnProperty(name)) {
+            return 0;
+        }
+
+        return this.items[name];
+    }
+
+    len(): number {
+        return Object.keys(this.items).length;
+    }
+
     add(name: string, count: number) {
         if (!this.items.hasOwnProperty(name)) {
             this.items[name] = count;
@@ -103,6 +156,22 @@ export class Backpack {
         }
     }
 
+    removeByTypes(gm: GameManager, types: string[]) {
+        const propMap = gm.propMap;
+
+        for (let name of Object.keys(this.items)) {
+            if (!propMap.hasOwnProperty(name)) {
+                continue;
+            }
+
+            const type = propMap[name].type;
+
+            if (types.includes(type)) {
+                delete this.items[name];
+            }
+        }
+    }
+
     clear() {
         this.items = {};
     }
@@ -110,6 +179,12 @@ export class Backpack {
     merge(backpack: Backpack) {
         for (let name of Object.keys(backpack.items)) {
             this.add(name, backpack.items[name]);
+        }
+    }
+
+    removeBackpack(backpack: Backpack) {
+        for (let name of Object.keys(backpack.items)) {
+            this.remove(name, backpack.items[name]);
         }
     }
 
@@ -171,25 +246,6 @@ export class Backpack {
         for (let name of Object.keys(this.items)) {
             if (this.items[name] >= min && this.items[name] <= max) {
                 result.push(name);
-            }
-        }
-
-        return result;
-    }
-
-    getTypes(gm: GameManager): string[] {
-        const propMap = gm.propMap;
-        const result = [];
-
-        for (let name of Object.keys(this.items)) {
-            if (!propMap.hasOwnProperty(name)) {
-                continue;
-            }
-
-            const type = propMap[name].type;
-
-            if (!result.includes(type)) {
-                result.push(type);
             }
         }
 

@@ -230,20 +230,24 @@ value // 变量值
 ### 方法介绍
 
 ```js
-registerShop(name, giArr) // 注册商店，参数为 商店名称 和 商品信息数组
+registerShop(name, gc) // 注册商店，参数为 商店名称 和 商品信息配置
 
 getShop(name): Shop | undefined // 获取商店对象
 saveShop(name) // 保存商店
 
+setGoodsInfo(name, goodsName, gi) // 设置商品信息，参数为 商店名称 和 商品名称 和 商品信息对象
+getGoodsInfo(name, goodsName): GoodsInfo | undefined // 获取商品信息，返回一个商品信息对象
+
 updateShop(name): Shop | undefined // 更新商店，根据商品信息数组重新生成商店
 ```
 
-### goodsInfoArr商品信息数组
+### goodsConfig商品信息配置
 
-生成商店用的配置信息，元素的结构为
+生成商店用的配置信息，结构为`商品名称: 商品信息`
+
+商品信息对象结构为
 
 ```js
-name // 商品名称
 price: {
     base, // 基础价格
     delta // 价格增量
@@ -260,7 +264,7 @@ prob // 出现概率，0-1之间的小数
 ### shop对象结构
 
 ```js
-updateTime // 更新时间
+updateTime // 更新时间，秒级时间戳
 goods // 商品映射表
 ```
 
@@ -273,6 +277,18 @@ goods // 商品映射表
 }
 ```
 
+### shop对象方法
+
+```js
+updateShop(): Shop // 更新商店，根据商品信息数组重新生成商店，不会自动保存，建议用上面那个
+
+getGoods(name: string): Goods | undefined // 获取商品信息，返回一个对象，结构为{price, count}
+addGoods(name, price, count)  // 添加商品，name为商品名称，price为价格，count为数量，不能修改已有商品
+supplyGoods(name, count) // 补充商品，name为商品名称，count为数量，能修改已有商品
+buyGoods(name, count): boolean // 购买商品，name为商品名称，count为数量，返回是否成功购买
+removeGoods(name): boolean // 删除商品，name为商品名称，返回是否成功删除
+```
+
 ## market市场管理器
 
 市场管理器为`gm.market`
@@ -283,7 +299,8 @@ goods // 商品映射表
 getMarket(): SellInfo[] | undefined // 获取市场信息
 saveMarket()  // 保存市场信息，一般用不到
 
-sell(player, title, content, name, price, count): boolean // 出售商品
+putOnSale(uid, title, content, name, price, count): boolean // 上架商品，title不超过12个字符，content不超过300个字符，price为单价
+buy(id, count = 0): boolean // 购买商品，id为商品id，count为购买数量，返回是否成功购买
 getSellInfo(id): SellInfo | undefined // 获取商品信息
 removeSellInfo(id): boolean // 删除商品信息
 showSellInfo(): string[]  // 显示商品信息，返回一个字符串数组，用于发送给玩家
@@ -338,20 +355,25 @@ gm.registerProp(prop);
 
 ```js
 checkExist(name, count): boolean // 检查背包内是否存在指定数量的物品
+checkTypesExist(gm, types: string[]): boolean // 检查背包内是否存在指定类型的物品
 
 getTotalCount(): number // 获取背包内物品总数量
 getTotalCountByTypes(gm, types: string[]): number  // 根据道具类型获取背包内物品总数量
+getTypes(gm): string[] // 获取道具类型数组
+getNames(): string[] // 获取道具名称数组
+getCount(name): number // 获取道具数量
+len(): number // 获取背包长度
 
 add(name, count) // 增加物品
 remove(name, count) // 减少物品
+removeByTypes(gm, types: string[]) // 根据道具类型减少物品
 clear() // 清空背包
 
 merge(backpack) // 合并另一个背包的物品
+removeBackpack(backpack) // 移除另一个背包的物品
 
 draw(n): Backpack // 随机抽取n个物品，返回一个新的背包对象
 
 findByTypes(gm, types: string[]): string[] // 根据道具类型获取物品名称数组
 findByCountRange(min, max): string[] // 根据道具数量范围获取物品名称数组
-
-getTypes(gm): string[] // 获取道具类型数组
 ```

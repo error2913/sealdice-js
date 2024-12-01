@@ -1,5 +1,3 @@
-import { Player } from "./player";
-
 export interface SellInfo {
     id: number;
     title: string;
@@ -91,12 +89,8 @@ export class MarketManager {
         return id + 1;
     }
 
-    sell(player: Player, title: string, content: string, name: string, price: number, count: number): boolean {
+    putOnSale(uid: string, title: string, content: string, name: string, price: number, count: number): boolean {
         if (title.length > 12 || content.length > 300) {
-            return false;
-        }
-
-        if (!player.backpack.checkExist(name, count)) {
             return false;
         }
 
@@ -107,13 +101,35 @@ export class MarketManager {
             name: name,
             price: price,
             count: count,
-            uid: player.uid
+            uid: uid
         }
 
-        player.backpack.remove(name, count);
         this.list.push(sellInfo);
         this.saveMarket();
 
+        return true;
+    }
+
+    buy(id: number, count: number = 0): boolean {
+        const index = this.list.findIndex(si => si.id === id);
+
+        if (index === -1) {
+            return false;
+        }
+
+        const si = this.list[index];
+
+        if (count === 0 || count > si.count) {
+            count = si.count;
+        }
+
+        this.list[index].count -= count;
+
+        if (this.list[index].count <= 0) {
+            this.list.splice(index, 1);
+        }
+
+        this.saveMarket();
         return true;
     }
 

@@ -1,5 +1,4 @@
 export interface GoodsInfo {
-    name: string;
     price: {
         base: number,
         delta: number
@@ -11,20 +10,22 @@ export interface GoodsInfo {
     prob: number
 }
 
+export interface GoodsConfig {
+    [key: string]: GoodsInfo
+}
+
 export interface Goods {
     price: number;
     count: number;
 }
 
 export class Shop {
-    private goodsInfoArray: GoodsInfo[];// 基于此数据生成goods
+    private goodsConfig: GoodsConfig;// 基于此数据生成goods
     updateTime: number;
-    goods: {
-        [key: string]: Goods
-    }
+    goods: { [key: string]: Goods }
 
-    constructor(giArr: GoodsInfo[]) {
-        this.goodsInfoArray = giArr;
+    constructor(gc: GoodsConfig) {
+        this.goodsConfig = gc;
         this.updateTime = 0;
         this.goods = {};
     }
@@ -33,7 +34,9 @@ export class Shop {
         this.updateTime = Math.floor(Date.now() / 1000);
         this.goods = {};
 
-        for (const gi of this.goodsInfoArray) {
+        for (const name of Object.keys(this.goodsConfig)) {
+            const gi = this.goodsConfig[name];
+
             if (Math.random() < gi.prob) {
                 const pb = gi.price.base;
                 const pd = gi.price.delta;
@@ -43,7 +46,7 @@ export class Shop {
                 const price = Math.floor(Math.random() * (pd * 2 + 1) + pb - pd);
                 const count = Math.floor(Math.random() * (cd * 2 + 1) + cb - cd);
 
-                this.goods[gi.name] = {
+                this.goods[name] = {
                     price: price,
                     count: count
                 }
@@ -62,18 +65,30 @@ export class Shop {
     }
 
     addGoods(name: string, price: number, count: number) {
+        if (this.goods.hasOwnProperty(name)) {
+            return;
+        }
+
         this.goods[name] = {
             price: price,
             count: count
         }
     }
 
-    removeGoods(name: string, count: number): boolean {
+    supplyGoods(name: string, count: number) {
+        if (!this.goods.hasOwnProperty(name)) {
+            return;
+        }
+
+        this.goods[name].count += count;
+    }
+
+    buyGoods(name: string, count: number): boolean {
         if (!this.goods.hasOwnProperty(name)) {
             return false;
         }
 
-        if (this.goods[name].count < count) {
+        if (this.goods[name].count < count || count <= 0) {
             return false;
         }
 
@@ -81,11 +96,20 @@ export class Shop {
 
         return true;
     }
+
+    removeGoods(name: string): boolean {
+        if (!this.goods.hasOwnProperty(name)) {
+            return false;
+        }
+
+        delete this.goods[name];
+        return true;
+    }
 }
 
 export class ShopManager {
     private ext: seal.ExtInfo;
-    private map: { [key: string]: GoodsInfo[] } // 基于此数据生成shop
+    private map: { [key: string]: GoodsConfig } // 基于此数据生成shop
     private cache: { [key: string]: Shop }
 
     constructor(ext: seal.ExtInfo) {
@@ -94,8 +118,8 @@ export class ShopManager {
         this.cache = {};
     }
 
-    private parse(data: any, giArr: GoodsInfo[]): Shop {
-        const shop = new Shop(giArr);
+    private parse(data: any, gc: GoodsConfig): Shop {
+        const shop = new Shop(gc);
 
         if (data.hasOwnProperty('updateTime') && typeof data.updateTime === 'number') {
             shop.updateTime = data.updateTime;
@@ -120,16 +144,21 @@ export class ShopManager {
         return shop;
     }
 
-    registerShop(name: string, giArr: GoodsInfo[]) {
+    registerShop(name: string, gc: GoodsConfig) {
         if (this.map.hasOwnProperty(name)) {
             console.error(`注册商店${name}时出现错误:该名字已注册`);
             return;
         }
 
-        for (const gi of giArr) {
-            if (
-                !gi.hasOwnProperty('name') || typeof gi.name !== 'string' ||
+        if (gc === null || typeof gc !== 'object' || Array.isArray(gc)) {
+            console.error(`注册商店${name}时出现错误:配置数据错误`);
+            return;
+        }
 
+        for (const name of Object.keys(gc)) {
+            const gi = gc[name];
+
+            if (
                 !gi.hasOwnProperty('price') || typeof gi.price !== 'object' ||
                 !gi.price.hasOwnProperty('base') || typeof gi.price.base !== 'number' ||
                 !gi.price.hasOwnProperty('delta') || typeof gi.price.delta !== 'number' ||
@@ -145,7 +174,7 @@ export class ShopManager {
             }
         }
 
-        this.map[name] = giArr;
+        this.map[name] = gc;
     }
 
     getShop(name: string): Shop | undefined {
@@ -163,8 +192,8 @@ export class ShopManager {
                 console.error(`从数据库中获取${`shop_${name}`}失败:`, error);
             }
 
-            const giArr = this.map[name];
-            this.cache[name] = this.parse(data, giArr);
+            const gc = this.map[name];
+            this.cache[name] = this.parse(data, gc);
         }
 
         return this.cache[name];
@@ -180,6 +209,34 @@ export class ShopManager {
             const shop = this.cache[name];
             this.ext.storageSet(`shop_${name}`, JSON.stringify(shop));
         }
+    }
+
+    setGoodsInfo(name: string, goodsName: string, gi: GoodsInfo) {
+        if (!this.map.hasOwnProperty(name)) {
+            console.error(`获取商店${name}时出现错误:该名字未注册`);
+            return undefined;
+        }
+
+        this.map[name][goodsName] = gi;
+
+        if (this.cache.hasOwnProperty(name)) {
+            delete this.cache[name];
+            this.getShop(name);
+        }
+    }
+
+    getGoodsInfo(name: string, goodsName: string): GoodsInfo | undefined {
+        if (!this.map.hasOwnProperty(name)) {
+            console.error(`获取商店${name}时出现错误:该名字未注册`);
+            return undefined;
+        }
+
+        if (!this.map[name].hasOwnProperty(goodsName)) {
+            console.error(`获取商店${name}时出现错误:该商品信息未注册`);
+            return undefined;
+        }
+
+        return this.map[name][goodsName];
     }
 
     updateShop(name: string): Shop | undefined {
