@@ -196,6 +196,10 @@ export class ShopManager {
             this.cache[name] = this.parse(data, gc);
         }
 
+        if (this.cache[name].updateTime === 0) {
+            this.updateShop(name);
+        }
+
         return this.cache[name];
     }
 
