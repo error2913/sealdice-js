@@ -20,7 +20,8 @@ if (!ext) {
     // 污染类，用于模拟污染
     class Pollution {
         constructor() {
-            this.time = 0;
+            this.time = 0; // 遭受的时间
+            this.value = 0; // 遭受的污染值
             this.level = '';
         }
 
@@ -31,6 +32,10 @@ if (!ext) {
             }
 
             if (!defaultData.hasOwnProperty('time') || typeof defaultData.time !== 'number') {
+                return false;
+            }
+
+            if (!defaultData.hasOwnProperty('value') || typeof defaultData.value!== 'number') {
                 return false;
             }
 
@@ -54,6 +59,10 @@ if (!ext) {
                 pollution.time = data.time;
             }
 
+            if (data.hasOwnProperty('value') && typeof data.value == 'number') {
+                pollution.value = data.value;
+            }
+
             if (data.hasOwnProperty('level') && typeof data.level == 'string') {
                 pollution.level = data.level;
             } else {
@@ -63,13 +72,21 @@ if (!ext) {
             return pollution;
         }
 
-        // 污染函数，参数为污染值，用于根据污染值更新污染等级
-        pollute(pollutionValue) {
-            this.time++;
+        reduce() {
+            const now = Math.floor(Date.now() / 1000);
+            const delta = now - this.time;
 
-            if (pollutionValue >= 100) {
+            this.value *= Math.pow(0.95, delta);
+            
+            this.time = Math.floor(Date.now() / 1000);
+        }
+
+        pollute(count) {
+            this.value += count;
+
+            if (this.value >= 100) {
                 this.level = '高';
-            } else if (pollutionValue >= 50) {
+            } else if (this.value >= 50) {
                 this.level = '中';
             } else {
                 this.level = '低';
@@ -81,79 +98,96 @@ if (!ext) {
 
     const gvi = {
         pollution: ['pollution', '低'],
-        n: ['number', 0]
+        nukePlayerNumber: ['number', 0]
     }
     const pvi = {
         pollution: ['pollution', '低'],
-        pollutionValue: ['number', 0],
         money: ['number', 0],
         develop: ['number', 0],
         haveNuke: ['boolean', false],
-        entry: ['backpack', { '普通': 1 }]
+        target: ['backpack', {}]
     }
     const gm = globalThis.getNewGM(ext, gvi, pvi);
 
     const game = gm.getGame('全局');
 
     const prop = gm.newPropItem();
-    prop.name = '核弹'; // 名字
-    prop.desc = '很恐怖'; // 描述
-    prop.type = '武器'; // 类型
-    prop.reply = '你使用了一个核弹！！！'; // 回复，此回复只在单个使用时会发送，可使用豹语
+    prop.name = '普通核弹'; // 名字
+    prop.desc = '非常恐怖，威力巨大'; // 描述
+    prop.type = '核弹'; // 类型
+    prop.reply = ''; // 回复，此回复只在单个使用时会发送，可使用豹语
     prop.solve = (ctx, msg, cmdArgs, player, count, game) => {
-        player.varsMap.pollutionValue += count;
-        player.varsMap.pollution.pollute(player.varsMap.pollutionValue);
+        const mctx = seal.getCtxProxyFirst(ctx, cmdArgs);
+        const muid = mctx.player.userId;
 
-        if (count !== 1) {
-            seal.replyToSender(ctx, msg, `你使用了${count}个核弹！！！`);
+        if (player.uid === muid) {
+            seal.replyToSender(ctx, msg, '请选择你的目标');
+            return false;
         }
+
+        const mun = mctx.player.name;
+        const mplayer = gm.player.getPlayer(muid, mun);
+
+        mplayer.varsMap.pollution.reduce();
+        mplayer.varsMap.pollution.pollute(count);
+        mplayer.varsMap.develop *= 0.8;
+
+        seal.replyToSender(ctx, msg, `<${player.name}>对<${mplayer.name}>使用了${count}个核弹！！！`);
 
         return true;
     }
     gm.registerProp(prop);
 
-    gm.chart.registerChart('一个排行榜', 'pollutionValue');
+    gm.chart.registerChart('富豪榜', 'money');
 
-    const giArr = [
-        {
-            name: '铀',
-            price: {
-                base: 10000,
-                delta: 500
-            },
-            count: {
-                base: 10,
-                delta: 1
-            },
+    const giArr = {
+        '铀': {
+            price: { base: 10000, delta: 500 },
+            count: { base: 10, delta: 1 },
             prob: 1
         },
-        {
-            name: '浓缩装置',
-            price: {
-                base: 50000,
-                delta: 1000
-            },
-            count: {
-                base: 2,
-                delta: 1
-            },
+        '浓缩装置': {
+            price: { base: 50000, delta: 1000 },
+            count: { base: 2, delta: 1 },
             prob: 0.1
+        },
+        '核弹': {
+            price: { base: 100000, delta: 10000 },
+            count: { base: 1, delta: 1 },
+            prob: 0.01
         }
-    ]
+    }
     gm.shop.registerShop('普通', giArr);
 
+    
+    function checkNuke(player)  {
+        if (player.varsMap.haveNuke) {
+            if (player.varsMap.backpack.checkTypesExist(gm, ['核弹'])) {
+                return;
+            }
+
+            player.varsMap.haveNuke = false;
+            game.varsMap.nukePlayerNumber -= 1;
+            return;
+        }
+
+        if (player.varsMap.backpack.checkTypesExist(gm, ['核弹'])) {
+            player.varsMap.haveNuke = true;
+            game.varsMap.nukePlayerNumber += 1;
+        }
+    }
 
     const cmd = seal.ext.newCmdItemInfo();
     cmd.name = 'nu';
     cmd.help = `帮助:
 help
 show
-get <道具名> <数量>
 use <道具名> <数量>
 chart
 shop
 sell <道具名> <数量> <价格>
 market`;
+    cmd.allowDelegate = true;
     cmd.solve = (ctx, msg, cmdArgs) => {
         let val = cmdArgs.getArgN(1);
         const uid = ctx.player.userId;
@@ -168,7 +202,15 @@ market`;
             }
             case 'show': {
                 const player = gm.player.getPlayer(uid, un);
-                seal.replyToSender(ctx, msg, JSON.stringify(player));
+                const targetText = Object.keys(player.varsMap.target.items).join('\n');
+                const s = `玩家:<${player.name}>
+污染值:${player.varsMap.pollution.value}
+污染等级:${player.varsMap.pollution.level}
+钱包:${player.varsMap.money}
+发展度:${player.varsMap.develop}
+是否有核武:${player.varsMap.haveNuke}
+威慑目标:${targetText}`
+                seal.replyToSender(ctx, msg, s);
                 return seal.ext.newCmdExecuteResult(true);
             }
             case 'get': {
@@ -187,6 +229,7 @@ market`;
                 const player = gm.player.getPlayer(uid, un);
 
                 player.backpack.add(name, count);
+                checkNuke(player);
 
                 seal.replyToSender(ctx, msg, `你获得了${count}个${name}`);
 
@@ -212,12 +255,12 @@ market`;
 
                 setTimeout(() => {
                     gm.player.savePlayer(uid);
-                    gm.chart.updateChart('一个排行榜', player);
+                    gm.chart.updateChart('富豪榜', player);
                 }, 1000);
                 return seal.ext.newCmdExecuteResult(true);
             }
             case 'chart': {
-                const chart = gm.chart.getChart('一个排行榜');
+                const chart = gm.chart.getChart('富豪榜');
                 seal.replyToSender(ctx, msg, JSON.stringify(chart));
                 return seal.ext.newCmdExecuteResult(true);
             }
