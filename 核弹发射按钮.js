@@ -2,7 +2,7 @@
 // @name         核弹发射按钮
 // @author       错误
 // @version      1.0.0
-// @description  测试
+// @description  发展科技，积累资源，制造核弹。快使用核武污染和威慑别人吧。
 // @timestamp    1732866663
 // 2024-11-29 15:51:03
 // @license      MIT
@@ -107,6 +107,8 @@ if (!ext) {
         if (count !== 1) {
             seal.replyToSender(ctx, msg, `你使用了${count}个核弹！！！`);
         }
+
+        return true;
     }
     gm.registerProp(prop);
 
