@@ -11,8 +11,7 @@ export interface VarsInfo {
 export class VarsManager {
     private map: {
         [key: string]: {
-            check: (defaultData: any) => boolean,
-            parse: (data: any, defaultData: any) => any
+            parse: (data: any, defaultData: any) => any | undefined
         }
     }
 
@@ -21,61 +20,46 @@ export class VarsManager {
 
         this.registerVarsType(
             'boolean',
-            (defaultData: any) => {
-            return typeof defaultData === 'boolean';
-            }, 
             (data: any, defaultData: any) => {
-            if (typeof data === 'boolean') {
-                return data;
-            }
+                if (typeof defaultData !== 'boolean') {
+                    return undefined;
+                }
 
-            return defaultData;
+                return typeof data === 'boolean' ? data: defaultData;
             }
         );
 
         this.registerVarsType(
             'string',
-            (defaultData: any) => {
-                return typeof defaultData === 'string';
-            }, 
             (data: any, defaultData: any) => {
-                if (typeof data === 'string') {
-                    return data;
+                if (typeof defaultData!== 'string') {
+                    return undefined;
                 }
 
-                return defaultData;
+                return typeof data === 'string'? data: defaultData;
             }
         );
 
         this.registerVarsType(
             'number',
-            (defaultData: any) => {
-                return typeof defaultData === 'number';
-            },
             (data: any, defaultData: any) => {
-                if (typeof data === 'number') {
-                    return data;
+                if (typeof defaultData!== 'number') {
+                    return undefined;
                 }
 
-                return defaultData;
+                return typeof data === 'number'? data: defaultData;
             }
         );
 
         this.registerVarsType(
             'backpack',
-            (defaultData: any) => {
-                return Backpack.check(defaultData);
-            },
-            (data: any, defaultData: any) => {
-                return Backpack.parse(data, defaultData);
-            }
+            Backpack.parse
         );
     }
 
     registerVarsType(
         type: string,
-        checkFunc: (defaultData: any) => boolean,
-        parseFunc: (data: any, defaultData: any) => any
+        parseFunc: (data: any, defaultData: any) => any | undefined
     ) {
         if (this.map.hasOwnProperty(type)) {
             console.error(`注册变量解析器${type}时出现错误:该名字已注册`);
@@ -83,31 +67,15 @@ export class VarsManager {
         }
 
         this.map[type] = {
-            check: checkFunc,
             parse: parseFunc
         }
     }
-    
-    checkTypeVarsInfo(data: any): boolean {
-        if (data === null || typeof data !== 'object' || Array.isArray(data)) {
-            return false;
+
+    parse(data: any, vi: VarsInfo): VarsMap | undefined {
+        if (vi === null || typeof vi !== 'object' || Array.isArray(vi)) {
+            return undefined;
         }
 
-        for (let key of Object.keys(data)) {
-            const type = data[key][0];
-            const defaultData = data[key][1];
-
-            if (this.map.hasOwnProperty(type) && this.map[type].check(defaultData)) {
-                continue;
-            }
-
-            return false;
-        }
-
-        return true;
-    }
-
-    parse(data: any, vi: VarsInfo): VarsMap {
         const result: VarsMap = {};
 
         if (data === null || typeof data !== 'object' || Array.isArray(data)) {
@@ -115,12 +83,16 @@ export class VarsManager {
         }
 
         for (let key of Object.keys(vi)) {
+            if (!Array.isArray(vi[key]) || vi[key].length !== 2 || typeof vi[key][0]== 'string') {
+                return undefined;
+            }
+
             const type = vi[key][0];
             const defaultData = vi[key][1];
 
             if (!this.map.hasOwnProperty(type)) {
                 console.error(`解析变量${key}时出现错误:未注册${type}类型的解析器`);
-                continue;
+                return undefined;
             }
             
             if (!data.hasOwnProperty(key)) {
@@ -128,6 +100,11 @@ export class VarsManager {
             }
             
             result[key] = this.map[type].parse(data[key], defaultData);
+
+            if (result[key] === undefined) {
+                console.error(`解析变量${key}时出现错误:默认值错误`);
+                return undefined;
+            }
         }
 
         return result;

@@ -19,7 +19,7 @@ export class MarketManager {
         this.getMarket();
     }
 
-    private parse(data: any): SellInfo[] {
+    parse(data: any, _: any): SellInfo[] | undefined {
         if (!Array.isArray(data)) {
             return [];
         }
@@ -68,7 +68,7 @@ export class MarketManager {
                 console.error(`从数据库中获取${`market`}失败:`, error);
             }
 
-            this.list = this.parse(data);
+            this.list = this.parse(data, null);
         }
 
 

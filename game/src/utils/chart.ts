@@ -7,18 +7,19 @@ export interface PlayerInfo {
 }
 
 export class Chart {
-    varName: string;
+    func: (player: Player) => number;
     list: PlayerInfo[];
 
-    constructor(vn: string) {
-        this.varName = vn;
+    constructor(func: (player: Player) => number) {
+        this.func = func;
         this.list = [];
     }
 
     updateChart(player: Player) {
-        const vn = this.varName;
-        if (!player.varsMap.hasOwnProperty(vn)) {
-            console.error(`更新排行榜时出现错误:变量${vn}不存在`);
+        const value = this.func(player);
+
+        if (typeof value!== 'number') {
+            console.error(`更新排行榜时出现错误:返回值不是数字`);
             return;
         }
 
@@ -28,20 +29,12 @@ export class Chart {
             const pi = {
                 uid: player.uid,
                 name: player.name,
-                value: player.varsMap[vn]
+                value: value
             }
 
             this.list.push(pi);
         } else {
             this.list[index].name = player.name;
-
-            const value = player.varsMap[vn];
-
-            if (typeof value !== 'number') {
-                console.error(`更新排行榜时出现错误:变量${vn}的值不是数字`);
-                return;
-            }
-
             this.list[index].value = value;
         }
 
@@ -55,7 +48,7 @@ export class Chart {
 
 export class ChartManager {
     private ext: seal.ExtInfo;
-    private map: { [key: string]: string } // 排行榜名字和变量名的映射
+    private map: { [key: string]: (player: Player) => number } // 排行榜名字和变量名的映射
     private cache: { [key: string]: Chart }
 
     constructor(ext: seal.ExtInfo) {
@@ -64,8 +57,12 @@ export class ChartManager {
         this.cache = {};
     }
 
-    private parse(data: any, vn: string): Chart {
-        const chart = new Chart(vn);
+    parse(data: any, func: (player: Player) => number): Chart | undefined {
+        if (typeof func !== 'function') {
+            return undefined;
+        }
+
+        const chart = new Chart(func);
 
         if (data.hasOwnProperty('list') && Array.isArray(data.list)) {
             chart.list = data.list;
@@ -78,13 +75,13 @@ export class ChartManager {
         this.cache = {};
     }
 
-    registerChart(name: string, vn: string) {
+    registerChart(name: string, func: (player: Player) => number) {
         if (this.map.hasOwnProperty(name)) {
             console.error(`注册排行榜${name}时出现错误:该名字已注册`);
             return;
         }
 
-        this.map[name] = vn;
+        this.map[name] = func;
     }
 
     getChart(name: string): Chart | undefined {
@@ -102,8 +99,8 @@ export class ChartManager {
                 console.error(`从数据库中获取${`chart_${name}`}失败:`, error);
             }
 
-            const vn = this.map[name];
-            this.cache[name] = this.parse(data, vn);
+            const func = this.map[name];
+            this.cache[name] = this.parse(data, func);
         }
 
 

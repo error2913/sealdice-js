@@ -2,55 +2,54 @@
 
 ## vars变量管理
 
-使用`globalThis.varsManager.registerVarsType(type, check, parse)`可以注册变量类型，参数介绍：
+### 方法介绍
+
+```js
+registerVarsType(type, parseFunc) // 注册变量类型
+parse(data, vi): VarsMap | undefined // 解析变量，参数为data和varsInfo，返回值为解析后的值，返回undefined说明默认值出错
+```
+
+使用`globalThis.varsManager.registerVarsType(type, parse)`可以注册变量类型，参数介绍：
 
 ```js
 type // 变量类型名称，字符串
-check // 检查函数，参数为defaultData，返回值为布尔值，用于检查defaultData是否符合要求
-parse // 解析函数，参数为data和defaultData，返回值为解析后的值，用于从字符串中解析变量
+parse(data, defaultData) // 解析函数，参数为data和defaultData，返回值为解析后的值，用于从字符串反序列化结果中解析变量。defaultData格式错误时应该返回undefined
 ```
 
 示例：
 
 ```js
-// 一个污染类，用于模拟污染
+// 污染类，用于模拟污染
 class Pollution {
     constructor() {
-        this.time = 0;
+        this.time = 0; // 遭受的时间
+        this.value = 0; // 遭受的污染值
         this.level = '';
-    }
-
-    // 检查函数，检查defaultData是否符合要求
-    static check(defaultData) {
-        if (defaultData === null || typeof defaultData !== 'object' || Array.isArray(defaultData)) {
-            return false;
-        }
-
-        if (!defaultData.hasOwnProperty('time') || typeof defaultData.time !== 'number') {
-            return false;
-        }
-
-        if (!defaultData.hasOwnProperty('level') || typeof defaultData.level!== 'string') {
-            return false;
-        }
-
-        return true;
     }
 
     // 解析函数，参数为data和defaultData，返回值为解析后的值，用于从字符串中解析变量
     static parse(data, defaultData) {
+        // 检查defaultData部分
+        if (typeof defaultData !== 'string') {
+            return undefined;
+        }
+
+        // 解析data部分
         const pollution = new Pollution();
 
         if (data === null || typeof data !== 'object' || Array.isArray(data)) {
-            pollution.level = defaultData;
-            return pollution;
+            data = {};
         }
 
         if (data.hasOwnProperty('time') && typeof data.time == 'number') {
             pollution.time = data.time;
         }
 
-        if (data.hasOwnProperty('level') && typeof data.level== 'string') {
+        if (data.hasOwnProperty('value') && typeof data.value == 'number') {
+            pollution.value = data.value;
+        }
+
+        if (data.hasOwnProperty('level') && typeof data.level == 'string') {
             pollution.level = data.level;
         } else {
             pollution.level = defaultData;
@@ -59,30 +58,21 @@ class Pollution {
         return pollution;
     }
 
-    // 污染函数，参数为污染值，用于根据污染值更新污染等级
-    pollute(pollutionValue) {
-        this.time++;
-
-        if (pollutionValue >= 100) {
-            this.level = '高';
-        } else if (pollutionValue >= 50) {
-            this.level = '中';
-        } else {
-            this.level = '低';
-        }
-    }
+    // ...其他方法
 }
 
-// 注册变量类型，参数为变量类型名称，检查函数，解析函数
-globalThis.varsManager.registerVarsType('pollution', Pollution.check, Pollution.parse);
+// 注册变量类型，参数为 变量类型名称，解析函数
+globalThis.varsManager.registerVarsType('pollution', Pollution.parse);
 ```
+
+内置的变量类型：`string`、`number`、`boolean`、`backpack`
 
 ### VarsInfo 变量信息
 
 在注册游戏时提供，结构为
 
 ```js
-变量名称: [变量类型, 变量默认值]
+变量名称: [变量类型名称, 变量默认值]
 ```
 
 示例：
@@ -90,7 +80,7 @@ globalThis.varsManager.registerVarsType('pollution', Pollution.check, Pollution.
 ```js
 const vi = {
     pollution: ['pollution', '低'], // 自定义的变量类型，需要在前面注册过
-    pollutionValue: ['number', 0],
+    money: ['number', 0],
     content: ['string', '字符串'],
     haveNuke: ['boolean', false],
     entry: ['backpack', { '普通': 1 }]
@@ -107,7 +97,7 @@ const vi = {
 
 ## game游戏管理
 
-使用`globalThis.getNewGM(ext, gvi, pvi)`可以获取游戏管理器，`gvi`和`pvi`分别为游戏和玩家的变量信息，示例：
+使用`globalThis.getNewGM(ext, gvi, pvi)`可以获取游戏管理器，`gvi`和`pvi`分别为游戏和玩家的变量信息，使用前请提前注册好使用到的变量类型，否则会发生报错，示例：
 
 ```js
 const gm = globalThis.getNewGM(ext, gvi, pvi);
@@ -126,6 +116,7 @@ propMap // 道具映射表
 ### 方法介绍
 
 ```js
+parse(data, defaultData: { gid: string, varsInfo: VarsInfo }): Game | undefined // 解析游戏数据
 clearCache() // 清除缓存
 
 getGame(gid): Game // 获取游戏对象
@@ -134,7 +125,7 @@ saveGame(gid) // 保存游戏
 // 下面是道具相关
 newPropItem(): Prop // 获得一个新的道具对象
 registerProp(prop) // 注册道具，需要提供道具对象作为参数
-getProp(name): Prop | undefined // 获取道具
+getProp(name): Prop | undefined // 获取道具信息
 useProp(ctx, msg, cmdArgs, player, name, count, game?): boolean // 使用道具
 ```
 
@@ -152,8 +143,7 @@ varsMap // 变量映射表
 ### 方法介绍
 
 ```js
-parse(data, uid, name, vi): Player // 解析玩家数据，一般用不到
-
+parse(data, defaultData: { uid: string, name: string, varsInfo: VarsInfo }): Player | undefined // 解析玩家数据
 clearCache() // 清除缓存
 
 getPlayer(uid, name): Player // 获取玩家对象，传入的name不会更新旧的名字，只用于生成新的玩家
@@ -184,9 +174,10 @@ varsMap // 变量映射表
 ### 方法介绍
 
 ```js
+parse(data, func: (player: Player) => number): Chart | undefined // 解析排行榜数据，参数为 排行榜数据 和 返回数字的函数
 clearCache() // 清除缓存
 
-registerChart(name, vn) // 注册排行榜，参数为 排行榜名称 和 变量名称
+registerChart(name, func: (player: Player) => number) // 注册排行榜，参数为 排行榜名称 和 变量名称
 
 getChart(name): Chart | undefined // 获取排行榜
 saveChart(name) // 保存排行榜，一般用不到，更新时会自动保存
@@ -198,20 +189,22 @@ updateAllChart(player) // 更新所有排行榜
 使用示例：
 
 ```js
-gm.chart.registerChart('一个排行榜', 'money');
+gm.chart.registerChart('富豪榜', (player) => {
+    return player.varsMap.money;
+});
 
 // 变量发生变化时，调用排行榜更新
 const player = gm.player.getPlayer(uid, name);
-gm.chart.updateChart('一个排行榜', player);
+gm.chart.updateChart('富豪榜', player);
 
 // 获取排行榜对象
-const chart = gm.chart.getChart('一个排行榜');
+const chart = gm.chart.getChart('富豪榜');
 ```
 
 ### chart对象结构
 
 ```js
-varName // 变量名称
+func(player) => number // 计算函数，返回一个数字
 list // 排行榜列表，是一个数组
 ```
 
@@ -230,6 +223,8 @@ value // 变量值
 ### 方法介绍
 
 ```js
+parse(data, gc): Shop | undefined // 解析商店数据，参数为 商店数据 和 商品信息配置
+
 registerShop(name, gc) // 注册商店，参数为 商店名称 和 商品信息配置
 
 getShop(name): Shop | undefined // 获取商店对象
@@ -260,6 +255,29 @@ prob // 出现概率，0-1之间的小数
 ```
 
 其中`price`和`count`最终大小的范围是`base ± delta`
+
+注册示例：
+
+```js
+const gc = {
+    '铀': {
+        price: { base: 10000, delta: 500 },
+        count: { base: 10, delta: 1 },
+        prob: 1
+    },
+    '浓缩装置': {
+        price: { base: 50000, delta: 1000 },
+        count: { base: 2, delta: 1 },
+        prob: 0.1
+    },
+    '核弹': {
+        price: { base: 100000, delta: 10000 },
+        count: { base: 1, delta: 1 },
+        prob: 0.01
+    }
+}
+gm.shop.registerShop('普通', gc);
+```
 
 ### shop对象结构
 
@@ -296,11 +314,13 @@ removeGoods(name): boolean // 删除商品，name为商品名称，返回是否�
 ### 方法介绍
 
 ```js
+parse(data, _): SellInfo[] | undefined // 解析市场数据，参数为 市场数据，返回一个数组，数组元素为商品信息对象
 getMarket(): SellInfo[] | undefined // 获取市场信息
 saveMarket()  // 保存市场信息，一般用不到
 
 putOnSale(uid, title, content, name, price, count): boolean // 上架商品，title不超过12个字符，content不超过300个字符，price为单价
-buy(id, count = 0): boolean // 购买商品，id为商品id，count为购买数量，返回是否成功购买
+buy(id, count = 0): boolean // 购买商品，id为商品id，count为购买数量，为0时视作购买全部，返回是否成功购买
+
 getSellInfo(id): SellInfo | undefined // 获取商品信息
 removeSellInfo(id): boolean // 删除商品信息
 showSellInfo(): string[]  // 显示商品信息，返回一个字符串数组，用于发送给玩家
@@ -327,12 +347,11 @@ const prop = gm.newPropItem();
 prop.name = '核弹'; // 名字
 prop.desc = '很恐怖'; // 描述
 prop.type = '武器'; // 类型
-prop.reply = '你使用了一个核弹！！！'; // 回复，此回复只在单个使用时会发送，可使用豹语
+prop.reply = '你使用了一个核弹！！！'; // 回复，此回复只在单个使用时会发送，可使用豹语，可以不填写
 
 // solve方法，在使用道具后，发送prop.reply前会调用此方法，需要返回一个布尔值，代表是否成功使用，true为成功，false为失败
 prop.solve = (ctx, msg, cmdArgs, player, count, game) => {
-    player.varsMap.pollutionValue += count;
-    player.varsMap.pollution.pollute(player.varsMap.pollutionValue);
+    // ...一些逻辑处理
 
     if (count !== 1) {
         seal.replyToSender(ctx, msg, `你使用了${count}个核弹！！！`);

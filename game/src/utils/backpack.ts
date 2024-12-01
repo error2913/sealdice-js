@@ -7,23 +7,20 @@ export class Backpack {
         this.items = {};
     }
 
-    static check(defaultData: any): boolean {
+    static parse(data: any, defaultData: { [key: string]: number }): Backpack | undefined {
+        // 检查defaultData部分
         if (defaultData === null || typeof defaultData !== 'object' || Array.isArray(defaultData)) {
-            return false;
+            return undefined;
         }
 
         for (let name of Object.keys(defaultData)) {
             const count = defaultData[name];
-            if (typeof count == 'number') {
-                continue;
+            if (typeof count !== 'number') {
+                return undefined;
             }
-            return false;
         }
 
-        return true;
-    }
-
-    static parse(data: any, defaultData: { [key: string]: number }): Backpack {
+        // 解析data部分
         const backpack = new Backpack();
 
         if (

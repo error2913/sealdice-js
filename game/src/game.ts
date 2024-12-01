@@ -26,6 +26,16 @@ export class GameManager {
     private cache: { [key: string]: Game };
 
     constructor(ext: seal.ExtInfo, gvi: VarsInfo, pvi: VarsInfo) {
+        if (globalThis.varsManager.parse(null, gvi) === undefined) {
+            console.error(`初始化游戏管理器时出现错误:gvi格式错误`);
+            return;
+        }
+
+        if (!globalThis.varsManager.parse(null, pvi) === undefined) {
+            console.error(`初始化游戏管理器时出现错误:pvi格式错误`);
+            return;
+        }
+
         this.ext = ext;
         this.varsInfo = gvi;
         this.player = new PlayerManager(ext, pvi);
@@ -36,7 +46,18 @@ export class GameManager {
         this.cache = {};
     }
 
-    private parse(data: any, gid: string, vi: VarsInfo): Game {
+    parse(data: any, defaultData: { gid: string, varsInfo: VarsInfo }): Game | undefined {
+        if (
+            defaultData === null || typeof defaultData !== 'object' || Array.isArray(defaultData) ||
+            !defaultData.hasOwnProperty('gid') || typeof defaultData.gid !== 'string' ||
+            !defaultData.hasOwnProperty('varsInfo') || globalThis.varsManager.parse(null, defaultData.varsInfo) === undefined
+        ) {
+            return undefined;
+        }
+
+        const gid = defaultData.gid;
+        const vi = defaultData.varsInfo;
+
         if (!data.hasOwnProperty('gid')) {
             console.log(`创建新游戏:${gid}`);
         }
@@ -63,9 +84,13 @@ export class GameManager {
             } catch (error) {
                 console.error(`从数据库中获取${`game_${gid}`}失败:`, error);
             }
-    
-            const vi = this.varsInfo;
-            this.cache[gid] = this.parse(data, gid, vi);
+
+            const defaultData = {
+                gid: gid,
+                varsInfo: this.varsInfo
+            }
+
+            this.cache[gid] = this.parse(data, defaultData);
         }
 
         return this.cache[gid];
@@ -110,7 +135,7 @@ export class GameManager {
 
         const prop = this.getProp(name);
 
-        if (!prop) {
+        if (prop === undefined) {
             seal.replyToSender(ctx, msg, `【${name}】不知道有什么用`);
             return false;
         }
@@ -130,7 +155,7 @@ export class GameManager {
         if (count === 1) {
             seal.replyToSender(ctx, msg, seal.format(ctx, prop.reply));
         }
-        
+
         player.backpack.remove(name, count);
 
         return true;

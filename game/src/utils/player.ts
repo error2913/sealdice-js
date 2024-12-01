@@ -17,7 +17,7 @@ export class Player {
 
 export class PlayerManager {
     private ext: seal.ExtInfo;
-    private varsInfo:VarsInfo;
+    private varsInfo: VarsInfo;
     private cache: { [key: string]: Player };
 
     constructor(ext: seal.ExtInfo, vi: VarsInfo) {
@@ -26,7 +26,20 @@ export class PlayerManager {
         this.cache = {};
     }
 
-    parse(data: any, uid: string, name: string, vi: VarsInfo): Player {
+    parse(data: any, defaultData: { uid: string, name: string, varsInfo: VarsInfo }): Player | undefined {
+        if (
+            defaultData === null || typeof defaultData !== 'object' || Array.isArray(defaultData) ||
+            !defaultData.hasOwnProperty('uid') || typeof defaultData.uid !== 'string' ||
+            !defaultData.hasOwnProperty('name') || typeof defaultData.name !== 'string' ||
+            !defaultData.hasOwnProperty('varsInfo') || globalThis.varsManager.parse(null, defaultData.varsInfo) === undefined
+        ) {
+            return undefined;
+        }
+
+        const uid = defaultData.uid;
+        let name = defaultData.name;
+        const vi = defaultData.varsInfo;
+
         if (!data.hasOwnProperty('uid')) {
             console.log(`创建新玩家:${uid}`);
         }
@@ -61,9 +74,14 @@ export class PlayerManager {
             } catch (error) {
                 console.error(`从数据库中获取${`player_${uid}`}失败:`, error);
             }
-    
-            const vi = this.varsInfo;
-            this.cache[uid] = this.parse(data, uid, name, vi);
+
+            const defaultData = {
+                uid: uid,
+                name: name,
+                varsInfo: this.varsInfo
+            }
+
+            this.cache[uid] = this.parse(data, defaultData);
         }
 
         return this.cache[uid];

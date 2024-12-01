@@ -118,7 +118,29 @@ export class ShopManager {
         this.cache = {};
     }
 
-    private parse(data: any, gc: GoodsConfig): Shop {
+    parse(data: any, gc: GoodsConfig): Shop | undefined {
+        if (gc === null || typeof gc!== 'object' || Array.isArray(gc)) {
+            return undefined;
+        }
+
+        for (const name of Object.keys(gc)) {
+            const gi = gc[name];
+
+            if (
+                !gi.hasOwnProperty('price') || typeof gi.price !== 'object' ||
+                !gi.price.hasOwnProperty('base') || typeof gi.price.base !== 'number' ||
+                !gi.price.hasOwnProperty('delta') || typeof gi.price.delta !== 'number' ||
+
+                !gi.hasOwnProperty('count') || typeof gi.count !== 'object' ||
+                !gi.count.hasOwnProperty('base') || typeof gi.count.base !== 'number' ||
+                !gi.count.hasOwnProperty('delta') || typeof gi.count.delta !== 'number' ||
+
+                !gi.hasOwnProperty('prob') || typeof gi.prob !== 'number'
+            ) {
+                return undefined;
+            }
+        }
+
         const shop = new Shop(gc);
 
         if (data.hasOwnProperty('updateTime') && typeof data.updateTime === 'number') {
@@ -150,28 +172,9 @@ export class ShopManager {
             return;
         }
 
-        if (gc === null || typeof gc !== 'object' || Array.isArray(gc)) {
+        if (this.parse(null, gc) === undefined) {
             console.error(`注册商店${name}时出现错误:配置数据错误`);
             return;
-        }
-
-        for (const name of Object.keys(gc)) {
-            const gi = gc[name];
-
-            if (
-                !gi.hasOwnProperty('price') || typeof gi.price !== 'object' ||
-                !gi.price.hasOwnProperty('base') || typeof gi.price.base !== 'number' ||
-                !gi.price.hasOwnProperty('delta') || typeof gi.price.delta !== 'number' ||
-
-                !gi.hasOwnProperty('count') || typeof gi.count !== 'object' ||
-                !gi.count.hasOwnProperty('base') || typeof gi.count.base !== 'number' ||
-                !gi.count.hasOwnProperty('delta') || typeof gi.count.delta !== 'number' ||
-
-                !gi.hasOwnProperty('prob') || typeof gi.prob !== 'number'
-            ) {
-                console.error(`注册商店${name}时出现错误:配置数据错误`);
-                return;
-            }
         }
 
         this.map[name] = gc;
