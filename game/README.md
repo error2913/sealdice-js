@@ -312,7 +312,7 @@ prop.desc = '很恐怖'; // 描述
 prop.type = '武器'; // 类型
 prop.reply = '你使用了一个核弹！！！'; // 回复，此回复只在单个使用时会发送，可使用豹语
 
-// solve方法，在使用道具后，发送prop.reply前会调用此方法
+// solve方法，在使用道具后，发送prop.reply前会调用此方法，需要返回一个布尔值，代表是否成功使用，true为成功，false为失败
 prop.solve = (ctx, msg, cmdArgs, player, count, game) => {
     player.varsMap.pollutionValue += count;
     player.varsMap.pollution.pollute(player.varsMap.pollutionValue);
@@ -320,6 +320,8 @@ prop.solve = (ctx, msg, cmdArgs, player, count, game) => {
     if (count !== 1) {
         seal.replyToSender(ctx, msg, `你使用了${count}个核弹！！！`);
     }
+
+    return true;
 }
 gm.registerProp(prop);
 ```

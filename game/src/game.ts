@@ -115,10 +115,15 @@ export class GameManager {
             return false;
         }
 
+        let result = true;
         try {
-            prop.solve(ctx, msg, cmdArgs, player, count, game);
+            result = prop.solve(ctx, msg, cmdArgs, player, count, game);
         } catch (error) {
-            console.error(`使用道具${name}时出现错误:`, error);
+            seal.replyToSender(ctx, msg, `使用道具${name}时出现错误:${error}`);
+            result = false;
+        }
+
+        if (!result) {
             return false;
         }
 

@@ -2,7 +2,7 @@
 // @name         game依赖
 // @author       错误
 // @version      1.0.0
-// @description  。。。
+// @description  我不会写简介。去读readme吧。
 // @timestamp    1732336623
 // 2024-11-23 12:37:03
 // @license      MIT
