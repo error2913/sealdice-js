@@ -252,8 +252,9 @@ market`;
                 const player = gm.player.getPlayer(uid, un);
 
                 gm.useProp(ctx, msg, cmdArgs, player, name, count, game);
-
+                
                 setTimeout(() => {
+                    checkNuke(player);
                     gm.player.savePlayer(uid);
                     gm.chart.updateChart('富豪榜', player);
                 }, 1000);
@@ -266,9 +267,7 @@ market`;
             }
             case 'shop': {
                 const shop = gm.shop.getShop('普通');
-                shop.updateShop();
                 seal.replyToSender(ctx, msg, JSON.stringify(shop));
-                gm.shop.saveShop('普通');
                 return seal.ext.newCmdExecuteResult(true);
             }
             case 'sell': {
@@ -294,12 +293,18 @@ market`;
                 const content = `${count}个${name}，价格为${price}`;
 
                 const player = gm.player.getPlayer(uid, un);
-                const result = gm.market.sell(player, title, content, name, price, count);
+                if (!player.backpack.checkExist(name, count)) {
+                    seal.replyToSender(ctx, msg, `你没有${count}个${name}`);
+                    return seal.ext.newCmdExecuteResult(true);
+                }
+
+                const result = gm.market.putOnSale(uid, title, content, name, price, count);
 
                 if (result) {
+                    player.backpack.remove(name, count);
                     seal.replyToSender(ctx, msg, `你出售了${count}个${title}，价格为${price}`);
                 } else {
-                    seal.replyToSender(ctx, msg, `你没有${title}`);
+                    seal.replyToSender(ctx, msg, `格式错误，请检查你的输入`);
                 }
 
                 gm.player.savePlayer(uid);
