@@ -25,34 +25,18 @@ if (!ext) {
             this.level = '';
         }
 
-        // 检查函数，检查defaultData是否符合要求
-        static check(defaultData) {
-            if (defaultData === null || typeof defaultData !== 'object' || Array.isArray(defaultData)) {
-                return false;
-            }
-
-            if (!defaultData.hasOwnProperty('time') || typeof defaultData.time !== 'number') {
-                return false;
-            }
-
-            if (!defaultData.hasOwnProperty('value') || typeof defaultData.value!== 'number') {
-                return false;
-            }
-
-            if (!defaultData.hasOwnProperty('level') || typeof defaultData.level !== 'string') {
-                return false;
-            }
-
-            return true;
-        }
-
         // 解析函数，参数为data和defaultData，返回值为解析后的值，用于从字符串中解析变量
         static parse(data, defaultData) {
+            // 检查defaultData部分
+            if (typeof defaultData !== 'string') {
+                return undefined;
+            }
+
+            // 解析data部分
             const pollution = new Pollution();
 
             if (data === null || typeof data !== 'object' || Array.isArray(data)) {
-                pollution.level = defaultData;
-                return pollution;
+                data = {};
             }
 
             if (data.hasOwnProperty('time') && typeof data.time == 'number') {
@@ -77,7 +61,7 @@ if (!ext) {
             const delta = now - this.time;
 
             this.value *= Math.pow(0.95, delta);
-            
+
             this.time = Math.floor(Date.now() / 1000);
         }
 
@@ -94,7 +78,7 @@ if (!ext) {
         }
     }
 
-    globalThis.varsManager.registerVarsType('pollution', Pollution.check, Pollution.parse);
+    globalThis.varsManager.registerVarsType('pollution', Pollution.parse);
 
     const gvi = {
         pollution: ['pollution', '低'],
@@ -138,9 +122,11 @@ if (!ext) {
     }
     gm.registerProp(prop);
 
-    gm.chart.registerChart('富豪榜', 'money');
+    gm.chart.registerChart('富豪榜', (player) => {
+        return player.varsMap.money;
+    });
 
-    const giArr = {
+    const gc = {
         '铀': {
             price: { base: 10000, delta: 500 },
             count: { base: 10, delta: 1 },
@@ -157,10 +143,10 @@ if (!ext) {
             prob: 0.01
         }
     }
-    gm.shop.registerShop('普通', giArr);
+    gm.shop.registerShop('普通', gc);
 
-    
-    function checkNuke(player)  {
+
+    function checkNuke(player) {
         if (player.varsMap.haveNuke) {
             if (player.varsMap.backpack.checkTypesExist(gm, ['核弹'])) {
                 return;
@@ -252,7 +238,7 @@ market`;
                 const player = gm.player.getPlayer(uid, un);
 
                 gm.useProp(ctx, msg, cmdArgs, player, name, count, game);
-                
+
                 setTimeout(() => {
                     checkNuke(player);
                     gm.player.savePlayer(uid);
