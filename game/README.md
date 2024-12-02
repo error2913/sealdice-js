@@ -65,7 +65,7 @@ class Pollution {
 globalThis.varsManager.registerVarsType('pollution', Pollution.parse);
 ```
 
-内置的变量类型：`string`、`number`、`boolean`、`backpack`
+内置的变量类型：`string`、`number`、`boolean`、`backpack`、`player`
 
 ### VarsInfo 变量信息
 

@@ -1,4 +1,4 @@
-import { GameManager } from "../game";
+import { GameManager } from "../game/game";
 
 export class Backpack {
     items: { [key: string]: number };
@@ -7,20 +7,7 @@ export class Backpack {
         this.items = {};
     }
 
-    static parse(data: any, defaultData: { [key: string]: number }): Backpack | undefined {
-        // 检查defaultData部分
-        if (defaultData === null || typeof defaultData !== 'object' || Array.isArray(defaultData)) {
-            return undefined;
-        }
-
-        for (let name of Object.keys(defaultData)) {
-            const count = defaultData[name];
-            if (typeof count !== 'number') {
-                return undefined;
-            }
-        }
-
-        // 解析data部分
+    static parse(data: any, defaultData: { [key: string]: number }): Backpack {
         const backpack = new Backpack();
 
         if (
