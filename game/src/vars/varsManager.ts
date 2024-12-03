@@ -69,4 +69,12 @@ export class VarsManager {
 
         return result;
     }
+
+    getParseFunc(type: string): ((data: any,...args: any[]) => any) | null {
+        if (!this.typeMap.hasOwnProperty(type)) {
+            return null;
+        }
+        
+        return this.typeMap[type].parse;
+    }
 }

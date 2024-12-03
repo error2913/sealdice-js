@@ -197,7 +197,7 @@ export class Backpack {
         }
 
         let s = '';
-        
+
         for (let name of Object.keys(this.items)) {
             s += `【${name}】 x ${this.items[name]}\n`;
         }
@@ -219,9 +219,9 @@ export class Backpack {
         }
     }
 
-    findByTypes(gm: GameManager, ...types: string[]): string[] {
+    findByTypes(gm: GameManager, ...types: string[]): Backpack {
         const propMap = gm.prop.propMap;
-        const result = [];
+        const result = new Backpack();
 
         for (let name of Object.keys(this.items)) {
             if (!propMap.hasOwnProperty(name)) {
@@ -231,19 +231,19 @@ export class Backpack {
             const type = propMap[name].type;
 
             if (types.includes(type)) {
-                result.push(name);
+                result.addItem(name, this.items[name]);
             }
         }
 
         return result;
     }
 
-    findByCountRange(min: number, max: number): string[] {
-        const result = [];
+    findByCountRange(min: number, max: number): Backpack {
+        const result = new Backpack();
 
         for (let name of Object.keys(this.items)) {
             if (this.items[name] >= min && this.items[name] <= max) {
-                result.push(name);
+                result.addItem(name, this.items[name]);
             }
         }
 
