@@ -25,7 +25,9 @@ export class Team {
     }
 
     addMember(uid: string) {
-        this.members.push(uid);
+        if (!this.checkExists(uid)) {
+            this.members.push(uid);
+        }
     }
 
     removeMember(uid: string) {

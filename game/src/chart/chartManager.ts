@@ -86,4 +86,8 @@ export class ChartManager {
             this.updateChart(name, player);
         }
     }
+
+    showAvailableChart(): string {
+        return Object.keys(this.map).join('\n');
+    }
 }
