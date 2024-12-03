@@ -41,12 +41,8 @@ export class GameManager {
                 console.error(`从数据库中获取${`game_${gid}`}失败:`, error);
             }
 
-            const defaultData = {
-                gid: gid,
-                varsInfo: this.varsInfo
-            }
-
-            this.cache[gid] = Game.parse(data, defaultData);
+            const vi = this.varsInfo;
+            this.cache[gid] = Game.parse(data, gid, vi);
         }
 
         return this.cache[gid];

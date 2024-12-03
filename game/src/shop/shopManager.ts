@@ -33,11 +33,6 @@ export class ShopManager {
             return;
         }
 
-        if (Shop.parse(null, gc) === undefined) {
-            console.error(`注册商店${name}时出现错误:配置数据错误`);
-            return;
-        }
-
         this.map[name] = gc;
     }
 
@@ -61,7 +56,8 @@ export class ShopManager {
         }
 
         if (this.cache[name].updateTime === 0) {
-            this.updateShop(name);
+            this.cache[name].updateShop();
+            this.saveShop(name);
         }
 
         return this.cache[name];
@@ -90,6 +86,7 @@ export class ShopManager {
         if (this.cache.hasOwnProperty(name)) {
             delete this.cache[name];
             this.getShop(name);
+            this.saveShop(name);
         }
     }
 

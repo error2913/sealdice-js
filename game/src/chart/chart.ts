@@ -18,8 +18,24 @@ export class Chart {
     static parse(data: any, func: (player: Player) => number): Chart {
         const chart = new Chart(func);
 
+        if (data === null || typeof data !== 'object' || Array.isArray(data)) {
+            data = {};
+        }
+
         if (data.hasOwnProperty('list') && Array.isArray(data.list)) {
-            chart.list = data.list;
+            for (let pi of data.list) {
+                if (pi === null || typeof pi !== 'object' || Array.isArray(pi)) {
+                    continue;
+                }
+
+                if (
+                    pi.hasOwnProperty('uid') && typeof pi.uid === 'string' &&
+                    pi.hasOwnProperty('name') && typeof pi.name === 'string' &&
+                    pi.hasOwnProperty('value') && typeof pi.value === 'number'
+                ) {
+                    chart.list.push(pi);
+                }
+            }
         }
 
         return chart;
@@ -28,7 +44,7 @@ export class Chart {
     updateChart(player: Player) {
         const value = this.func(player);
 
-        if (typeof value!== 'number') {
+        if (typeof value !== 'number') {
             console.error(`更新排行榜时出现错误:返回值不是数字`);
             return;
         }
@@ -53,5 +69,23 @@ export class Chart {
         });
 
         this.list = this.list.slice(0, 10);
+    }
+
+    showChart(): string {
+        if (this.list.length === 0) {
+            return '排行榜为空';
+        }
+
+        let s = ''
+        
+        for (let i = 0; i < this.list.length; i++) {
+            const pi = this.list[i];
+
+            s += `第${i + 1}名： <${pi.name}>(${pi.value})\n`;
+        }
+
+        s = s.trim();
+
+        return s;
     }
 }

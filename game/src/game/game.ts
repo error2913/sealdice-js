@@ -9,12 +9,9 @@ export class Game {
         this.varsMap = globalThis.varsManager.parse(null, vi);
     }
 
-    static parse(data: any, defaultData: { gid: string, varsInfo: VarsInfo }): Game {
-        const gid = defaultData.gid;
-        const vi = defaultData.varsInfo;
-
-        if (!data.hasOwnProperty('gid')) {
-            console.log(`创建新游戏:${gid}`);
+    static parse(data: any, gid: string, vi: VarsInfo): Game {
+        if (data === null || typeof data!== 'object' || Array.isArray(data)) {
+            data = {};
         }
 
         const game = new Game(gid, vi);

@@ -26,13 +26,12 @@ export class PlayerManager {
                 console.error(`从数据库中获取${`player_${uid}`}失败:`, error);
             }
 
-            const defaultData = {
-                uid: uid,
-                name: name,
-                varsInfo: this.varsInfo
-            }
+            const vi = this.varsInfo;
+            this.cache[uid] = Player.parse(data, uid, vi);
+        }
 
-            this.cache[uid] = Player.parse(data, defaultData);
+        if (this.cache[uid].name === '') {
+            this.cache[uid].name = name;
         }
 
         return this.cache[uid];

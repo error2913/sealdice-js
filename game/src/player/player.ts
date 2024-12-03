@@ -7,27 +7,23 @@ export class Player {
     backpack: Backpack;
     varsMap: VarsMap;
 
-    constructor(uid: string, name: string, vi: VarsInfo) {
+    constructor(uid: string, vi: VarsInfo) {
         this.uid = uid;
-        this.name = name;
+        this.name = '';
         this.backpack = new Backpack();
         this.varsMap = globalThis.varsManager.parse(null, vi);
     }
 
-    static parse(data: any, defaultData: { uid: string, name: string, varsInfo: VarsInfo }): Player {
-        const uid = defaultData.uid;
-        let name = defaultData.name;
-        const vi = defaultData.varsInfo;
-
-        if (!data.hasOwnProperty('uid')) {
-            console.log(`创建新玩家:${uid}`);
+    static parse(data: any, uid: string, vi: VarsInfo): Player {
+        if (data === null || typeof data!== 'object' || Array.isArray(data)) {
+            data = {};
         }
+
+        const player = new Player(uid, vi);
 
         if (data.hasOwnProperty('name')) {
-            name = data.name;
+            player.name = data.name;
         }
-
-        const player = new Player(uid, name, vi);
 
         if (data.hasOwnProperty('backpack')) {
             player.backpack = Backpack.parse(data.backpack, null);

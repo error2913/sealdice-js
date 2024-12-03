@@ -1,44 +1,41 @@
 import { Backpack } from "../backpack/backpack"
-import { Player } from "../utils/player"
+import { Team } from "../team/team"
 
 export interface VarsMap {
     [key: string]: any
 }
 
 export interface VarsInfo {
-    [key: string]: [string, any]// 类型和默认值
+    [key: string]: [string, ...any]
 }
 
 export class VarsManager {
     private typeMap: {
         [key: string]: {
-            parse: (data: any, defaultData: any) => any
+            parse: (data: any, ...args: any[]) => any
         }
     }
 
     constructor() {
         this.typeMap = {};
 
-        this.registerVarsType('boolean', (data: any, defaultData: any) => {
-            return typeof data === 'boolean' ? data : defaultData;
+        this.registerVarsType('boolean', (data: any, bool: boolean) => {
+            return typeof data === 'boolean' ? data : bool;
         });
 
-        this.registerVarsType('string', (data: any, defaultData: any) => {
-            return typeof data === 'string' ? data : defaultData;
+        this.registerVarsType('string', (data: any, s: string) => {
+            return typeof data === 'string' ? data : s;
         });
 
-        this.registerVarsType('number', (data: any, defaultData: any) => {
-            return typeof data === 'number' ? data : defaultData;
+        this.registerVarsType('number', (data: any, n: number) => {
+            return typeof data === 'number' ? data : n;
         });
 
         this.registerVarsType('backpack', Backpack.parse);
-        this.registerVarsType('player', Player.parse);
+        this.registerVarsType('team', Team.parse);
     }
 
-    registerVarsType(
-        type: string,
-        parseFunc: (data: any, defaultData: any) => any
-    ) {
+    registerVarsType(type: string, parseFunc: (data: any, ...args: any[]) => any) {
         if (this.typeMap.hasOwnProperty(type)) {
             console.error(`注册变量解析器${type}时出现错误:该名字已注册`);
             return;
@@ -58,8 +55,6 @@ export class VarsManager {
 
         for (let key of Object.keys(vi)) {
             const type = vi[key][0];
-            const defaultData = vi[key][1];
-
             if (!this.typeMap.hasOwnProperty(type)) {
                 continue;
             }
@@ -68,7 +63,8 @@ export class VarsManager {
                 data[key] = null;
             }
 
-            result[key] = this.typeMap[type].parse(data[key], defaultData);
+            const args = vi[key].slice(1);
+            result[key] = this.typeMap[type].parse(data[key], ...args);
         }
 
         return result;

@@ -1,11 +1,11 @@
 export interface SellInfo {
     id: number;
+    uid: string;
     title: string;
     content: string;
     name: string;
     price: number;
     count: number;
-    uid: string;
 }
 
 export class MarketManager {
@@ -27,29 +27,18 @@ export class MarketManager {
         const list = [];
 
         for (let i = 0; i < data.length; i++) {
-            const item = data[i];
+            const si = data[i];
 
             if (
-                !item.hasOwnProperty('id') || typeof item.id !== 'number' ||
-                !item.hasOwnProperty('title') || typeof item.title !== 'string' ||
-                !item.hasOwnProperty('content') || typeof item.content !== 'string' ||
-                !item.hasOwnProperty('name') || typeof item.name !== 'string' ||
-                !item.hasOwnProperty('price') || typeof item.price !== 'number' ||
-                !item.hasOwnProperty('count') || typeof item.count !== 'number' ||
-                !item.hasOwnProperty('uid') || typeof item.uid !== 'string'
+                !si.hasOwnProperty('id') || typeof si.id !== 'number' ||
+                !si.hasOwnProperty('uid') || typeof si.uid !== 'string' ||
+                !si.hasOwnProperty('title') || typeof si.title !== 'string' ||
+                !si.hasOwnProperty('content') || typeof si.content !== 'string' ||
+                !si.hasOwnProperty('name') || typeof si.name !== 'string' ||
+                !si.hasOwnProperty('price') || typeof si.price !== 'number' ||
+                !si.hasOwnProperty('count') || typeof si.count !== 'number'
             ) {
-                console.error(`解析市场数据时出现错误:数据错误`);
                 return [];
-            }
-
-            const si = {
-                id: item.id,
-                title: item.title,
-                content: item.content,
-                name: item.name,
-                price: item.price,
-                count: item.count,
-                uid: item.uid
             }
 
             list.push(si);
@@ -89,71 +78,66 @@ export class MarketManager {
         return id + 1;
     }
 
-    putOnSale(uid: string, title: string, content: string, name: string, price: number, count: number): boolean {
-        if (title.length > 12 || content.length > 300) {
-            return false;
-        }
-
+    putOnSale(uid: string, title: string, content: string, name: string, price: number, count: number) {
         const sellInfo = {
             id: this.createNewId(),
+            uid: uid,
             title: title,
             content: content,
             name: name,
             price: price,
             count: count,
-            uid: uid
         }
 
         this.list.push(sellInfo);
         this.saveMarket();
-
-        return true;
     }
 
-    buy(id: number, count: number = 0): boolean {
+    buyGoods(id: number, count: number = 0) {
+        const index = this.list.findIndex(si => si.id === id);
+
+        if (index !== -1) {
+            const si = this.list[index];
+
+            if (count === 0 || count > si.count) {
+                count = si.count;
+            }
+
+            this.list[index].count -= count;
+
+            if (this.list[index].count <= 0) {
+                this.list.splice(index, 1);
+            }
+
+            this.saveMarket();
+        }
+    }
+
+    getSellInfo(id: number): SellInfo {
         const index = this.list.findIndex(si => si.id === id);
 
         if (index === -1) {
-            return false;
+            return {
+                id: 0,
+                uid: '',
+                title: '',
+                content: '',
+                name: '',
+                price: 0,
+                count: 0
+            }
         }
 
-        const si = this.list[index];
+        return this.list[index];
+    }
 
-        if (count === 0 || count > si.count) {
-            count = si.count;
-        }
+    removeSellInfo(id: number) {
+        const index = this.list.findIndex(si => si.id === id);
 
-        this.list[index].count -= count;
-
-        if (this.list[index].count <= 0) {
+        if (index !== -1) {
             this.list.splice(index, 1);
+            this.saveMarket();
         }
-
-        this.saveMarket();
-        return true;
-    }
-
-    getSellInfo(id: number): SellInfo | undefined {
-        const index = this.list.findIndex(si => si.id === id);
-
-        if (index === -1) {
-            return undefined;
-        }
-
-        const si = this.list[index];
-        return si;
-    }
-
-    removeSellInfo(id: number): boolean {
-        const index = this.list.findIndex(si => si.id === id);
-
-        if (index === -1) {
-            return false;
-        }
-
-        this.list.splice(index, 1);
-        this.saveMarket();
-        return true;
     }
 
     showSellInfo(): string[] {

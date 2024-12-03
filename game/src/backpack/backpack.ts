@@ -1,4 +1,4 @@
-import { GameManager } from "../game/game";
+import { GameManager } from "../game/gameManager";
 
 export class Backpack {
     items: { [key: string]: number };
@@ -7,21 +7,19 @@ export class Backpack {
         this.items = {};
     }
 
-    static parse(data: any, defaultData: { [key: string]: number }): Backpack {
+    static parse(data: any, items: { [key: string]: number }): Backpack {
         const backpack = new Backpack();
 
         if (
             data === null || typeof data !== 'object' || Array.isArray(data) ||
             data.items === null || typeof data.items !== 'object' || Array.isArray(data.items)
         ) {
-            backpack.items = defaultData || {};
+            backpack.items = items || {};
             return backpack;
         }
 
-        const items = data.items;
-
-        for (let name of Object.keys(items)) {
-            const count = items[name];
+        for (let name of Object.keys(data.items)) {
+            const count = data.items[name];
             if (typeof count == 'number') {
                 backpack.items[name] = count;
             }
@@ -30,7 +28,84 @@ export class Backpack {
         return backpack;
     }
 
-    checkExist(name: string, count: number): boolean {
+    addItem(name: string, count: number) {
+        if (!this.items.hasOwnProperty(name)) {
+            this.items[name] = count;
+        } else {
+            this.items[name] += count;
+        }
+    }
+
+    removeItem(name: string, count: number) {
+        if (!this.items.hasOwnProperty(name)) {
+            return;
+        }
+
+        this.items[name] -= count;
+
+        if (this.items[name] <= 0) {
+            delete this.items[name];
+        }
+    }
+
+    removeItemsByTypes(gm: GameManager, ...types: string[]) {
+        const propMap = gm.prop.propMap;
+
+        for (let name of Object.keys(this.items)) {
+            if (!propMap.hasOwnProperty(name)) {
+                continue;
+            }
+
+            const type = propMap[name].type;
+
+            if (types.includes(type)) {
+                delete this.items[name];
+            }
+        }
+    }
+
+    clear() {
+        this.items = {};
+    }
+
+    len(): number {
+        return Object.keys(this.items).length;
+    }
+
+    draw(n: number): Backpack {
+        const result = new Backpack();
+        let totalCount = this.sum();
+
+        if (totalCount < n) {
+            n = totalCount;
+        }
+
+        for (let i = 0; i < n; i++) {
+            const index = Math.ceil(Math.random() * totalCount);
+            const names = Object.keys(this.items);
+
+            let tempCount = 0;
+            for (let name of names) {
+                tempCount += this.items[name];
+
+                if (tempCount >= index) {
+                    result.addItem(name, 1);
+                    this.removeItem(name, 1);
+                    break;
+                }
+            }
+
+            totalCount--;
+
+            if (totalCount <= 0) {
+                break;
+            }
+        }
+
+        return result;
+    }
+
+    checkExists(name: string, count: number): boolean {
         if (!this.items.hasOwnProperty(name) || this.items[name] < count) {
             return false;
         }
@@ -38,8 +113,8 @@ export class Backpack {
         return true;
     }
 
-    checkTypesExist(gm: GameManager, types: string[]): boolean {
-        const propMap = gm.propMap;
+    checkTypesExists(gm: GameManager, ...types: string[]): boolean {
+        const propMap = gm.prop.propMap;
 
         for (let name of Object.keys(this.items)) {
             if (!propMap.hasOwnProperty(name)) {
@@ -56,7 +131,7 @@ export class Backpack {
         return false;
     }
 
-    getTotalCount(): number {
+    sum(): number {
         let count = 0;
 
         for (let name of Object.keys(this.items)) {
@@ -66,8 +141,8 @@ export class Backpack {
         return count;
     }
 
-    getTotalCountByTypes(gm: GameManager, types: string[]): number {
-        const propMap = gm.propMap;
+    sumByTypes(gm: GameManager, ...types: string[]): number {
+        const propMap = gm.prop.propMap;
         let count = 0;
 
         for (let name of Object.keys(this.items)) {
@@ -86,7 +161,7 @@ export class Backpack {
     }
 
     getTypes(gm: GameManager): string[] {
-        const propMap = gm.propMap;
+        const propMap = gm.prop.propMap;
         const result = [];
 
         for (let name of Object.keys(this.items)) {
@@ -116,97 +191,36 @@ export class Backpack {
         return this.items[name];
     }
 
-    len(): number {
-        return Object.keys(this.items).length;
-    }
-
-    add(name: string, count: number) {
-        if (!this.items.hasOwnProperty(name)) {
-            this.items[name] = count;
-        } else {
-            this.items[name] += count;
-        }
-    }
-
-    remove(name: string, count: number) {
-        if (!this.items.hasOwnProperty(name)) {
-            return;
+    showBackpack(): string {
+        if (this.len() === 0) {
+            return '背包为空';
         }
 
-        this.items[name] -= count;
-
-        if (this.items[name] <= 0) {
-            delete this.items[name];
-        }
-    }
-
-    removeByTypes(gm: GameManager, types: string[]) {
-        const propMap = gm.propMap;
-
+        let s = '';
+        
         for (let name of Object.keys(this.items)) {
-            if (!propMap.hasOwnProperty(name)) {
-                continue;
-            }
-
-            const type = propMap[name].type;
-
-            if (types.includes(type)) {
-                delete this.items[name];
-            }
+            s += `【${name}】 x ${this.items[name]}\n`;
         }
+        
+        s = s.trim();
+
+        return s;
     }
 
-    clear() {
-        this.items = {};
-    }
-
-    merge(backpack: Backpack) {
+    mergeBackpack(backpack: Backpack) {
         for (let name of Object.keys(backpack.items)) {
-            this.add(name, backpack.items[name]);
+            this.addItem(name, backpack.items[name]);
         }
     }
 
     removeBackpack(backpack: Backpack) {
         for (let name of Object.keys(backpack.items)) {
-            this.remove(name, backpack.items[name]);
+            this.removeItem(name, backpack.items[name]);
         }
     }
 
-    draw(n: number): Backpack {
-        const result = new Backpack();
-        let totalCount = this.getTotalCount();
-
-        if (totalCount < n) {
-            n = totalCount;
-        }
-
-        for (let i = 0; i < n; i++) {
-            const index = Math.ceil(Math.random() * totalCount);
-            const names = Object.keys(this.items);
-
-            let tempCount = 0;
-            for (let name of names) {
-                tempCount += this.items[name];
-
-                if (tempCount >= index) {
-                    result.add(name, 1);
-                    this.remove(name, 1);
-                    break;
-                }
-            }
-
-            totalCount--;
-
-            if (totalCount <= 0) {
-                break;
-            }
-        }
-
-        return result;
-    }
-
-    findByTypes(gm: GameManager, types: string[]): string[] {
-        const propMap = gm.propMap;
+    findByTypes(gm: GameManager, ...types: string[]): string[] {
+        const propMap = gm.prop.propMap;
         const result = [];
 
         for (let name of Object.keys(this.items)) {

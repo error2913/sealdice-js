@@ -19,11 +19,15 @@ export class Shop {
     static parse(data: any, gc: GoodsConfig): Shop {
         const shop = new Shop(gc);
 
+        if (data === null || typeof data !== 'object' || Array.isArray(data)) {
+            data = {};
+        }
+
         if (data.hasOwnProperty('updateTime') && typeof data.updateTime === 'number') {
             shop.updateTime = data.updateTime;
         }
 
-        if (data.hasOwnProperty('goods') && typeof data.goods === 'object') {
+        if (data.hasOwnProperty('goods') && typeof data.goods === 'object' && !Array.isArray(data.goods)) {
             for (const name of Object.keys(data.goods)) {
                 const g = data.goods[name];
 
@@ -31,15 +35,29 @@ export class Shop {
                     g.hasOwnProperty('price') && typeof g.price === 'number' &&
                     g.hasOwnProperty('count') && typeof g.count === 'number'
                 ) {
-                    shop.goods[name] = {
-                        price: g.price,
-                        count: g.count
-                    }
+                    shop.goods[name] = g;
                 }
             }
         }
 
         return shop;
+    }
+
+    showShop(): string {
+        if (Object.keys(this.goods).length === 0) {
+            return '商店里什么都没有';
+        }
+
+        let s = '';
+
+        for (const name of Object.keys(this.goods)) {
+            const g = this.goods[name];
+            s += `【${name}】: 价格${g.price} 数量${g.count}\n`;
+        }
+
+        s = s.trim();
+
+        return s;
     }
 
     updateShop(): Shop {
@@ -68,9 +86,9 @@ export class Shop {
         return this;
     }
 
-    getGoods(name: string): Goods | undefined {
+    getGoods(name: string): Goods {
         if (!this.goods.hasOwnProperty(name)) {
-            return undefined;
+            return { price: 0, count: 0 }
         }
 
         return this.goods[name];
@@ -95,26 +113,17 @@ export class Shop {
         this.goods[name].count += count;
     }
 
-    buyGoods(name: string, count: number): boolean {
-        if (!this.goods.hasOwnProperty(name)) {
-            return false;
-        }
-
-        if (this.goods[name].count < count || count <= 0) {
-            return false;
+    buyGoods(name: string, count: number) {
+        if (!this.goods.hasOwnProperty(name) || this.goods[name].count < count || count <= 0) {
+            return;
         }
 
         this.goods[name].count -= count;
-
-        return true;
     }
 
-    removeGoods(name: string): boolean {
-        if (!this.goods.hasOwnProperty(name)) {
-            return false;
+    removeGoods(name: string) {
+        if (this.goods.hasOwnProperty(name)) {
+            delete this.goods[name];
         }
-
-        delete this.goods[name];
-        return true;
     }
 }
