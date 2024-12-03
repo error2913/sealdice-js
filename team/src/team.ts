@@ -3,7 +3,7 @@ export interface Team {
     members: string[];
 }
 
-export interface member {
+export interface MemberInfo {
     name:string;
     attr: {
         [key: string]: number;

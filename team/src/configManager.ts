@@ -1,4 +1,4 @@
-import { member, Team } from "./team";
+import { MemberInfo, Team } from "./team";
 
 export class ConfigManager {
     private ext: seal.ExtInfo;
@@ -7,7 +7,7 @@ export class ConfigManager {
         this.ext = ext;
     }
 
-    public registerConfig(): void {
+    registerConfig(): void {
         seal.ext.registerTemplateConfig(this.ext, '新建队伍', ['新建<{{队伍名字}}>成功'])
         seal.ext.registerTemplateConfig(this.ext, '绑定队伍', ['绑定<{{队伍名字}}>成功'])
         seal.ext.registerTemplateConfig(this.ext, '删除队伍', ['删除队伍成功：\n{{队伍列表}}'])
@@ -40,21 +40,21 @@ export class ConfigManager {
         return templates[Math.floor(Math.random() * templates.length)];
     }
 
-    public createText(name: string): string {
+    createText(name: string): string {
         const text = this.getRandomTemplate('新建队伍')
             .replace('{{队伍名字}}', name);
 
         return text;
     }
 
-    public bindText(name: string): string {
+    bindText(name: string): string {
         const text = this.getRandomTemplate('绑定队伍')
             .replace('{{队伍名字}}', name);
 
         return text;
     }
 
-    public delText(nameList: string[]): string {
+    delText(nameList: string[]): string {
         const sperator = seal.ext.getStringConfig(this.ext, '分隔符');
 
         const listText = nameList
@@ -67,7 +67,7 @@ export class ConfigManager {
         return text;
     }
 
-    public getListText(teamList: Team[]): string {
+    getListText(teamList: Team[]): string {
         const sperator = seal.ext.getStringConfig(this.ext, '分隔符');
 
         const listText = teamList
@@ -86,7 +86,7 @@ export class ConfigManager {
         return text;
     }
 
-    public addText(atNum: number, memberNum: number): string {
+    addText(atNum: number, memberNum: number): string {
         const text = this.getRandomTemplate('添加成员')
             .replace('{{@的人数}}', atNum.toString())
             .replace('{{队伍人数}}', memberNum.toString());
@@ -94,7 +94,7 @@ export class ConfigManager {
         return text;
     }
 
-    public removeText(atNum: number, memberNum: number): string {
+    removeText(atNum: number, memberNum: number): string {
         const text = this.getRandomTemplate('移除成员')
             .replace('{{@的人数}}', atNum.toString())
             .replace('{{队伍人数}}', memberNum.toString());
@@ -102,7 +102,7 @@ export class ConfigManager {
         return text;
     }
 
-    public drawText(nameList: string[]): string {
+    drawText(nameList: string[]): string {
         const sperator = seal.ext.getStringConfig(this.ext, '分隔符');
 
         const listText = nameList
@@ -114,7 +114,7 @@ export class ConfigManager {
         return text;
     }
 
-    public callText(callList: string[]): string {
+    callText(callList: string[]): string {
         const sperator = seal.ext.getStringConfig(this.ext, '分隔符');
 
         const listText = callList
@@ -127,7 +127,7 @@ export class ConfigManager {
         return text;
     }
 
-    public recallText(callList: string[], memberNum: number, signNum: number, guguNum: number): string {
+    recallText(callList: string[], memberNum: number, signNum: number, guguNum: number): string {
         const sperator = seal.ext.getStringConfig(this.ext, '分隔符');
 
         const listText = callList
@@ -143,10 +143,10 @@ export class ConfigManager {
         return text;
     }
 
-    public showText(members: member[], keys: string[]): string {
+    showText(mis: MemberInfo[], keys: string[]): string {
         const sperator = seal.ext.getStringConfig(this.ext, '分隔符');
 
-        const listText = members
+        const listText = mis
             .map(item => {
                 let text = item.name
                 if (keys.length === 0) {
@@ -176,10 +176,10 @@ export class ConfigManager {
         return text;
     }
 
-    public setText(members: member[], key: string, valueText: string): string {
+    setText(mis: MemberInfo[], key: string, valueText: string): string {
         const sperator = seal.ext.getStringConfig(this.ext, '分隔符');
 
-        const listText = members
+        const listText = mis
             .map(item => {
                 let text = item.name
                 text += ` ${key}=>${item.attr[key]}`
@@ -195,10 +195,10 @@ export class ConfigManager {
         return text;
     }
 
-    public sortText(members: member[], key: string): string {
+    sortText(mis: MemberInfo[], key: string): string {
         const sperator = seal.ext.getStringConfig(this.ext, '分隔符');
 
-        const listText = members
+        const listText = mis
             .map(item => {
                 let text = item.name
                 text += ` ${key}${item.attr[key]}`
@@ -213,15 +213,15 @@ export class ConfigManager {
         return text;
     }
 
-    public emptyText(): string {
+    emptyText(): string {
         return this.getRandomTemplate('提示队伍为空');
     }
 
-    public notExistText(): string {
+    notExistText(): string {
         return this.getRandomTemplate('提示队伍不存在');
     }
 
-    public isCallingText(): string {
+    isCallingText(): string {
         return this.getRandomTemplate('提示正在呼叫');
     }
 }

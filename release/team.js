@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         team
 // @author       错误
-// @version      4.0.1
+// @version      4.0.2
 // @description  这是一个海豹插件，它提供了一套完整的队伍管理功能，允许用户在 QQ 群组中创建和管理队伍。\n- 更多自定义配置请查看配置项（即插件设置部分）。\n - 如果你也是一名插件作者，你也可以通过globalThis.teamManager.xxx在你的插件中来调用该插件的方法。具体方法请在src/teamManager.ts中查看。\n- 若使用过程中遇到问题或BUG，请联系开发者。如果您有更好的想法，欢迎前往主页提交 Pull Request 或 Issue，共同完善该插件
 // @timestamp    1724468302
 // 2024-08-24 10:58:22
@@ -93,9 +93,9 @@
       const text = this.getRandomTemplate("呼叫结束").replace("{{队伍人数}}", memberNum.toString()).replace("{{签到人数}}", signNum.toString()).replace("{{咕咕人数}}", guguNum.toString()).replace("{{成员列表}}", listText);
       return text;
     }
-    showText(members, keys) {
+    showText(mis, keys) {
       const sperator = seal.ext.getStringConfig(this.ext, "分隔符");
-      const listText = members.map((item) => {
+      const listText = mis.map((item) => {
         let text2 = item.name;
         if (keys.length === 0) {
           const hp = item.attr["hp"];
@@ -116,9 +116,9 @@
       const text = this.getRandomTemplate("展示属性").replace("{{成员属性列表}}", listText);
       return text;
     }
-    setText(members, key, valueText) {
+    setText(mis, key, valueText) {
       const sperator = seal.ext.getStringConfig(this.ext, "分隔符");
-      const listText = members.map((item) => {
+      const listText = mis.map((item) => {
         let text2 = item.name;
         text2 += ` ${key}=>${item.attr[key]}`;
         return text2;
@@ -126,9 +126,9 @@
       const text = this.getRandomTemplate("设置属性").replace("{{修改操作}}", `操作:${valueText}`).replace("{{成员属性列表}}", listText);
       return text;
     }
-    sortText(members, key) {
+    sortText(mis, key) {
       const sperator = seal.ext.getStringConfig(this.ext, "分隔符");
-      const listText = members.map((item) => {
+      const listText = mis.map((item) => {
         let text2 = item.name;
         text2 += ` ${key}${item.attr[key]}`;
         return text2;
@@ -411,13 +411,13 @@
      * 展示队伍
      * @param {seal.MsgContext} ctx
      * @param {string[]} keys 属性名列表
-     * @returns {member[]} 成员属性列表
+     * @returns {MemberInfo[]} 成员属性列表
      */
     show(ctx, keys) {
       const id = ctx.group.groupId;
       let teamList = this.getTeamList(id);
       let team = teamList[0];
-      let members = team.members.map((userId) => {
+      let mis = team.members.map((userId) => {
         const msg = getMsg("group", userId, id);
         const mctx = getCtx(ctx.endPoint.userId, msg);
         const attr = {};
@@ -432,20 +432,20 @@
           attr
         };
       });
-      return members;
+      return mis;
     }
     /**
      * 设置属性
      * @param {seal.MsgContext} ctx 
      * @param {string} key 属性名
      * @param {string} valueText 表达式文本
-     * @returns {member[]} 成员属性列表
+     * @returns {MemberInfo[]} 成员属性列表
      */
     set(ctx, key, valueText) {
       const id = ctx.group.groupId;
       let teamList = this.getTeamList(id);
       let team = teamList[0];
-      let members = team.members.map((userId) => {
+      let mis = team.members.map((userId) => {
         const msg = getMsg("group", userId, id);
         const mctx = getCtx(ctx.endPoint.userId, msg);
         if (["+", "-", "*", "/"].includes(valueText[0])) {
@@ -456,25 +456,26 @@
         seal.vars.intSet(mctx, key, value);
         const attr = {};
         attr[key] = seal.vars.intGet(mctx, key)[0];
+        seal.applyPlayerGroupCardByTemplate(mctx, "");
         return {
           name: mctx.player.name,
           attr
         };
       });
-      return members;
+      return mis;
     }
     /**
      * 排序属性
      * @param {seal.MsgContext} ctx 
      * @param {string} key 属性名
-     * @returns {member[]} 成员属性列表
+     * @returns {MemberInfo[]} 成员属性列表
      */
     sort(ctx, key) {
-      let members = this.show(ctx, [key]);
-      members.sort((a, b) => {
+      let mis = this.show(ctx, [key]);
+      mis.sort((a, b) => {
         return b.attr[key] - a.attr[key];
       });
-      return members;
+      return mis;
     }
   };
 
@@ -482,7 +483,7 @@
   function main() {
     let ext = seal.ext.find("team");
     if (!ext) {
-      ext = seal.ext.new("team", "错误", "4.0.1");
+      ext = seal.ext.new("team", "错误", "4.0.2");
       seal.ext.register(ext);
     }
     const teamManager = new TeamManager(ext);
@@ -599,10 +600,9 @@
             seal.replyToSender(ctx, msg, reply2);
             return seal.ext.newCmdExecuteResult(true);
           }
-          const keys = cmdArgs.args.slice();
-          keys.splice(0, 1);
-          const members = teamManager.show(ctx, keys);
-          const reply = configManager.showText(members, keys);
+          const keys = cmdArgs.args.slice(1);
+          const mis = teamManager.show(ctx, keys);
+          const reply = configManager.showText(mis, keys);
           seal.replyToSender(ctx, msg, reply);
           return seal.ext.newCmdExecuteResult(true);
         }
@@ -619,8 +619,8 @@
             seal.replyToSender(ctx, msg, "提示:【.team st <属性名> <表达式>】表达式缺失");
             return seal.ext.newCmdExecuteResult(true);
           }
-          const members = teamManager.set(ctx, key, valueText);
-          const reply = configManager.setText(members, key, valueText);
+          const mis = teamManager.set(ctx, key, valueText);
+          const reply = configManager.setText(mis, key, valueText);
           seal.replyToSender(ctx, msg, reply);
           return seal.ext.newCmdExecuteResult(true);
         }
@@ -636,8 +636,8 @@
             seal.replyToSender(ctx, msg, "提示:【.team sort 属性名】属性名缺失");
             return seal.ext.newCmdExecuteResult(true);
           }
-          const members = teamManager.sort(ctx, key);
-          const reply = configManager.sortText(members, key);
+          const mis = teamManager.sort(ctx, key);
+          const reply = configManager.sortText(mis, key);
           seal.replyToSender(ctx, msg, reply);
           return seal.ext.newCmdExecuteResult(true);
         }
@@ -666,8 +666,8 @@
           return;
         }
         const key = "dex";
-        const members = teamManager.sort(ctx, key);
-        const reply = configManager.sortText(members, key);
+        const mis = teamManager.sort(ctx, key);
+        const reply = configManager.sortText(mis, key);
         seal.replyToSender(ctx, msg, reply);
         return;
       }

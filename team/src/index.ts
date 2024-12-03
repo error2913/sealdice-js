@@ -5,7 +5,7 @@ function main() {
   // 注册扩展
   let ext = seal.ext.find('team');
   if (!ext) {
-    ext = seal.ext.new('team', '错误', '4.0.1');
+    ext = seal.ext.new('team', '错误', '4.0.2');
     seal.ext.register(ext);
   }
 
@@ -154,11 +154,10 @@ function main() {
           return seal.ext.newCmdExecuteResult(true);
         }
 
-        const keys = cmdArgs.args.slice();
-        keys.splice(0, 1);
+        const keys = cmdArgs.args.slice(1);
 
-        const members = teamManager.show(ctx, keys);
-        const reply = configManager.showText(members, keys);
+        const mis = teamManager.show(ctx, keys);
+        const reply = configManager.showText(mis, keys);
 
         seal.replyToSender(ctx, msg, reply);
         return seal.ext.newCmdExecuteResult(true);
@@ -180,8 +179,8 @@ function main() {
           return seal.ext.newCmdExecuteResult(true);
         }
 
-        const members = teamManager.set(ctx, key, valueText);
-        const reply = configManager.setText(members, key, valueText);
+        const mis = teamManager.set(ctx, key, valueText);
+        const reply = configManager.setText(mis, key, valueText);
 
         seal.replyToSender(ctx, msg, reply);
         return seal.ext.newCmdExecuteResult(true);
@@ -202,8 +201,8 @@ function main() {
           return seal.ext.newCmdExecuteResult(true);
         }
 
-        const members = teamManager.sort(ctx, key);
-        const reply = configManager.sortText(members, key);
+        const mis = teamManager.sort(ctx, key);
+        const reply = configManager.sortText(mis, key);
 
         seal.replyToSender(ctx, msg, reply);
         return seal.ext.newCmdExecuteResult(true);
@@ -239,8 +238,8 @@ function main() {
 
       const key = 'dex';
 
-      const members = teamManager.sort(ctx, key);
-      const reply = configManager.sortText(members, key);
+      const mis = teamManager.sort(ctx, key);
+      const reply = configManager.sortText(mis, key);
 
       seal.replyToSender(ctx, msg, reply);
       return;

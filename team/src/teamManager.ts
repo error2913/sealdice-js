@@ -1,5 +1,5 @@
 import { ConfigManager } from './configManager';
-import { Team, member } from './team'
+import { Team, MemberInfo } from './team'
 import { getCtx, getMsg } from "./utils";
 
 export class TeamManager {
@@ -34,7 +34,7 @@ export class TeamManager {
      * @param {string} id QQ群号，groupId
      * @returns {Team[]} 队伍列表
      */
-    public getTeamList(id: string): Team[] {
+    getTeamList(id: string): Team[] {
         if (!this.cache.hasOwnProperty(id)) {
             let teamList = this.teamList;
 
@@ -64,7 +64,7 @@ export class TeamManager {
      * @param {string} id QQ群号，groupId
      * @returns {string[]} 呼叫成员userId列表
      */
-    public getCallList(id: string): string[] {
+    getCallList(id: string): string[] {
         let callList = [];
 
         try {
@@ -86,7 +86,7 @@ export class TeamManager {
      * @param {string} name 队伍名字
      * @returns 若绑定队伍则返回true，新建队伍则返回false
      */
-    public bind(id: string, name: string): boolean {
+    bind(id: string, name: string): boolean {
         let teamList = this.getTeamList(id);
         let team = teamList[0];
 
@@ -126,7 +126,7 @@ export class TeamManager {
      * @param {seal.Kwarg[]} kwargs 关键字参数，可包含now，all
      * @returns {string[]} 删除成功返回队伍名字列表，否则返回空列表，意味着队伍不存在
      */
-    public delete(id: string, name: string, kwargs: seal.Kwarg[]): string[] {
+    delete(id: string, name: string, kwargs: seal.Kwarg[]): string[] {
         let teamList = this.getTeamList(id);
         let team = teamList[0];
         const keys = kwargs.map(item => { return item.name });
@@ -163,7 +163,7 @@ export class TeamManager {
      * @param {string[]} atList at的用户id列表
      * @returns {string[]} 成员userId列表
      */
-    public add(ctx: seal.MsgContext, atList: string[]): string[] {
+    add(ctx: seal.MsgContext, atList: string[]): string[] {
         const id = ctx.group.groupId;
         let teamList = this.getTeamList(id);
         let team = teamList[0];
@@ -187,7 +187,7 @@ export class TeamManager {
      * @param {seal.Kwarg[]} kwargs 关键字参数，可包含all
      * @returns {string[]} 成员userId列表
      */
-    public remove(ctx: seal.MsgContext, atList: string[], kwargs: seal.Kwarg[]): string[] {
+    remove(ctx: seal.MsgContext, atList: string[], kwargs: seal.Kwarg[]): string[] {
         const id = ctx.group.groupId;
         let teamList = this.getTeamList(id);
         let team = teamList[0];
@@ -211,7 +211,7 @@ export class TeamManager {
      * @param {number} n 抽取人数
      * @returns {[string[], boolean]} 抽取的成员name列表
      */
-    public draw(ctx: seal.MsgContext, n: number): string[] {
+    draw(ctx: seal.MsgContext, n: number): string[] {
         const id = ctx.group.groupId;
         let teamList = this.getTeamList(id);
         let team = teamList[0];
@@ -237,7 +237,7 @@ export class TeamManager {
      * @param {seal.MsgContext} ctx
      * @returns {[string[], boolean]} [呼叫的成员userId列表，是否正在呼叫中]
      */
-    public call(ctx: seal.MsgContext): [string[], boolean] {
+    call(ctx: seal.MsgContext): [string[], boolean] {
         const id = ctx.group.groupId;
         let teamList = this.getTeamList(id);
         let team = teamList[0];
@@ -264,7 +264,7 @@ export class TeamManager {
      * 签到
      * @param {seal.MsgContext} ctx
      */
-    public signUp(ctx: seal.MsgContext): void {
+    signUp(ctx: seal.MsgContext): void {
         const id = ctx.group.groupId;
         const userId = ctx.player.userId;
 
@@ -311,14 +311,14 @@ export class TeamManager {
      * 展示队伍
      * @param {seal.MsgContext} ctx
      * @param {string[]} keys 属性名列表
-     * @returns {member[]} 成员属性列表
+     * @returns {MemberInfo[]} 成员属性列表
      */
-    public show(ctx: seal.MsgContext, keys: string[]): member[] {
+    show(ctx: seal.MsgContext, keys: string[]): MemberInfo[] {
         const id = ctx.group.groupId;
         let teamList = this.getTeamList(id);
         let team = teamList[0];
 
-        let members = team.members.map(userId => {
+        let mis = team.members.map(userId => {
             const msg = getMsg("group", userId, id);
             const mctx = getCtx(ctx.endPoint.userId, msg);
 
@@ -345,7 +345,7 @@ export class TeamManager {
 
         })
 
-        return members;
+        return mis;
     }
 
     /**
@@ -353,14 +353,14 @@ export class TeamManager {
      * @param {seal.MsgContext} ctx 
      * @param {string} key 属性名
      * @param {string} valueText 表达式文本
-     * @returns {member[]} 成员属性列表
+     * @returns {MemberInfo[]} 成员属性列表
      */
-    public set(ctx: seal.MsgContext, key: string, valueText: string): member[] {
+    set(ctx: seal.MsgContext, key: string, valueText: string): MemberInfo[] {
         const id = ctx.group.groupId;
         let teamList = this.getTeamList(id);
         let team = teamList[0];
 
-        let members = team.members.map(userId => {
+        let mis = team.members.map(userId => {
             const msg = getMsg("group", userId, id);
             const mctx = getCtx(ctx.endPoint.userId, msg);
 
@@ -387,28 +387,30 @@ export class TeamManager {
             const attr: { [key: string]: number } = {};
             attr[key] = seal.vars.intGet(mctx, key)[0];
 
+            seal.applyPlayerGroupCardByTemplate(mctx, '');
+
             return {
                 name: mctx.player.name,
                 attr: attr
             }
         })
 
-        return members;
+        return mis;
     }
 
     /**
      * 排序属性
      * @param {seal.MsgContext} ctx 
      * @param {string} key 属性名
-     * @returns {member[]} 成员属性列表
+     * @returns {MemberInfo[]} 成员属性列表
      */
-    public sort(ctx: seal.MsgContext, key: string): member[] {
-        let members = this.show(ctx, [key]);
+    sort(ctx: seal.MsgContext, key: string): MemberInfo[] {
+        let mis = this.show(ctx, [key]);
 
-        members.sort((a, b) => {
+        mis.sort((a, b) => {
             return b.attr[key] - a.attr[key];
         })
 
-        return members;
+        return mis;
     }
 }
