@@ -87,6 +87,9 @@ const cmd = seal.ext.newCmdItemInfo();
 cmd.name = 'rn';
 cmd.help = `帮助:
 【.rn <模板>】将群成员的群名片设置为【模板】
+【.rn pefix <前缀>】为群名片添加前缀
+【.rn suffix <后缀>】为群名片添加后缀
+【.rn fmt <前缀> <后缀>】为群名片添加前缀和后缀
 【.rn draw】将群成员的群名片设置为牌堆抽取结果
 【.rn amon】阿蒙！
 【.rn clr】恢复群名片`;
@@ -106,8 +109,70 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             ret.showHelp = true;
             return ret;
         }
+        case 'prefix': {
+            const prefix = cmdArgs.getArgN(2);
+            if (prefix === '') {
+                seal.replyToSender(ctx, msg, '请指定前缀');
+                return seal.ext.newCmdExecuteResult(false);
+            }
+
+            const tmpl = `${prefix}{$t玩家_RAW}`;
+            const epId = ctx.endPoint.userId;
+            const gid = ctx.group.groupId;
+            const err = setName(epId, gid, tmpl);
+            if (err!== null) {
+                seal.replyToSender(ctx, msg, err.message);
+                return seal.ext.newCmdExecuteResult(false);
+            }
+
+            seal.replyToSender(ctx, msg, '已设置');
+            return seal.ext.newCmdExecuteResult(true);
+        }
+        case 'suffix': {
+            const sufix = cmdArgs.getArgN(2);
+            if (sufix === '') {
+                seal.replyToSender(ctx, msg, '请指定后缀');
+                return seal.ext.newCmdExecuteResult(false);
+            }
+
+            const tmpl = `{$t玩家_RAW}${sufix}`;
+            const epId = ctx.endPoint.userId;
+            const gid = ctx.group.groupId;
+            const err = setName(epId, gid, tmpl);
+            if (err!== null) {
+                seal.replyToSender(ctx, msg, err.message);
+                return seal.ext.newCmdExecuteResult(false);
+            }
+
+            seal.replyToSender(ctx, msg, '已设置');
+            return seal.ext.newCmdExecuteResult(true);
+        }
+        case 'fmt': {
+            const prefix = cmdArgs.getArgN(2);
+            const sufix = cmdArgs.getArgN(3);
+            if (prefix === '' || sufix === '') {
+                seal.replyToSender(ctx, msg, '请指定前缀和后缀');
+                return seal.ext.newCmdExecuteResult(false);
+            }
+
+            const tmpl = `${prefix}{$t玩家_RAW}${sufix}`;
+            const epId = ctx.endPoint.userId;
+            const gid = ctx.group.groupId;
+            const err = setName(epId, gid, tmpl);
+            if (err!== null) {
+                seal.replyToSender(ctx, msg, err.message);
+                return seal.ext.newCmdExecuteResult(false);
+            }
+
+            seal.replyToSender(ctx, msg, '已设置');
+            return seal.ext.newCmdExecuteResult(true);
+        }
         case 'draw': {
             const name = cmdArgs.getArgN(2);
+            if (name === '') {
+                seal.replyToSender(ctx, msg, '请指定牌堆名称');
+                return seal.ext.newCmdExecuteResult(false);
+            }
             if (name === 'keys') {
                 cmdArgs.args = cmdArgs.args.slice(1);
                 cmdArgs.rawArgs = cmdArgs.rawArgs.replace('draw', '');
