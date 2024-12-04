@@ -124,7 +124,6 @@ const gvi = {
     nukeTeam: ['team', []]
 }
 const pvi = {
-    money: ['number', 0],
     date: ['string', ''],
     haveNuke: ['boolean', false],
     production: ['string', ''],
@@ -233,7 +232,7 @@ nukeRegister(
 )
 
 gm.chart.registerChart('钱包', (player) => {
-    return player.varsMap.money;
+    return player.money;
 });
 
 gm.chart.registerChart('污染', (player) => {
@@ -343,7 +342,7 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             if (varsName === '污染') {
                 player.varsMap.pollution.value = count;
             } else if (varsName === '钱') {
-                player.varsMap.money = count;
+                player.money = count;
             } else {
                 seal.replyToSender(ctx, msg, '请输入变量名');
                 return seal.ext.newCmdExecuteResult(true);
@@ -388,7 +387,7 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             player.varsMap.pollution.settle();
 
             const s = `【${player.varsMap.haveNuke ? '有核' : '无核'}】<${player.name}>
-钱包:${player.varsMap.money}
+钱包:${player.money}
 污染值:${player.varsMap.pollution.value}
 污染等级:${player.varsMap.pollution.level}`;
 
@@ -511,7 +510,7 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             const mplayer = gm.player.getPlayer(muid, mun);
             mplayer.varsMap.pollution.settle();
 
-            const { result, err } = gm.prop.useProp(name, player, count, mplayer);
+            const { _, err } = gm.prop.useProp(name, player, count, mplayer);
             if (err !== null) {
                 seal.replyToSender(ctx, msg, err.message);
                 return seal.ext.newCmdExecuteResult(true);
@@ -529,7 +528,12 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             return seal.ext.newCmdExecuteResult(true);
         }
         case '排行榜': {
-            const chart = gm.chart.getChart('钱包');
+            const name = cmdArgs.getArgN(2);
+            if (name === '') {
+                const s = '可选的排行榜有：\n' + gm.chart.showAvailableChart();
+                seal.replyToSender(ctx, msg, '请输入排行榜名');
+            }
+            const chart = gm.chart.getChart(name);
             const s = chart.showChart();
             seal.replyToSender(ctx, msg, s);
             return seal.ext.newCmdExecuteResult(true);
@@ -547,34 +551,20 @@ cmd.solve = (ctx, msg, cmdArgs) => {
                 return seal.ext.newCmdExecuteResult(true);
             }
 
-            const count = parseInt(cmdArgs.getArgN(3));
+            let count = parseInt(cmdArgs.getArgN(3));
             if (isNaN(count) || count < 1) {
-                seal.replyToSender(ctx, msg, '请输入数量');
-                return seal.ext.newCmdExecuteResult(true);
+                count = 1;
             }
 
             const player = gm.player.getPlayer(uid, un);
             const shop = gm.shop.getShop('普通');
             const goods = shop.getGoods(name);
-            if (goods === undefined) {
-                seal.replyToSender(ctx, msg, '物品不存在');
+
+            const err = shop.buyGoods(player, name, count);
+            if (err !== null) {
+                seal.replyToSender(ctx, msg, err.message);
                 return seal.ext.newCmdExecuteResult(true);
             }
-
-            if (count > goods.count) {
-                seal.replyToSender(ctx, msg, `数量不足，最多只能购买${goods.count}个`);
-                return seal.ext.newCmdExecuteResult(true);
-            }
-
-            const price = goods.price * count;
-            if (player.varsMap.money < price) {
-                seal.replyToSender(ctx, msg, `你的钱不够，需要${price}元`);
-                return seal.ext.newCmdExecuteResult(true);
-            }
-
-            player.varsMap.money -= price;
-            player.backpack.addItem(name, count);
-            shop.buyGoods(name, count);
 
             seal.replyToSender(ctx, msg, `你购买了${count}个${name}，花费了${price}元`);
 
