@@ -281,7 +281,7 @@ const gc = {
         prob: 0.1
     }
 };
-gm.shop.registerShop('普通', gc);
+gm.shop.registerShop('普通', gc, 1);
 
 function checkNuke(player, game) {
     if (player.backpack.checkTypesExists(gm, '核弹')) {

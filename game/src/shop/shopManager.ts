@@ -18,7 +18,7 @@ export interface GoodsConfig {
 
 export class ShopManager {
     private ext: seal.ExtInfo;
-    private map: { [key: string]: GoodsConfig } // 基于此数据生成shop
+    private map: { [key: string]: { goodsConfig: GoodsConfig, interval: number } } // 基于此数据生成shop
     private cache: { [key: string]: Shop }
 
     constructor(ext: seal.ExtInfo) {
@@ -27,13 +27,16 @@ export class ShopManager {
         this.cache = {};
     }
 
-    registerShop(name: string, gc: GoodsConfig) {
+    registerShop(name: string, gc: GoodsConfig, interval: number) {
         if (this.map.hasOwnProperty(name)) {
             console.error(`注册商店${name}时出现错误:该名字已注册`);
             return;
         }
 
-        this.map[name] = gc;
+        this.map[name] = {
+            goodsConfig: gc,
+            interval: interval
+        }
     }
 
     getShop(name: string): Shop | undefined {
@@ -51,11 +54,15 @@ export class ShopManager {
                 console.error(`从数据库中获取${`shop_${name}`}失败:`, error);
             }
 
-            const gc = this.map[name];
+            const gc = this.map[name].goodsConfig;
             this.cache[name] = Shop.parse(data, gc);
         }
 
-        if (this.cache[name].updateTime === 0) {
+        const now = Math.floor(Date.now() / 1000);
+        const updateTime = this.cache[name].updateTime;
+        const interval = this.map[name].interval;
+        const dateDiff = Math.ceil((now - updateTime) / 24 * 60 * 60);
+        if (interval !== 0 && dateDiff >= interval) {
             this.cache[name].updateShop();
             this.saveShop(name);
         }

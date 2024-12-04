@@ -4,6 +4,7 @@ import { VarsInfo, VarsMap } from "../vars/varsManager";
 export class Player {
     uid: string;
     name: string;
+    date: string;
     backpack: Backpack;
     varsMap: VarsMap;
 
@@ -25,6 +26,10 @@ export class Player {
             player.name = data.name;
         }
 
+        if (data.hasOwnProperty('date')) {
+            player.date = data.date;
+        }
+
         if (data.hasOwnProperty('backpack')) {
             player.backpack = Backpack.parse(data.backpack, null);
         }
@@ -34,5 +39,15 @@ export class Player {
         }
 
         return player;
+    }
+
+    signIn(): boolean {
+        const date = new Date().toLocaleString().split(' ')[0];
+        if (this.date === date) {
+            return false;
+        }
+
+        this.date = date;
+        return true;
     }
 }
