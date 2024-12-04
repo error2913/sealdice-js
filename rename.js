@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         群名片集体修改器
 // @author       错误
-// @version      1.0.0
+// @version      1.0.1
 // @description  指令 .rn 获取帮助。七天内发言的用户才可被修改群名片。骰娘需要管理员权限。使用指令需要管理员权限。依赖于错误:骰主公告极速版:>=1.1.0。
 // @timestamp    1733286874
 // 2024-12-04 12:34:34
@@ -14,7 +14,7 @@
 
 let ext = seal.ext.find('rename');
 if (!ext) {
-    ext = seal.ext.new('rename', '错误', '1.0.0');
+    ext = seal.ext.new('rename', '错误', '1.0.1');
     seal.ext.register(ext);
 }
 
@@ -41,46 +41,114 @@ function getCtx(epId, msg) {
     return undefined;
 }
 
-function setName(epId, gid, tmpl) {
+async function setNameByTmpl(epId, gid, tmpl) {
     const data = globalThis.getPostData();
     if (!data.hasOwnProperty(epId) || !data[epId].hasOwnProperty(gid)) {
-        return new Error('未找到数据');
+        return { result: null, err: new Error('未找到数据') };
     }
 
-    const members = data[epId][gid].members;
-    for (const uid of Object.keys(members)) {
-        const msg = getMsg(gid, uid);
-        const ctx = getCtx(epId, msg);
-        seal.applyPlayerGroupCardByTemplate(ctx, tmpl);
+    const uids = Object.keys(data[epId][gid].members);
+    if (uids.length === 0) {
+        return { result: null, err: new Error('当前群聊没有用户数据') };
     }
 
-    return null;
+    const f = 10;
+    const interval = 450;
+    const result = { success: 0, fail: 0 };
+
+    let arr = [];
+    for (let i = 0; i < uids.length; i++) {
+        arr.push(uids[i]);
+
+        if (i % f === f - 1 || i === uids.length - 1) {
+            const arr_copy = arr.slice();
+
+            for (let j = 0; j < arr_copy.length; j++) {
+                const uid = arr_copy[j];
+                const msg = getMsg(gid, uid);
+                const ctx = getCtx(epId, msg);
+
+                try {
+                    seal.setPlayerGroupCard(ctx, tmpl);
+                    result.success++;
+                } catch (e) {
+                    result.fail++;
+                }
+            }
+
+            await new Promise(resolve => {
+                setTimeout(resolve, interval + Math.floor(Math.random() * 100));
+            });
+
+            arr = [];
+        }
+    }
+
+    if (result.success === 0) {
+        return { result: null, err: new Error('全部设置失败，请检查长度') };
+    }
+
+    return { result, err: null };
 }
 
-function setNameByDraw(epId, gid, name) {
+async function setNameByDraw(epId, gid, name) {
     const data = globalThis.getPostData();
     if (!data.hasOwnProperty(epId) || !data[epId].hasOwnProperty(gid)) {
-        return new Error('未找到数据');
+        return { result: null, err: new Error('未找到数据') };
     }
 
-    const members = data[epId][gid].members;
-    for (const uid of Object.keys(members)) {
-        const msg = getMsg(gid, uid);
-        const ctx = getCtx(epId, msg);
-        const dr = seal.deck.draw(ctx, name, true);
-        if (!dr.exists) {
-            return new Error(`牌堆${name}不存在:${dr.err}`);
-        }
-
-        const tmpl = dr.result;
-        if (tmpl == null) {
-            return new Error(`牌堆${name}结果为空:${dr.err}`);
-        }
-
-        seal.applyPlayerGroupCardByTemplate(ctx, tmpl);
+    const uids = Object.keys(data[epId][gid].members);
+    if (uids.length === 0) {
+        return { result: null, err: new Error('当前群聊没有用户数据') };
     }
 
-    return null;
+    const f = 10;
+    const interval = 450;
+    const result = { success: 0, fail: 0 };
+
+    let arr = [];
+    for (let i = 0; i < uids.length; i++) {
+        arr.push(uids[i]);
+
+        if (i % f === f - 1 || i === uids.length - 1) {
+            const arr_copy = arr.slice();
+
+            for (let j = 0; j < arr_copy.length; j++) {
+                const uid = arr_copy[j];
+                const msg = getMsg(gid, uid);
+                const ctx = getCtx(epId, msg);
+
+                const dr = seal.deck.draw(ctx, name, true);
+                if (!dr.exists) {
+                    return { result: null, err: new Error(`牌堆${name}不存在:${dr.err}`) };
+                }
+
+                const tmpl = dr.result;
+                if (tmpl == null) {
+                    return { result: null, err: new Error(`牌堆${name}结果为空:${dr.err}`) };
+                }
+
+                try {
+                    seal.setPlayerGroupCard(ctx, tmpl);
+                    result.success++;
+                } catch (e) {
+                    result.fail++;
+                }
+            }
+
+            await new Promise(resolve => {
+                setTimeout(resolve, interval + Math.floor(Math.random() * 100));
+            });
+
+            arr = [];
+        }
+    }
+
+    if (result.success === 0) {
+        return { result: null, err: new Error('全部设置失败，请检查长度') };
+    }
+
+    return { result, err: null };
 }
 
 const cmd = seal.ext.newCmdItemInfo();
@@ -93,7 +161,7 @@ cmd.help = `帮助:
 【.rn draw】将群成员的群名片设置为牌堆抽取结果
 【.rn amon】阿蒙！
 【.rn clr】恢复群名片`;
-cmd.solve = (ctx, msg, cmdArgs) => {
+cmd.solve = async (ctx, msg, cmdArgs) => {
     if (ctx.privilegeLevel < 50) {
         const s = seal.formatTmpl(ctx, "核心:提示_无权限");
 
@@ -105,9 +173,8 @@ cmd.solve = (ctx, msg, cmdArgs) => {
     switch (val) {
         case '':
         case 'help': {
-            const ret = seal.ext.newCmdExecuteResult(true);
-            ret.showHelp = true;
-            return ret;
+            seal.replyToSender(ctx, msg, cmd.help);
+            return seal.ext.newCmdExecuteResult(true);
         }
         case 'prefix': {
             const prefix = cmdArgs.getArgN(2);
@@ -119,13 +186,13 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             const tmpl = `${prefix}{$t玩家_RAW}`;
             const epId = ctx.endPoint.userId;
             const gid = ctx.group.groupId;
-            const err = setName(epId, gid, tmpl);
-            if (err!== null) {
+            const { result, err } = await setNameByTmpl(epId, gid, tmpl);
+            if (err !== null) {
                 seal.replyToSender(ctx, msg, err.message);
                 return seal.ext.newCmdExecuteResult(false);
             }
 
-            seal.replyToSender(ctx, msg, '已设置');
+            seal.replyToSender(ctx, msg, `${result.success}成功,${result.fail}失败`);
             return seal.ext.newCmdExecuteResult(true);
         }
         case 'suffix': {
@@ -138,13 +205,13 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             const tmpl = `{$t玩家_RAW}${sufix}`;
             const epId = ctx.endPoint.userId;
             const gid = ctx.group.groupId;
-            const err = setName(epId, gid, tmpl);
-            if (err!== null) {
+            const { result, err } = await setNameByTmpl(epId, gid, tmpl);
+            if (err !== null) {
                 seal.replyToSender(ctx, msg, err.message);
                 return seal.ext.newCmdExecuteResult(false);
             }
 
-            seal.replyToSender(ctx, msg, '已设置');
+            seal.replyToSender(ctx, msg, `${result.success}成功,${result.fail}失败`);
             return seal.ext.newCmdExecuteResult(true);
         }
         case 'fmt': {
@@ -158,13 +225,13 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             const tmpl = `${prefix}{$t玩家_RAW}${sufix}`;
             const epId = ctx.endPoint.userId;
             const gid = ctx.group.groupId;
-            const err = setName(epId, gid, tmpl);
-            if (err!== null) {
+            const { result, err } = await setNameByTmpl(epId, gid, tmpl);
+            if (err !== null) {
                 seal.replyToSender(ctx, msg, err.message);
                 return seal.ext.newCmdExecuteResult(false);
             }
 
-            seal.replyToSender(ctx, msg, '已设置');
+            seal.replyToSender(ctx, msg, `${result.success}成功,${result.fail}失败`);
             return seal.ext.newCmdExecuteResult(true);
         }
         case 'draw': {
@@ -184,51 +251,52 @@ cmd.solve = (ctx, msg, cmdArgs) => {
 
             const epId = ctx.endPoint.userId;
             const gid = ctx.group.groupId;
-            const err = setNameByDraw(epId, gid, name);
+            const { result, err } = await setNameByDraw(epId, gid, name);
             if (err !== null) {
                 seal.replyToSender(ctx, msg, err.message);
                 return seal.ext.newCmdExecuteResult(false);
             }
 
-            seal.replyToSender(ctx, msg, '已设置');
+            seal.replyToSender(ctx, msg, `${result.success}成功,${result.fail}失败`);
             return seal.ext.newCmdExecuteResult(true);
         }
         case 'amon': {
             const tmpl = seal.formatTmpl(ctx, "核心:骰子名字");
             const epId = ctx.endPoint.userId;
             const gid = ctx.group.groupId;
-            const err = setName(epId, gid, tmpl);
+            const { result, err } = await setNameByTmpl(epId, gid, tmpl);
             if (err !== null) {
                 seal.replyToSender(ctx, msg, err.message);
                 return seal.ext.newCmdExecuteResult(false);
             }
 
-            seal.replyToSender(ctx, msg, '已设置: ' + tmpl);
+            seal.replyToSender(ctx, msg, `${result.success}成功,${result.fail}失败`);
             return seal.ext.newCmdExecuteResult(true);
         }
         case 'clr': {
+            const tmpl = '';
             const epId = ctx.endPoint.userId;
             const gid = ctx.group.groupId;
-            const err = setName(epId, gid, '');
+            const { result, err } = await setNameByTmpl(epId, gid, tmpl);
             if (err !== null) {
                 seal.replyToSender(ctx, msg, err.message);
                 return seal.ext.newCmdExecuteResult(false);
             }
 
-            seal.replyToSender(ctx, msg, '已清除');
+            seal.replyToSender(ctx, msg, `${result.success}成功,${result.fail}失败`);
             return seal.ext.newCmdExecuteResult(true);
         }
         default: {
             const tmpl = val;
             const epId = ctx.endPoint.userId;
             const gid = ctx.group.groupId;
-            const err = setName(epId, gid, tmpl);
+            const { result, err } = await setNameByTmpl(epId, gid, tmpl);
             if (err !== null) {
                 seal.replyToSender(ctx, msg, err.message);
                 return seal.ext.newCmdExecuteResult(false);
             }
 
-            seal.replyToSender(ctx, msg, `已设置: ${tmpl}`);
+            seal.replyToSender(ctx, msg, `${result.success}成功,${result.fail}失败`);
             return seal.ext.newCmdExecuteResult(true);
         }
     }
