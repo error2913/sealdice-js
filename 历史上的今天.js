@@ -2,7 +2,7 @@
 // @name         历史上的今天
 // @author       错误
 // @version      1.0.0
-// @description  发送‘历史上的今天’，获取历史上的今天的事件
+// @description  发送‘历史上的今天’，获取历史上的今天的事件 
 // @timestamp    1725522223
 // 2024-09-05 15:43:43
 // @license      MIT
