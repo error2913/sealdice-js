@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         骰主公告极速版
 // @author       错误
-// @version      1.0.0
+// @version      1.1.0
 // @description  让骰主掌握立即发公告、或者广告的权利。使用 .pn help 查看帮助。公告只能发在安装插件后活跃过、且在这之后一周内活跃的群聊。
 // @timestamp    1732543168
 // 2024-11-25 21:59:28
@@ -13,22 +13,55 @@
 
 let ext = seal.ext.find('postnow');
 if (!ext) {
-    ext = seal.ext.new('postnow', '错误', '1.0.0');
+    ext = seal.ext.new('postnow', '错误', '1.1.0');
     seal.ext.register(ext);
 
-    const data = JSON.parse(ext.storageGet('data') || '{}');
+    const data = JSON.parse(ext.storageGet('postData') || '{}');
 
     function save() {
-        ext.storageSet('data', JSON.stringify(data));
+        ext.storageSet('postData', JSON.stringify(data));
     }
 
-    function getMsg(gid) {
+    function add(epId, gid, uid, ts) {
+        if (!data.hasOwnProperty(epId)) {
+            data[epId] = {};
+        }
+
+        if (!data[epId].hasOwnProperty(gid)) {
+            data[epId][gid] = {
+                ts: ts,
+                members: {}
+            }
+        }
+
+        data[epId][gid].ts = ts;
+        data[epId][gid].members[uid] = ts;
+    }
+
+    // 兼容旧版本数据
+    function adaptOldData() {
+        const data = JSON.parse(ext.storageGet('data') || '{}');
+
+        if (Object.keys(data).length === 0) {
+            return;
+        }
+
+        for (const gid of Object.keys(data)) {
+            add(data[gid].epId, gid, '0', data[gid].ts);
+        }
+
+        save();
+        ext.storageSet('data', '{}');
+    }
+    adaptOldData();
+
+    function getMsg(gid, uid) {
         let msg = seal.newMessage();
 
         msg.groupId = gid;
         msg.guildId = '';
         msg.messageType = 'group';
-        msg.sender.userId = 'QQ:114514';
+        msg.sender.userId = uid;
 
         return msg;
     }
@@ -45,8 +78,8 @@ if (!ext) {
         return undefined;
     }
 
-    function sendPost(gid, epId, s, emg) {
-        const msg = getMsg(gid);
+    function sendPost(epId, gid, uid, s, emg = false) {
+        const msg = getMsg(gid, uid);
         const ctx = getCtx(epId, msg);
 
         if (!emg && ctx.group.logOn) {
@@ -57,67 +90,92 @@ if (!ext) {
     }
 
     function post(s, emg = false) {
-        const gids = Object.keys(data);
+        const epIds = Object.keys(data);
+        const f = 5;
+        const interval = 2000;
 
-        let arr = [];
-        for (let i = 0; i < gids.length; i++) {
-            arr.push(data[gids[i]]);
+        for (let i = 0; i < epIds.length; i++) {
+            const epId = epIds[i];
+            const gids = Object.keys(data[epId]);
 
-            if (i % 5 === 5 - 1 || i === gids.length -1) {
-                const arr_copy = arr.slice();
-                const n = Math.floor(i / 5);
-
-                setTimeout(() => {
-                    for (let j = 0; j < arr_copy.length; j++) {
-                        const gid = arr_copy[j].gid;
-                        const epId = arr_copy[j].epId;
-
-                        sendPost(gid, epId, s, emg);
-                    }
-                }, n * 2 * 1000 + Math.floor(Math.random() * 500))
-
-                arr = [];
+            let arr = [];
+            for (let j = 0; j < gids.length; j++) {
+                arr.push(gids[j]);
+    
+                if (j % f === f - 1 || j === gids.length -1) {
+                    const arr_copy = arr.slice();
+                    const n = Math.floor(j / f);
+    
+                    setTimeout(() => {
+                        for (let k = 0; k < arr_copy.length; k++) {
+                            const gid = arr_copy[k];
+    
+                            sendPost(epId, gid, '0', s, emg);
+                        }
+                    }, n * interval + Math.floor(Math.random() * 500))
+    
+                    arr = [];
+                }
             }
-        }
-    }
-
-    function add(ctx, msg) {
-        if (ctx.isPrivate) {
-            return;
-        }
-
-        const gid = ctx.group.groupId;
-        const epId = ctx.endPoint.userId;
-
-        data[gid] = {
-            ts: msg.time,
-            gid: gid,
-            epId: epId
         }
     }
 
     function clean(ts) {
         const limit = 1000 * 60 * 60 * 24 * 7;
-        const keys = Object.keys(data);
-        for (let i = 0; i < keys.length; i++) {
-            const gid = keys[i];
-            if (ts - data[gid].ts > limit) {
-                delete data[gid];
+        const epIds = Object.keys(data);
+        for (let i = 0; i < epIds.length; i++) {
+            const epId = epIds[i];
+
+            const gids = Object.keys(data[epId]);
+            for (let j = 0; j < gids.length; j++) {
+                const gid = gids[j];
+
+                if (ts - data[epId][gid].ts > limit) {
+                    delete data[epId][gid];
+                }
+
+                const members = Object.keys(data[epId][gid].members);
+                for (let k = 0; k < members.length; k++) {
+                    const uid = members[k];
+
+                    if (ts - data[epId][gid].members[uid] > limit) {
+                        delete data[epId][gid].members[uid];
+                    }
+                }
             }
         }
     }
 
     seal.ext.registerTask(ext, "cron", "0 */4 * * *", (taskCtx) => {
-        clean(taskCtx.now);
+        const ts = taskCtx.now;
+        clean(ts);
         save();
     });
 
     ext.onCommandReceived = (ctx, msg, _) => {
-        add(ctx, msg);
+        if (ctx.isPrivate) {
+            return;
+        }
+
+        const epId = ctx.endPoint.userId;
+        const gid = ctx.group.groupId;
+        const uid = ctx.player.userId;
+        const ts = msg.time;
+
+        add(epId, gid, uid, ts);
     }
 
     ext.onNotCommandReceived = (ctx, msg) => {
-        add(ctx, msg);
+        if (ctx.isPrivate) {
+            return;
+        }
+
+        const epId = ctx.endPoint.userId;
+        const gid = ctx.group.groupId;
+        const uid = ctx.player.userId;
+        const ts = msg.time;
+
+        add(epId, gid, uid, ts);
     }
 
     const cmd = seal.ext.newCmdItemInfo();
@@ -125,7 +183,8 @@ if (!ext) {
     cmd.help = `帮助:
 【.pn <公告内容>】发布公告，换行请使用\\ n
 【.pn emg <公告内容>】发布紧急公告，忽略是否处于log状态
-【.pn test <公告内容>】测试公告格式，不会发出去`;
+【.pn test <公告内容>】测试公告格式，不会发出去
+【.pn save】保存数据`;
     cmd.solve = (ctx, msg, cmdArgs) => {
         if (ctx.privilegeLevel < 100) {
             const s = seal.formatTmpl(ctx, "核心:提示_无权限");
@@ -152,6 +211,11 @@ if (!ext) {
                 post(s, true);
                 return seal.ext.newCmdExecuteResult(true);
             }
+            case 'save': {
+                save();
+                seal.replyToSender(ctx, msg, '已保存');
+                return seal.ext.newCmdExecuteResult(true);
+            }
             default: {
                 const s = cmdArgs.getRestArgsFrom(1);
                 post(s);
@@ -160,4 +224,8 @@ if (!ext) {
         }
     };
     ext.cmdMap['pn'] = cmd;
+
+    globalThis.getPostData = () => {
+        return JSON.parse(JSON.stringify(data));
+    }
 }
