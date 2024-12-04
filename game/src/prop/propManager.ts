@@ -31,27 +31,30 @@ export class PropManager {
         return this.propMap[name];
     }
 
-    useProp(name: string, player: Player, count: number, ...args: any[]): { result: any, err: string } {
+    useProp(name: string, player: Player, count: number, ...args: any[]): { result: any, err: Error } {
         if (!player.backpack.checkExists(name, count)) {
-            return { result: null, err: `背包内【${name}】数量不足` };
+            const err = new Error(`背包内【${name}】数量不足`);
+            return { result: null, err: err };
         }
 
         const prop = this.getProp(name);
         if (prop.name === '') {
-            return { result: null, err: `【${name}】不知道有什么用` };
+            const err = new Error(`【${name}】不知道有什么用`);
+            return { result: null, err: err };
         }
 
         try {
             const { result, err } = prop.solve(player, count, ...args);
-            if (err !== '') {
+            if (err !== null) {
                 return { result: null, err: err };
             }
 
             player.backpack.removeItem(name, count);
 
-            return { result: result, err: '' };
+            return { result: result, err: null };
         } catch (err) {
-            return { result: null, err: `【${prop.name}】出现错误:${err}` };
+            err.message = `【${prop.name}】出现错误:${err.message}`;
+            return { result: null, err: err };
         }
     }
 

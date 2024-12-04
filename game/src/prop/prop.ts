@@ -4,14 +4,14 @@ export class Prop {
     name: string;
     desc: string;
     type: string;
-    solve: (player: Player, count: number, ...args: any[]) => { result: any, err: string };
+    solve: (player: Player, count: number, ...args: any[]) => { result: any, err: Error };
 
     constructor() {
         this.name = '';
         this.desc = '';
         this.type = '';
         this.solve = (_, __) => {
-            return { result: null, err: '' };
+            return { result: null, err: null };
         };
     }
 

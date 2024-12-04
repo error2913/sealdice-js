@@ -1,5 +1,5 @@
 import { GameManager } from "./game/gameManager";
-import { VarsInfo, VarsManager } from "./vars/varsManager";
+import { VarsManager } from "./vars/varsManager";
 
 function main() {
   // 注册扩展
@@ -9,11 +9,18 @@ function main() {
     seal.ext.register(ext);
   }
 
-  function getNewGameManager(ext: seal.ExtInfo, gvi: VarsInfo, pvi: VarsInfo): GameManager {
-    return new GameManager(ext, gvi, pvi);
+  const data = {};
+
+  function getGameManager(ext: seal.ExtInfo): GameManager {
+    return data.hasOwnProperty(ext.name) ? data[ext.name] : new GameManager(ext);
   }
 
-  globalThis.getNewGameManager = getNewGameManager;
+  function registerGameManager(gm: GameManager) {
+    data[gm.ext.name] = gm;
+  }
+
+  globalThis.getGameManager = getGameManager;
+  globalThis.registerGameManager = registerGameManager;
   globalThis.varsManager = new VarsManager();
 }
 

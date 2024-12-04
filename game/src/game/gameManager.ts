@@ -7,7 +7,7 @@ import { VarsInfo } from "../vars/varsManager";
 import { Game } from "./game";
 
 export class GameManager {
-    private ext: seal.ExtInfo;
+    ext: seal.ExtInfo;
     private varsInfo: VarsInfo;
     prop: PropManager;
     player: PlayerManager;
@@ -16,11 +16,11 @@ export class GameManager {
     market: MarketManager;
     private cache: { [key: string]: Game };
 
-    constructor(ext: seal.ExtInfo, gvi: VarsInfo, pvi: VarsInfo) {
+    constructor(ext: seal.ExtInfo) {
         this.ext = ext;
-        this.varsInfo = gvi;
+        this.varsInfo = {};
         this.prop = new PropManager();
-        this.player = new PlayerManager(ext, pvi);
+        this.player = new PlayerManager(ext);
         this.chart = new ChartManager(ext);
         this.shop = new ShopManager(ext);
         this.market = new MarketManager(ext);

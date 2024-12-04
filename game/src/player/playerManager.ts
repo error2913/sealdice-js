@@ -6,9 +6,9 @@ export class PlayerManager {
     private varsInfo: VarsInfo;
     private cache: { [key: string]: Player };
 
-    constructor(ext: seal.ExtInfo, vi: VarsInfo) {
+    constructor(ext: seal.ExtInfo) {
         this.ext = ext;
-        this.varsInfo = vi;
+        this.varsInfo = {};
         this.cache = {};
     }
 
