@@ -5,6 +5,7 @@ export class Player {
     uid: string;
     name: string;
     date: string;
+    money: number;
     backpack: Backpack;
     varsMap: VarsMap;
 
@@ -28,6 +29,10 @@ export class Player {
 
         if (data.hasOwnProperty('date')) {
             player.date = data.date;
+        }
+
+        if (data.hasOwnProperty('money')) {
+            player.money = data.money;
         }
 
         if (data.hasOwnProperty('backpack')) {

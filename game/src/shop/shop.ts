@@ -1,3 +1,4 @@
+import { Player } from "../player/player";
 import { GoodsConfig } from "./shopManager";
 
 export interface Goods {
@@ -113,12 +114,30 @@ export class Shop {
         this.goods[name].count += count;
     }
 
-    buyGoods(name: string, count: number) {
-        if (!this.goods.hasOwnProperty(name) || this.goods[name].count < count || count <= 0) {
-            return;
+    buyGoods(player: Player, name: string, count: number): Error {
+        if (!this.goods.hasOwnProperty(name)) {
+            return new Error('没有这个商品');
+        }
+
+        if (this.goods[name].count < count) {
+            return new Error('商品数量不足');
+        }
+
+        if (count <= 0) {
+            return new Error('购买数量小于1');
+        }
+
+        const price = this.goods[name].price * count;
+        if (player.money < price) {
+            return new Error('货币不足');
         }
 
         this.goods[name].count -= count;
+
+        player.money -= price;
+        player.backpack.addItem(name, count);
+
+        return null;
     }
 
     removeGoods(name: string) {

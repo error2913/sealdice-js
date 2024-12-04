@@ -1,3 +1,6 @@
+import { GameManager } from "../game/gameManager";
+import { Player } from "../player/player";
+
 export interface SellInfo {
     id: number;
     uid: string;
@@ -78,10 +81,25 @@ export class MarketManager {
         return id + 1;
     }
 
-    putOnSale(uid: string, title: string, content: string, name: string, price: number, count: number) {
+    putOnSale(player: Player, title: string, content: string, name: string, price: number, count: number): Error {
+        if (title.length === 0) {
+            return new Error('请输入标题');
+        }
+        if (title.length > 12) {
+            return new Error('标题长度不能超过12个字符');
+        }
+        if (content.length > 300) {
+            return new Error('内容长度不能超过300个字符');
+        }
+        if (!player.backpack.checkExists(name, count)) {
+            return new Error(`背包内【${name}】数量不足`);
+        }
+
+        player.backpack.removeItem(name, count);
+
         const sellInfo = {
             id: this.createNewId(),
-            uid: uid,
+            uid: player.uid,
             title: title,
             content: content,
             name: name,
@@ -91,26 +109,41 @@ export class MarketManager {
 
         this.list.push(sellInfo);
         this.saveMarket();
+        return null;
     }
 
-    buyGoods(id: number, count: number = 0) {
+    buyGoods(gm: GameManager, player: Player, id: number, count: number = 0): Error {
         const index = this.list.findIndex(si => si.id === id);
 
-        if (index !== -1) {
-            const si = this.list[index];
-
-            if (count === 0 || count > si.count) {
-                count = si.count;
-            }
-
-            this.list[index].count -= count;
-
-            if (this.list[index].count <= 0) {
-                this.list.splice(index, 1);
-            }
-
-            this.saveMarket();
+        if (index === -1) {
+            return new Error('商品不存在');
         }
+
+        const si = this.list[index];
+
+        if (count === 0 || count > si.count) {
+            count = si.count;
+        }
+
+        const price = si.price * count;
+        if (player.money < price) {
+            return new Error('货币不足');
+        }
+
+        this.list[index].count -= count;
+        if (this.list[index].count <= 0) {
+            this.list.splice(index, 1);
+        }
+
+        player.money -= price;
+        player.backpack.addItem(si.name, count);
+
+        const mplayer = gm.player.getPlayer(si.uid, '');
+        mplayer.money += price;
+        gm.player.savePlayer(si.uid);
+
+        this.saveMarket();
+        return null;
     }
 
     getSellInfo(id: number): SellInfo {
