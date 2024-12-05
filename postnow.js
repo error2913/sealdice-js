@@ -2,7 +2,7 @@
 // @name         骰主公告极速版
 // @author       错误
 // @version      1.1.1
-// @description  让骰主掌握立即发公告、或者广告的权利。使用 .pn help 查看帮助。公告只能发在安装插件后活跃过、且在这之后一周内活跃的群聊。每四个小时储存一次数据，期间重载js可能导致丢失，可使用 .pn save 保存数据。
+// @description  让骰主掌握立即发公告、或者广告的权利。使用 .pn help 查看帮助。公告只能发在安装插件后活跃过、且在这之后一周内活跃的群聊。每四个小时自动储存一次数据，期间重载js可能导致数据丢失，可使用 .pn save 保存数据。
 // @timestamp    1732543168
 // 2024-11-25 21:59:28
 // @license      MIT
@@ -16,6 +16,10 @@ if (!ext) {
     ext = seal.ext.new('postnow', '错误', '1.1.1');
     seal.ext.register(ext);
 
+    let readyToSend = false;
+    let task = async () => {
+        return null;
+    };
     const data = JSON.parse(ext.storageGet('postData') || '{}');
 
     function save() {
@@ -89,10 +93,11 @@ if (!ext) {
         seal.replyToSender(ctx, msg, s);
     }
 
-    function post(s, emg = false) {
+    async function post(s, emg = false) {
         const epIds = Object.keys(data);
         const f = 5;
         const interval = 2000;
+        let result = 0;
 
         for (let i = 0; i < epIds.length; i++) {
             const epId = epIds[i];
@@ -101,29 +106,31 @@ if (!ext) {
             let arr = [];
             for (let j = 0; j < gids.length; j++) {
                 arr.push(gids[j]);
-    
-                if (j % f === f - 1 || j === gids.length -1) {
+
+                if (j % f === f - 1 || j === gids.length - 1) {
                     const arr_copy = arr.slice();
-                    const n = Math.floor(j / f);
-    
-                    setTimeout(() => {
-                        for (let k = 0; k < arr_copy.length; k++) {
-                            const gid = arr_copy[k];
-    
-                            sendPost(epId, gid, '0', s, emg);
-                        }
-                    }, n * interval + Math.floor(Math.random() * 500))
-    
+
+                    for (let k = 0; k < arr_copy.length; k++) {
+                        const gid = arr_copy[k];
+
+                        sendPost(epId, gid, '0', s, emg);
+                        result++;
+                    }
+
+                    await new Promise(resolve => setTimeout(resolve, interval + Math.floor(Math.random() * 500)));
                     arr = [];
                 }
             }
         }
+
+        return result;
     }
 
-    function chasePost(uid, s) {
+    async function chasePost(uid, s) {
         const epIds = Object.keys(data);
         const f = 5;
         const interval = 2000;
+        let result = 0;
 
         for (let i = 0; i < epIds.length; i++) {
             const epId = epIds[i];
@@ -136,22 +143,23 @@ if (!ext) {
                     arr.push(gid);
                 }
 
-                if (arr.length % f === f - 1 || j === gids.length -1) {
+                if (arr.length % f === f - 1 || j === gids.length - 1) {
                     const arr_copy = arr.slice();
-                    const n = Math.floor(arr.length / f);
-    
-                    setTimeout(() => {
-                        for (let k = 0; k < arr_copy.length; k++) {
-                            const gid = arr_copy[k];
-    
-                            sendPost(epId, gid, uid, s);
-                        }
-                    }, n * interval + Math.floor(Math.random() * 500))
-    
+
+                    for (let k = 0; k < arr_copy.length; k++) {
+                        const gid = arr_copy[k];
+
+                        sendPost(epId, gid, '0', s);
+                        result++;
+                    }
+
+                    await new Promise(resolve => setTimeout(resolve, interval + Math.floor(Math.random() * 500)));
                     arr = [];
                 }
             }
         }
+
+        return result;
     }
 
     function clean(ts) {
@@ -219,9 +227,10 @@ if (!ext) {
 【.pn emg <公告内容>】发布紧急公告，忽略是否处于log状态
 【.pn chase <ID> <公告内容>】发布追杀公告，在特定用户活跃的群聊发送。ID格式: QQ:114514
 【.pn chaseat <ID> <公告内容>】发布追杀公告，且@对应玩家
-【.pn test <公告内容>】测试公告格式，不会发出去
-【.pn save】保存数据`;
-    cmd.solve = (ctx, msg, cmdArgs) => {
+【.pn save】保存数据
+【.pn send】确认发送
+【.pn cancel】取消发送`;
+    cmd.solve = async (ctx, msg, cmdArgs) => {
         if (ctx.privilegeLevel < 100) {
             const s = seal.formatTmpl(ctx, "核心:提示_无权限");
 
@@ -230,43 +239,114 @@ if (!ext) {
         }
 
         const val = cmdArgs.getArgN(1);
+
         switch (val) {
             case '':
             case 'help': {
-                const ret = seal.ext.newCmdExecuteResult(true);
-                ret.showHelp = true;
-                return ret;
-            }
-            case 'test': {
-                const s = cmdArgs.getRestArgsFrom(2);
-                seal.replyToSender(ctx, msg, s);
+                seal.replyToSender(ctx, msg, cmd.help);
                 return seal.ext.newCmdExecuteResult(true);
             }
             case 'emg': {
+                if (readyToSend) {
+                    seal.replyToSender(ctx, msg, `请输入【.pn send】确认发送，或者输入【.pn cancel】取消发送`);
+                    return seal.ext.newCmdExecuteResult(true);
+                }
+
                 const s = cmdArgs.getRestArgsFrom(2);
-                post(s, true);
+
+                readyToSend = true;
+                task = async () => {
+                    return await post(s, true);
+                }
+
+                seal.replyToSender(ctx, msg, `确认发送【.pn send】，或者输入【.pn cancel】取消发送。消息预览: \n--------------------------\n${s}`);
                 return seal.ext.newCmdExecuteResult(true);
             }
             case 'chase': {
+                if (readyToSend) {
+                    seal.replyToSender(ctx, msg, `请输入【.pn send】确认发送，或者输入【.pn cancel】取消发送`);
+                    return seal.ext.newCmdExecuteResult(true);
+                }
+
                 const uid = cmdArgs.getArgN(2);
                 const s = cmdArgs.getRestArgsFrom(3);
-                chasePost(uid, s);
+
+                readyToSend = true;
+                task = async () => {
+                    return await chasePost(uid, s);
+                }
+
+                seal.replyToSender(ctx, msg, `确认发送【.pn send】，或者输入【.pn cancel】取消发送。消息预览: \n--------------------------\n${s}`);
                 return seal.ext.newCmdExecuteResult(true);
             }
             case 'chaseat': {
+                if (readyToSend) {
+                    seal.replyToSender(ctx, msg, `请输入【.pn send】确认发送，或者输入【.pn cancel】取消发送`);
+                    return seal.ext.newCmdExecuteResult(true);
+                }
+
                 const uid = cmdArgs.getArgN(2);
                 const s = `[CQ:at,qq=${uid.replace(/\D+/, '')}] ` + cmdArgs.getRestArgsFrom(3);
-                chasePost(uid, s);
+
+                readyToSend = true;
+                task = async () => {
+                    return await chasePost(uid, s);
+                }
+
+                seal.replyToSender(ctx, msg, `确认发送【.pn send】，或者输入【.pn cancel】取消发送。消息预览: \n--------------------------\n${s}`);
                 return seal.ext.newCmdExecuteResult(true);
             }
             case 'save': {
                 save();
-                seal.replyToSender(ctx, msg, '已保存');
+
+                let s = '保存成功: ';
+                for (const epId of Object.keys(data)) {
+                    s += `\n账号${epId}:群聊数为${Object.keys(data[epId]).length}`;
+                }
+
+                seal.replyToSender(ctx, msg, s);
+                return seal.ext.newCmdExecuteResult(true);
+            }
+            case 'send': {
+                if (!readyToSend) {
+                    seal.replyToSender(ctx, msg, `请先输入【.pn】查看帮助。`);
+                    return seal.ext.newCmdExecuteResult(true);
+                }
+
+                readyToSend = false;
+                const result = await task();
+
+                seal.replyToSender(ctx, msg, `发送完成，共发送${result}条消息。`);
+                return seal.ext.newCmdExecuteResult(true);
+            }
+            case 'cancel': {
+                if (!readyToSend) {
+                    seal.replyToSender(ctx, msg, `请先输入【.pn】查看帮助。`);
+                    return seal.ext.newCmdExecuteResult(true);
+                }
+
+                readyToSend = false;
+                task = async () => {
+                    return null;
+                }
+
+                seal.replyToSender(ctx, msg, `已取消发送`);
                 return seal.ext.newCmdExecuteResult(true);
             }
             default: {
+                if (readyToSend) {
+                    seal.replyToSender(ctx, msg, `请输入【.pn send】确认发送，或者输入【.pn cancel】取消发送`);
+                    return seal.ext.newCmdExecuteResult(true);
+                }
+
                 const s = cmdArgs.getRestArgsFrom(1);
-                post(s);
+
+                readyToSend = true;
+                task = async () => {
+                    return await post(s);
+                }
+
+                seal.replyToSender(ctx, msg, `确认发送【.pn send】，或者输入【.pn cancel】取消发送。消息预览: \n--------------------------\n${s}`);
                 return seal.ext.newCmdExecuteResult(true);
             }
         }
