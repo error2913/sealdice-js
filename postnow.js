@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         骰主公告极速版
 // @author       错误
-// @version      1.1.1
+// @version      1.1.2
 // @description  让骰主掌握立即发公告、或者广告的权利。使用 .pn help 查看帮助。公告只能发在安装插件后活跃过、且在这之后一周内活跃的群聊。每四个小时自动储存一次数据，期间重载js可能导致数据丢失，可使用 .pn save 保存数据。
 // @timestamp    1732543168
 // 2024-11-25 21:59:28
@@ -13,7 +13,7 @@
 
 let ext = seal.ext.find('postnow');
 if (!ext) {
-    ext = seal.ext.new('postnow', '错误', '1.1.1');
+    ext = seal.ext.new('postnow', '错误', '1.1.2');
     seal.ext.register(ext);
 
     let readyToSend = false;
