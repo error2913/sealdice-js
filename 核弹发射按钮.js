@@ -558,7 +558,6 @@ cmd.solve = (ctx, msg, cmdArgs) => {
 
             const player = gm.player.getPlayer(uid, un);
             const shop = gm.shop.getShop('普通');
-            const goods = shop.getGoods(name);
 
             const err = shop.buyGoods(player, name, count);
             if (err !== null) {
