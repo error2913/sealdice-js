@@ -76,9 +76,7 @@ async function setNameByTmpl(epId, gid, tmpl) {
                 }
             }
 
-            await new Promise(resolve => {
-                setTimeout(resolve, interval + Math.floor(Math.random() * 100));
-            });
+            await new Promise(resolve => etTimeout(resolve, interval + Math.floor(Math.random() * 100)));
 
             arr = [];
         }
@@ -136,9 +134,7 @@ async function setNameByDraw(epId, gid, name) {
                 }
             }
 
-            await new Promise(resolve => {
-                setTimeout(resolve, interval + Math.floor(Math.random() * 100));
-            });
+            await new Promise(resolve => setTimeout(resolve, interval + Math.floor(Math.random() * 100)));
 
             arr = [];
         }
