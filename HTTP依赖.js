@@ -36,7 +36,12 @@ async function fetchData(url, data = null) {
         const body = await response.json();
         const result = body.data;
         if (result === null) {
-            throw new Error('数据为空');
+            console.log('获取数据成功: null');
+            return null;
+        }
+        if (result === undefined) {
+            console.log('获取数据成功: undefined');
+            return null;
         }
         console.log(`获取数据成功: ${JSON.stringify(result, null, 2)}`);
         return result;
