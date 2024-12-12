@@ -100,6 +100,10 @@ const cmd = seal.ext.newCmdItemInfo();
 cmd.name = 'http';
 cmd.help = '';
 cmd.solve = async (ctx, msg, cmdArgs) => {
+    if (ctx.privilegeLevel < 100) {
+        seal.replyToSender(ctx, msg, seal.formatTmpl(ctx, "核心:提示_无权限"));
+        return seal.ext.newCmdExecuteResult(true);
+    }
     const epId = ctx.endPoint.userId;
     const val = cmdArgs.getArgN(1);
     if (!val) {
