@@ -2,7 +2,7 @@
 // @name         HTTP依赖
 // @author       错误
 // @version      1.0.0
-// @description  为插件提供HTTP依赖。\n使用方法: http.getData(epId, val, data=null)
+// @description  为插件提供HTTP依赖管理。\nHTTP端口请按照自己的登录方案自行配置，配置完成后在插件设置填入。插件初始化时会自动获取HTTP地址对应的账号并保存。\n提供指令 .http 可以直接调用\n在其他插件中使用方法: globalThis.http.getData(epId, val, data=null)\nepId为账号QQ:12345，val为方法，如get_login_info。\n方法可参见https://github.com/botuniverse/onebot-11/blob/master/api/public.md#%E5%85%AC%E5%BC%80-api
 // @timestamp    1733626761
 // 2024-12-08 10:59:21
 // @license      MIT
@@ -98,7 +98,7 @@ globalThis.http = new Http(urlMap);
 
 const cmd = seal.ext.newCmdItemInfo();
 cmd.name = 'http';
-cmd.help = '';
+cmd.help = '帮助: .http <方法>。\n示例 .http get_login_info';
 cmd.solve = async (ctx, msg, cmdArgs) => {
     if (ctx.privilegeLevel < 100) {
         seal.replyToSender(ctx, msg, seal.formatTmpl(ctx, "核心:提示_无权限"));
