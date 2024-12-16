@@ -41,6 +41,14 @@ class Ping {
     }
 
     calculate() {
+        if (this.data.length === 1) {
+            const text_a = `${this.data[0][0].toFixed(2)}ms`;
+            const text_b = `${this.data[0][1].toFixed(2)}ms`;
+            const text_c = `${this.data[0][2].toFixed(2)}ms`;
+
+            return { text_a, text_b, text_c };
+        }
+
         const arr_a = this.data.map(([A, B, C]) => A);
         const arr_b = this.data.map(([A, B, C]) => B);
         const arr_c = this.data.map(([A, B, C]) => C);
