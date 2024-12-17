@@ -37,7 +37,10 @@ class Ping {
     }
 
     uncertainty(arr, avg) {
-        return Math.sqrt(arr.map((x) => (x - avg) ** 2).reduce((a, b) => a + b, 0) / ((arr.length - 1) * arr.length));
+        const uA = Math.sqrt(arr.map((x) => (x - avg) ** 2).reduce((a, b) => a + b, 0) / ((arr.length - 1) * arr.length));
+        const uB = 0.5 / Math.sqrt(3);
+
+        return Math.sqrt(uA ** 2 + uB ** 2);
     }
 
     calculate() {
