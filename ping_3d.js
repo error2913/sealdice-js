@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         三骰联合延迟测试
 // @author       错误
-// @version      1.0.0
+// @version      1.0.1
 // @description  使用 .乒 test <指令前缀a> <指令前缀b> <指令前缀c> <次数>开始测试，需要三个骰子同时安装，且指令前缀不同。指令前缀a为接收指令的那个骰子。
 // @timestamp    1734356092
 // 2024-12-16 21:34:52
@@ -14,7 +14,7 @@
 // 首先检查是否已经存在
 let ext = seal.ext.find('ping_3d');
 if (!ext) {
-    ext = seal.ext.new('ping_3d', '错误', '1.0.0');
+    ext = seal.ext.new('ping_3d', '错误', '1.0.1');
     seal.ext.register(ext);
 }
 
@@ -36,8 +36,8 @@ class Ping {
         return arr.reduce((a, b) => a + b, 0) / arr.length;
     }
 
-    sigma(arr, avg) {
-        return Math.sqrt(arr.map((x) => (x - avg) ** 2).reduce((a, b) => a + b, 0) / (arr.length - 1) * (arr.length));
+    uncertainty(arr, avg) {
+        return Math.sqrt(arr.map((x) => (x - avg) ** 2).reduce((a, b) => a + b, 0) / ((arr.length - 1) * arr.length));
     }
 
     calculate() {
@@ -57,13 +57,13 @@ class Ping {
         const avg_b = this.average(arr_b);
         const avg_c = this.average(arr_c);
 
-        const sigma_a = this.sigma(arr_a, avg_a);
-        const sigma_b = this.sigma(arr_b, avg_b);
-        const sigma_c = this.sigma(arr_c, avg_c);
+        const u_a = this.uncertainty(arr_a, avg_a);
+        const u_b = this.uncertainty(arr_b, avg_b);
+        const u_c = this.uncertainty(arr_c, avg_c);
 
-        const text_a = `${avg_a.toFixed(2)}±${sigma_a.toFixed(2)}ms`;
-        const text_b = `${avg_b.toFixed(2)}±${sigma_b.toFixed(2)}ms`;
-        const text_c = `${avg_c.toFixed(2)}±${sigma_c.toFixed(2)}ms`;
+        const text_a = `${avg_a.toFixed(2)}±${u_a.toFixed(2)}ms`;
+        const text_b = `${avg_b.toFixed(2)}±${u_b.toFixed(2)}ms`;
+        const text_c = `${avg_c.toFixed(2)}±${u_c.toFixed(2)}ms`;
 
         return { text_a, text_b, text_c };
     }
