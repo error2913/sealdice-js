@@ -2,7 +2,7 @@
 // @name         COC生成属性合并消息
 // @author       错误
 // @version      1.0.0
-// @description  目前仅有napcat能使用。具体配置请查看插件设置。依赖于错误:HTTP依赖:>=1.0.0。
+// @description  本插件会修改内置指令 .coc ，且需要重启核心才能恢复。目前仅有napcat能使用。具体配置请查看插件设置。依赖于错误:HTTP依赖:>=1.0.0。
 // @timestamp    1737050266
 // 2025-01-17 01:57:46
 // @license      MIT
