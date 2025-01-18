@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         多骰联合延迟测试
-// @author       作者名称
+// @author       错误
 // @version      1.0.0
 // @description  需要先用【.乒乓 set main @要设置的骰子】设置一个主机。主机需要加载依赖：错误:team:>=4.0.0
 // @timestamp    1737173515
