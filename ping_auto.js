@@ -90,6 +90,7 @@ function test1(ctx, msg, ping, index) {
     
             teamManager.remove(ctx, [lost_uid], []);
             seal.replyToSender(ctx, msg, `.乒乓 stop [CQ:at,qq=${lost_uid.replace(/\D+/g, '')}]失踪了，移除后重新进行检测`);
+            ctx.notice(`${lost_uid}失踪了`);
     
             start(ctx, msg, gid, ping);
         }, timeout);
@@ -112,15 +113,24 @@ function test2(ctx, msg, ping, index) {
     }, interval2);
 }
 
-function settlement(ctx, msg, ping) {
+function settlement(ctx, msg, gid, ping) {
     const result = ping.calculate();
     const text = result.map((item, index) => {
+        let name = '';
         if (index === 0) {
-            return `[CQ:at,qq=${ctx.endPoint.userId.replace(/\D+/g, '')}]: ${item}ms`;
+            name = seal.formatTmpl(ctx, "核心:骰子名字");
+        } else {
+            const epId = ctx.endPoint.userId;
+            const uid = ping.members[index - 1];
+            const mmsg = getMsg(gid, uid);
+            const mctx = getCtx(epId, mmsg);
+            name = mctx.player.name;
         }
-        return `[CQ:at,qq=${ping.members[index - 1].replace(/\D+/g, '')}]: ${item}ms`
+
+        return `${name}:${item}ms`;
     }).join('\n');
-    seal.replyToSender(ctx, msg, `结果:\n${text}`);
+    seal.replyToSender(ctx, msg, text);
+    ctx.notice(`检测报告:\n${text}`);
 }
 
 class Ping {
@@ -302,7 +312,7 @@ cmd.solve = (ctx, msg, cmdArgs) => {
                     ping.incomplete--;
 
                     if (ping.incomplete === 0) {
-                        settlement(ctx, msg, ping);
+                        settlement(ctx, msg, gid, ping);
                         return seal.ext.newCmdExecuteResult(true);
                     }
                 }
@@ -400,7 +410,7 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             ping.incomplete--;
 
             if (ping.incomplete === 0) {
-                settlement(ctx, msg, ping);
+                settlement(ctx, msg, gid, ping);
                 return seal.ext.newCmdExecuteResult(true);
             }
 
@@ -421,6 +431,7 @@ cmd.solve = (ctx, msg, cmdArgs) => {
 
             teamManager.remove(ctx, [lost_uid], []);
             seal.replyToSender(ctx, msg, `.乒乓 stop [CQ:at,qq=${lost_uid.replace(/\D+/g, '')}]失踪了，移除后重新进行检测`);
+            ctx.notice(`${lost_uid}失踪了`);
 
             start(ctx, msg, gid, ping);
             return seal.ext.newCmdExecuteResult(true);
