@@ -227,20 +227,10 @@ const cmd = seal.ext.newCmdItemInfo();
 cmd.name = '乒乓';
 cmd.help = `帮助:
 【.乒乓 set <main|sub> @要设置的骰子】设置为主机或从机，默认为从机
-广播超时失踪骰子
-
-主机：
- 发送终止检测广播
- 设置定时检测
- 立即检测
- 一级检测：发送检测，附带信息
- 接收反馈
-
-从机：
- 立即响应
- 二级检测
- 反馈结果
-`;
+【.乒乓 stop】停止检测
+【.乒乓 start】立即开始检测
+【.乒乓 on】开启自动检测
+【.乒乓 off】关闭自动检测`;
 cmd.allowDelegate = true;
 cmd.disabledInPrivate = true;
 cmd.solve = (ctx, msg, cmdArgs) => {
