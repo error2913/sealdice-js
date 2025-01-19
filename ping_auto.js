@@ -16,13 +16,17 @@ if (!ext) {
     ext = seal.ext.new('ping_auto', '错误', '1.0.0');
     seal.ext.register(ext);
     seal.ext.registerStringConfig(ext, '定时任务cron表达式', '0 */4 * * *', '修改后保存并重载js');
-    seal.ext.registerIntConfig(ext, '超时时间', 60, '修改后保存并重载js');
+    seal.ext.registerIntConfig(ext, '超时时间/s', 60, '修改后保存并重载js');
+    seal.ext.registerIntConfig(ext, '一级test延时/ms', 3000, '修改后保存并重载js');
+    seal.ext.registerIntConfig(ext, '二级test延时/ms', 1000, '修改后保存并重载js');
 }
 
 const data = {};
 const list = JSON.parse(ext.storageGet(`list`) || '[]');
 const cron = seal.ext.getStringConfig(ext, '定时任务cron表达式');
-const timeout = seal.ext.getIntConfig(ext, '超时时间') * 1000;
+const timeout = seal.ext.getIntConfig(ext, '超时时间/s') * 1000;
+const interval1 = seal.ext.getIntConfig(ext, '一级test延时/ms');
+const interval2 = seal.ext.getIntConfig(ext, '二级test延时/ms');
 
 seal.ext.registerTask(ext, "cron", cron, () => {
     for (let i = 0; i < list.length; i++) {
@@ -72,20 +76,51 @@ function start(ctx, msg, gid, ping) {
     }
     ping.incomplete = ping.members.length;
 
-    const text = ping.members.slice(0).map(item => `[CQ:at,qq=${item.replace(/\D+/g, '')}]`).join(' ');
-    ping.data[0][0] = Date.now();
-    seal.replyToSender(ctx, msg, `.乒乓 test1 ${text}`);
+    test1(ctx, msg, ping, 0);
+}
 
-    ping.timeoutId = setTimeout(() => {
-        const lost_uid = ping.members[0];
+function test1(ctx, msg, ping, index) {
+    setTimeout(() => {
+        const text = ping.members.slice(index).map(item => `[CQ:at,qq=${item.replace(/\D+/g, '')}]`).join(' ');
+        ping.data[0][index] = Date.now();
+        seal.replyToSender(ctx, msg, `.乒乓 test1 ${text}`);
+    
+        ping.timeoutId = setTimeout(() => {
+            const lost_uid = ping.members[index];
+    
+            teamManager.remove(ctx, [lost_uid], []);
+            seal.replyToSender(ctx, msg, `.乒乓 stop [CQ:at,qq=${lost_uid.replace(/\D+/g, '')}]失踪了，移除后重新进行检测`);
+    
+            start(ctx, msg, gid, ping);
+        }, timeout);
+    
+        Ping.savePing(gid);
+    }, interval1);
+}
 
-        teamManager.remove(ctx, [lost_uid], []);
-        seal.replyToSender(ctx, msg, `.乒乓 stop [CQ:at,qq=${lost_uid.replace(/\D+/g, '')}]失踪了，移除后重新进行检测`);
+function test2(ctx, msg, ping, index) {
+    setTimeout(() => {
+        ping.row[index] = Date.now();
+        seal.replyToSender(ctx, msg, `.乒乓 test2 [CQ:at,qq=${ping.members[index].replace(/\D+/g, '')}]`);
+    
+        ping.timeoutId = setTimeout(() => {
+            seal.replyToSender(ctx, msg, `.乒乓 timeout [CQ:at,qq=${ping.members[index].replace(/\D+/g, '')}]`);
+            Ping.savePing(gid);
+        }, timeout);
+    
+        Ping.savePing(gid);
+    }, interval2);
+}
 
-        start(ctx, msg, gid, ping);
-    }, timeout);
-
-    Ping.savePing(gid);
+function settlement(ctx, msg, ping) {
+    const result = ping.calculate();
+    const text = result.map((item, index) => {
+        if (index === 0) {
+            return `[CQ:at,qq=${ctx.endPoint.userId.replace(/\D+/g, '')}]: ${item}ms`;
+        }
+        return `[CQ:at,qq=${ping.members[index - 1].replace(/\D+/g, '')}]: ${item}ms`
+    }).join('\n');
+    seal.replyToSender(ctx, msg, `结果:\n${text}`);
 }
 
 class Ping {
@@ -271,33 +306,13 @@ cmd.solve = (ctx, msg, cmdArgs) => {
                 ping.timeoutId = null;
 
                 if (index !== ping.members.length - 1) {
-                    const text = ping.members.slice(index + 1).map(item => `[CQ:at,qq=${item.replace(/\D+/g, '')}]`).join(' ');
-                    ping.data[0][index + 1] = Date.now();
-                    seal.replyToSender(ctx, msg, `.乒乓 test1 ${text}`);
-
-                    ping.timeoutId = setTimeout(() => {
-                        const lost_uid = ping.members[index + 1];
-                
-                        teamManager.remove(ctx, [lost_uid], []);
-                        seal.replyToSender(ctx, msg, `.乒乓 stop [CQ:at,qq=${lost_uid.replace(/\D+/g, '')}]失踪了，移除后重新进行检测`);
-                
-                        start(ctx, msg, gid, ping);
-                    }, timeout);
-
-                    Ping.savePing(gid);
+                    test1(ctx, msg, ping, index + 1);
                     return seal.ext.newCmdExecuteResult(true);
                 } else {
                     ping.incomplete--;
 
                     if (ping.incomplete === 0) {
-                        const result = ping.calculate();
-                        const text = result.map((item, index) => {
-                            if (index === 0) {
-                                return `主机: ${item}ms`;
-                            }
-                            return `[CQ:at,qq=${ping.members[index - 1].replace(/\D+/g, '')}]: ${item}ms`
-                        }).join('\n');
-                        seal.replyToSender(ctx, msg, `结果:\n${text}`);
+                        settlement(ctx, msg, ping);
                         return seal.ext.newCmdExecuteResult(true);
                     }
                 }
@@ -308,15 +323,7 @@ cmd.solve = (ctx, msg, cmdArgs) => {
                 ping.timeoutId = null;
 
                 if (index !== ping.members.length - 1) {
-                    ping.row[index + 1] = Date.now();
-                    seal.replyToSender(ctx, msg, `.乒乓 test2 [CQ:at,qq=${ping.members[index + 1].replace(/\D+/g, '')}]`);
-
-                    ping.timeoutId = setTimeout(() => {
-                        seal.replyToSender(ctx, msg, `.乒乓 timeout [CQ:at,qq=${ping.members[index + 1].replace(/\D+/g, '')}]`);
-                        Ping.savePing(gid);
-                    }, timeout);
-
-                    Ping.savePing(gid);
+                    test2(ctx, msg, ping, index + 1);
                     return seal.ext.newCmdExecuteResult(true);
                 } else if (ping.incomplete === 0) {
                     seal.replyToSender(ctx, msg, `.乒乓 return ${JSON.stringify(ping.row)}`);
@@ -403,14 +410,7 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             ping.incomplete--;
 
             if (ping.incomplete === 0) {
-                const result = ping.calculate();
-                const text = result.map((item, index) => {
-                    if (index === 0) {
-                        return `主机: ${item}ms`;
-                    }
-                    return `[CQ:at,qq=${ping.members[index - 1].replace(/\D+/g, '')}]: ${item}ms`
-                }).join('\n');
-                seal.replyToSender(ctx, msg, `结果:\n${text}`);
+                settlement(ctx, msg, ping);
                 return seal.ext.newCmdExecuteResult(true);
             }
 
@@ -451,15 +451,8 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             if (ping.members.length !== 0) {
                 ping.row = new Array(ping.members.length).fill(0);
                 ping.incomplete = ping.members.length;
-                ping.row[0] = Date.now();
-                seal.replyToSender(ctx, msg, `.乒乓 test2 [CQ:at,qq=${ping.members[0].replace(/\D+/g, '')}]`);
 
-                ping.timeoutId = setTimeout(() => {
-                    seal.replyToSender(ctx, msg, `.乒乓 timeout [CQ:at,qq=${ping.members[0].replace(/\D+/g, '')}]`);
-                    Ping.savePing(gid);
-                }, timeout);
-
-                Ping.savePing(gid);
+                test2(ctx, msg, ping, 0);
             }
 
             return seal.ext.newCmdExecuteResult(true);
