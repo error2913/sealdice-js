@@ -2,7 +2,7 @@
 // @name         多骰联合延迟测试
 // @author       错误
 // @version      1.0.0
-// @description  需要先用【.乒乓 set main @要设置的骰子】设置一个主机。使用【.乒乓】获取帮助。主机需要加载依赖：错误:team:>=4.0.0
+// @description  需要先用【.乒乓 set main @要设置的骰子】设置一个主机。使用【.乒乓 @骰子】获取帮助。主机需要加载依赖：错误:team:>=4.0.0
 // @timestamp    1737173515
 // 2025-01-18 12:11:55
 // @license      MIT
@@ -460,6 +460,9 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             return seal.ext.newCmdExecuteResult(true);
         }
         default: {
+            if (!cmdArgs.amIBeMentionedFirst) {
+                return seal.ext.newCmdExecuteResult(true);
+            }
             const ret = seal.ext.newCmdExecuteResult(true);
             ret.showHelp = true;
             return ret;
