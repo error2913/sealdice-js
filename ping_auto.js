@@ -83,7 +83,7 @@ function test1(ctx, msg, ping, index) {
     setTimeout(() => {
         const text = ping.members.slice(index).map(item => `[CQ:at,qq=${item.replace(/\D+/g, '')}]`).join(' ');
         ping.data[0][index] = Date.now();
-        seal.replyToSender(ctx, msg, `.乒乓 test1 ${text}`);
+        seal.replyToSender(ctx, msg, `.乒乓 ping ${text}`);
     
         ping.timeoutId = setTimeout(() => {
             const lost_uid = ping.members[index];
@@ -102,7 +102,7 @@ function test1(ctx, msg, ping, index) {
 function test2(ctx, msg, ping, index) {
     setTimeout(() => {
         ping.row[index] = Date.now();
-        seal.replyToSender(ctx, msg, `.乒乓 test2 [CQ:at,qq=${ping.members[index].replace(/\D+/g, '')}]`);
+        seal.replyToSender(ctx, msg, `.乒乓 ping [CQ:at,qq=${ping.members[index].replace(/\D+/g, '')}]`);
     
         ping.timeoutId = setTimeout(() => {
             seal.replyToSender(ctx, msg, `.乒乓 timeout [CQ:at,qq=${ping.members[index].replace(/\D+/g, '')}]`);
@@ -326,7 +326,7 @@ cmd.solve = (ctx, msg, cmdArgs) => {
                     test2(ctx, msg, ping, index + 1);
                     return seal.ext.newCmdExecuteResult(true);
                 } else if (ping.incomplete === 0) {
-                    seal.replyToSender(ctx, msg, `.乒乓 return ${JSON.stringify(ping.row)}`);
+                    seal.replyToSender(ctx, msg, `.乒乓 zing ${JSON.stringify(ping.row)}`);
                     return seal.ext.newCmdExecuteResult(true);
                 }
             }
@@ -382,7 +382,7 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             seal.replyToSender(ctx, msg, '自动检测已经关闭');
             return seal.ext.newCmdExecuteResult(true);
         }
-        case 'return': {// 来源：一级从机
+        case 'zing': {// 来源：一级从机 奇怪的拟声词增加了
             if (!ping.main) {
                 return seal.ext.newCmdExecuteResult(true);
             }
@@ -436,10 +436,9 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             start(ctx, msg, gid, ping);
             return seal.ext.newCmdExecuteResult(true);
         }
-        // 仅限一级从机
-        case 'test1': {// 来源：主机
+        // 仅限从机
+        case 'ping': {// 来源：主机、一级从机
             if (ping.main) {
-                seal.replyToSender(ctx, msg, '好像有多个主机，这对吗？');
                 return seal.ext.newCmdExecuteResult(true);
             }
             if (!cmdArgs.amIBeMentionedFirst) {
@@ -456,18 +455,6 @@ cmd.solve = (ctx, msg, cmdArgs) => {
                 test2(ctx, msg, ping, 0);
             }
 
-            return seal.ext.newCmdExecuteResult(true);
-        }
-        // 仅限二级从机
-        case 'test2': {// 来源：一级从机
-            if (ping.main) {
-                return seal.ext.newCmdExecuteResult(true);
-            }
-            if (!cmdArgs.amIBeMentionedFirst) {
-                return seal.ext.newCmdExecuteResult(true);
-            }
-
-            seal.replyToSender(ctx, msg, `.乒乓 pong [CQ:at,qq=${uid.replace(/\D+/g, '')}]`);
             return seal.ext.newCmdExecuteResult(true);
         }
         default: {
