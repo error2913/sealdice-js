@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         多骰联合延迟测试
 // @author       错误
-// @version      1.0.0
+// @version      1.0.1
 // @description  需要先用【.乒乓 set main @要设置的骰子】设置一个主机。使用【.乒乓 @骰子】获取帮助。主机需要加载依赖：错误:team:>=4.0.0
 // @timestamp    1737173515
 // 2025-01-18 12:11:55
@@ -13,7 +13,7 @@
 
 let ext = seal.ext.find('ping_auto');
 if (!ext) {
-    ext = seal.ext.new('ping_auto', '错误', '1.0.0');
+    ext = seal.ext.new('ping_auto', '错误', '1.0.1');
     seal.ext.register(ext);
     seal.ext.registerStringConfig(ext, '定时任务cron表达式', '0 */4 * * *', '修改后保存并重载js');
     seal.ext.registerIntConfig(ext, '超时时间/s', 60, '修改后保存并重载js');
@@ -429,6 +429,8 @@ cmd.solve = (ctx, msg, cmdArgs) => {
                 return seal.ext.newCmdExecuteResult(true);
             }
 
+            clearTimeout(ping.timeoutId);
+            ping.timeoutId = null;
             teamManager.remove(ctx, [lost_uid], []);
             seal.replyToSender(ctx, msg, `.乒乓 stop [CQ:at,qq=${lost_uid.replace(/\D+/g, '')}]失踪了，移除后重新进行检测`);
             ctx.notice(`${lost_uid}失踪了`);
