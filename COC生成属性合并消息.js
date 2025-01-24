@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         COC生成属性合并消息
 // @author       错误
-// @version      1.0.0
+// @version      1.0.1
 // @description  本插件会修改内置指令 .coc ，且需要重启核心才能恢复。目前仅有napcat能使用。具体配置请查看插件设置。依赖于错误:HTTP依赖:>=1.0.0。
 // @timestamp    1737050266
 // 2025-01-17 01:57:46
@@ -14,7 +14,7 @@
 
 let ext = seal.ext.find('coc_forward_msg');
 if (!ext) {
-    ext = seal.ext.new('coc_forward_msg', '错误', '1.0.0');
+    ext = seal.ext.new('coc_forward_msg', '错误', '1.0.1');
     seal.ext.register(ext);
     seal.ext.registerIntConfig(ext, "制卡上限", 20);
     seal.ext.registerTemplateConfig(ext, "合并消息预览", ["{核心:骰子名字}: 属性已生成"]);
@@ -55,7 +55,6 @@ cmd.solve = (ctx, msg, cmdArgs) => {
 
     // 发送消息
     const epId = ctx.endPoint.userId;
-    const gid = ctx.group.groupId;
     const diceName = seal.formatTmpl(ctx, "核心:骰子名字");
     const messages = ss.map((s) => {
         return {
@@ -81,7 +80,6 @@ cmd.solve = (ctx, msg, cmdArgs) => {
     const source = seal.format(ctx, sourceTmpl[Math.floor(Math.random() * sourceTmpl.length)]);
 
     const data = {
-        "group_id": gid.replace(/\D+/g, ''),
         "messages": messages,
         "news": [
             {
@@ -92,6 +90,15 @@ cmd.solve = (ctx, msg, cmdArgs) => {
         "summary": `查看${val}条转发消息`,
         "source": source
     }
+
+    if (ctx.isPrivate) {
+        const uid = ctx.player.userId;
+        data.user_id = uid.replace(/\D+/g, '');
+    } else {
+        const gid = ctx.group.groupId;
+        data.group_id = gid.replace(/\D+/g, '');
+    }
+
     http.getData(epId, 'send_forward_msg', data)
 
     return seal.ext.newCmdExecuteResult(true);
