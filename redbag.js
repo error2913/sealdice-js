@@ -347,7 +347,7 @@ seal.ext.registerTask(ext, "cron", "0 */2 * * *", async () => {
                 const history = data[gid][i].history;
                 const [val, _] = seal.vars.intGet(ctx, varname);
 
-                let s = `<${data[gid][i].un}>的红包已退回\n总金额:${amount}`;
+                let s = `<${data[gid][i].un}>的红包已退回`;
 
                 if (history.length > 0) {
                     let remaining = amount;
@@ -361,7 +361,7 @@ seal.ext.registerTask(ext, "cron", "0 */2 * * *", async () => {
                     s += `[CQ:image,file=${file.replace(/\]/g, '%5D').replace(/,/g, '%2C')}]`;
                 } else {
                     seal.vars.intSet(ctx, varname, val + amount);
-                    s += `\n数量:${total}`;
+                    s += `\n总金额:${amount}`;
                 }
 
                 seal.replyToSender(ctx, msg, s);
