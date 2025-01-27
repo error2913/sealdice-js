@@ -21,7 +21,7 @@ def draw_redbag_bottom():
     ImageDraw.Draw(mask).ellipse((0, 0, 500, 500), fill=255)
     button.putalpha(mask)
     
-    font = ImageFont.truetype("simhei.ttf", size=200)
+    font = ImageFont.truetype("./resource/fonts/HYWenHei-85W.ttf", size=200)
     ImageDraw.Draw(button).text((150, 150), "開", font=font, fill=(255, 0, 0))
     
     image.paste(button, (750, 2450), button)
@@ -87,12 +87,12 @@ def draw_redbag_top():
 def draw_history_title(total: int, count: int, remaining: int):
     image = Image.new('RGB', (2000, 200), color = (255, 255, 255))
     
-    font = ImageFont.truetype("simhei.ttf", size=80)
+    font = ImageFont.truetype("./resource/fonts/HYWenHei-85W.ttf", size=80)
     text = f"已领取{count}/{total}个，剩余金额{remaining}"
     text_bbox = font.getbbox(text)
     text_size = (text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1])
     if text_size[0] > 1800:
-        font = ImageFont.truetype("simhei.ttf", size=80 * 1800 // text_size[0])
+        font = ImageFont.truetype("./resource/fonts/HYWenHei-85W.ttf", size=80 * 1800 // text_size[0])
         text_bbox = font.getbbox(text)
         text_size = (text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1])
     ImageDraw.Draw(image).text(((2000 - text_size[0]) // 2, (200 - text_size[1]) // 2), text, font=font, fill=(128, 128, 128))
@@ -107,21 +107,21 @@ def draw_history_content(user_id: int, user_name: str, amount: int):
 
     draw = ImageDraw.Draw(image)
 
-    font = ImageFont.truetype("simhei.ttf", size=100)
+    font = ImageFont.truetype("./resource/fonts/HYWenHei-85W.ttf", size=100)
     text_bbox = font.getbbox(user_name)
     text_size = (text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1])
     if text_size[0] > 1200:
-        font = ImageFont.truetype("simhei.ttf", size=100 * 1200 // text_size[0])
+        font = ImageFont.truetype("./resource/fonts/HYWenHei-85W.ttf", size=100 * 1200 // text_size[0])
         text_bbox = font.getbbox(user_name)
         text_size = (text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1])
     draw.text((400, (400 - text_size[1]) // 2), user_name, font=font, fill=(0, 0, 0))
 
-    font = ImageFont.truetype("simhei.ttf", size=100)
+    font = ImageFont.truetype("./resource/fonts/HYWenHei-85W.ttf", size=100)
     text = f"{amount}"
     text_bbox = font.getbbox(text)
     text_size = (text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1])
     if text_size[0] > 400:
-        font = ImageFont.truetype("simhei.ttf", size=100 * 400 // text_size[0])
+        font = ImageFont.truetype("./resource/fonts/HYWenHei-85W.ttf", size=100 * 400 // text_size[0])
         text_bbox = font.getbbox(text)
         text_size = (text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1])
     draw.text((1600 + (400 - text_size[0]) // 2, (400 - text_size[1]) // 2), text, font=font, fill=(0, 0, 0))
@@ -156,29 +156,29 @@ async def send_redbag(user_id: int = Query(), user_name: str = Query(), amount: 
     draw = ImageDraw.Draw(image)
  
      # 绘制标题
-    font = ImageFont.truetype("simhei.ttf", size=150)
+    font = ImageFont.truetype("./resource/fonts/HYWenHei-85W.ttf", size=150)
     title = f"来自<{user_name}>的红包"
     text_bbox = font.getbbox(title)
     text_size = (text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1])
     if text_size[0] > 1800:
-        font = ImageFont.truetype("simhei.ttf", size=150 * 1800 // text_size[0])
+        font = ImageFont.truetype("./resource/fonts/HYWenHei-85W.ttf", size=150 * 1800 // text_size[0])
         text_bbox = font.getbbox(title)
         text_size = (text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1])
     draw.text(((2000 - text_size[0]) // 2, 200), title, font=font, fill=(255, 215, 0))
        
     # 绘制祝福语
-    font = ImageFont.truetype("simhei.ttf", size=200)
+    font = ImageFont.truetype("./resource/fonts/HYWenHei-85W.ttf", size=200)
     text_bbox = font.getbbox(text)
     text_size = (text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1])
     draw.text(((2000 - text_size[0]) // 2, 1400), text, font=font, fill=(255, 215, 0))
     
     # 绘制金额和数量
-    font = ImageFont.truetype("simhei.ttf", size=100)
+    font = ImageFont.truetype("./resource/fonts/HYWenHei-85W.ttf", size=100)
     info = f"金额：{amount} 数量：{total}"
     text_bbox = font.getbbox(info)
     text_size = (text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1])
     if text_size[0] > 1800:
-        font = ImageFont.truetype("simhei.ttf", size=100 * 1800 // text_size[0])
+        font = ImageFont.truetype("./resource/fonts/HYWenHei-85W.ttf", size=100 * 1800 // text_size[0])
         text_bbox = font.getbbox(info)
         text_size = (text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1])
     draw.text(((2000 - text_size[0]) // 2, 3100), info, font=font, fill=(255, 215, 0))
@@ -208,29 +208,29 @@ async def send_exclusive_redbag(user_id: int = Query(), user_name: str = Query()
     draw = ImageDraw.Draw(image)
 
     # 绘制标题
-    font = ImageFont.truetype("simhei.ttf", size=150)
+    font = ImageFont.truetype("./resource/fonts/HYWenHei-85W.ttf", size=150)
     title = f"<{user_name}>发给<{target_user_name}>的专属红包"
     text_bbox = font.getbbox(title)
     text_size = (text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1])
     if text_size[0] > 1800:
-        font = ImageFont.truetype("simhei.ttf", size=150 * 1800 // text_size[0])
+        font = ImageFont.truetype("./resource/fonts/HYWenHei-85W.ttf", size=150 * 1800 // text_size[0])
         text_bbox = font.getbbox(title)
         text_size = (text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1])
     draw.text(((2000 - text_size[0]) // 2, 200), title, font=font, fill=(255, 215, 0))
         
     # 绘制祝福语
-    font = ImageFont.truetype("simhei.ttf", size=200)
+    font = ImageFont.truetype("./resource/fonts/HYWenHei-85W.ttf", size=200)
     text_bbox = font.getbbox(text)
     text_size = (text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1])
     draw.text(((2000 - text_size[0]) // 2, 1400), text, font=font, fill=(255, 215, 0))
 
     # 绘制金额和数量
-    font = ImageFont.truetype("simhei.ttf", size=100)
+    font = ImageFont.truetype("./resource/fonts/HYWenHei-85W.ttf", size=100)
     info = f"金额：{amount}"
     text_bbox = font.getbbox(info)
     text_size = (text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1])
     if text_size[0] > 1800:
-        font = ImageFont.truetype("simhei.ttf", size=100 * 1800 // text_size[0])
+        font = ImageFont.truetype("./resource/fonts/HYWenHei-85W.ttf", size=100 * 1800 // text_size[0])
         text_bbox = font.getbbox(info)
         text_size = (text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1])
     draw.text(((2000 - text_size[0]) // 2, 3100), info, font=font, fill=(255, 215, 0))
@@ -256,12 +256,12 @@ async def open_redbag(user_id: int = Query(), user_name: str = Query(), sender_u
     avatar = get_avatar(user_id)
     image.paste(avatar, (650, 455), avatar)
 
-    font = ImageFont.truetype("simhei.ttf", size=150)
+    font = ImageFont.truetype("./resource/fonts/HYWenHei-85W.ttf", size=150)
     title = f"<{user_name}>领取了<{sender_user_name}>的红包"
     text_bbox = font.getbbox(title)
     text_size = (text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1])
     if text_size[0] > 1800:
-        font = ImageFont.truetype("simhei.ttf", size=150 * 1800 // text_size[0])
+        font = ImageFont.truetype("./resource/fonts/HYWenHei-85W.ttf", size=150 * 1800 // text_size[0])
         text_bbox = font.getbbox(title)
         text_size = (text_bbox[2] - text_bbox[0], text_bbox[3] - text_bbox[1])
     ImageDraw.Draw(image).text(((2000 - text_size[0]) // 2, 1200), title, font=font, fill=(255, 215, 0))
