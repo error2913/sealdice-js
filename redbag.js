@@ -323,8 +323,16 @@ cmdShow.solve = (ctx, msg, cmdArgs) => {
 };
 ext.cmdMap['查看红包'] = cmdShow;
 
+let isTaskRunning = false;
 seal.ext.registerTask(ext, "cron", "0 */2 * * *", async () => {
+    if (isTaskRunning) {
+        console.log('清除过期红包任务正在运行，跳过');
+        return;
+    }
+
+    isTaskRunning = true;
     console.log('清除过期红包任务开始');
+
     const timestamp = Math.floor(Date.now() / 1000);
     for (const gid of Object.keys(data)) {
         for (let i = 0; i < data[gid].length; i++) {
@@ -346,23 +354,32 @@ seal.ext.registerTask(ext, "cron", "0 */2 * * *", async () => {
                     for (let i = 0; i < history.length; i++) {
                         remaining -= history[i].amount;
                     }
+                    
+                    seal.vars.intSet(ctx, varname, val + remaining);
 
                     const file = `${url}/history?total=${total}&remaining=${remaining}&history=${JSON.stringify(history)}`;
                     s += `[CQ:image,file=${file.replace(/\]/g, '%5D').replace(/,/g, '%2C')}]`;
                 } else {
+                    seal.vars.intSet(ctx, varname, val + amount);
                     s += `\n数量:${total}`;
                 }
 
-                seal.vars.intSet(ctx, varname, val + remaining);
                 seal.replyToSender(ctx, msg, s);
                 data[gid].splice(i, 1);
                 i--;
+                
+                if (data[gid].length === 0) {
+                    delete data[gid];
+                }
 
                 await new Promise(resolve => setTimeout(resolve, 1000));
             }
         }
     }
     ext.storageSet('data', JSON.stringify(data));
+
+    isTaskRunning = false;
+    console.log('清除过期红包任务结束');
 });
 
 ext.onNotCommandReceived = (ctx, msg) => {
