@@ -60,9 +60,7 @@
             chart.splice(10);
           } else {
             chart[index].un = ctx.player.name;
-            if (chart[index].value < val) {
-              chart[index].value = val;
-            }
+            chart[index].value = val;
             chart.sort((a, b) => b.value - a.value);
           }
         }
