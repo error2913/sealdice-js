@@ -1,17 +1,17 @@
+import { ChartManager } from "./chart";
 import { ConfigManager } from "./configManager";
-import { getChart, getChartText, updateVars } from "./utils";
 
 function main() {
   // 注册扩展
   let ext = seal.ext.find('排行榜');
   if (!ext) {
-    ext = seal.ext.new('排行榜', '错误', '1.0.0');
+    ext = seal.ext.new('排行榜', '错误', '1.1.0');
     seal.ext.register(ext);
   }
 
   const configManager = new ConfigManager(ext);
   configManager.register();
-  let chart = getChart(ext);
+  const cm = ChartManager.getData(ext);
 
   ext.onCommandReceived = (ctx, _, cmdArgs) => {
     const command = cmdArgs.command;
@@ -19,7 +19,7 @@ function main() {
 
     if (cmds.includes(command)) {
       setTimeout(() => {
-        chart = updateVars(ext, ctx, chart);
+        cm.updateVars(ext, ctx);
       }, 500)
     }
   }
@@ -39,7 +39,7 @@ function main() {
       })
     ) {
       setTimeout(() => {
-        chart = updateVars(ext, ctx, chart);
+        cm.updateVars(ext, ctx);
       }, 500)
     }
   }
@@ -47,24 +47,27 @@ function main() {
   const cmd = seal.ext.newCmdItemInfo();
   cmd.name = 'chart';
   cmd.help = `帮助
-【.chart <变量名称>】查看排行榜
-【.chart show】查看已有的变量名`;
+【.chart <变量名称>】查看排行榜`;
   cmd.solve = (ctx, msg, cmdArgs) => {
     let val = cmdArgs.getArgN(1);
     switch (val) {
       case '':
       case 'help': {
-        const ret = seal.ext.newCmdExecuteResult(true);
-        ret.showHelp = true;
-        return ret;
-      }
-      case 'show': {
         const names = seal.ext.getTemplateConfig(ext, '变量对应名称');
-        seal.replyToSender(ctx, msg, `可选变量名称:${names.join(',')}`);
+        const s = cmd.help + `\n可选变量名称:${names.join(',')}`;
+        seal.replyToSender(ctx, msg, s);
         return seal.ext.newCmdExecuteResult(true);
       }
       default: {
-        seal.replyToSender(ctx, msg, getChartText(val, chart, configManager));
+        const varName = configManager.getVarName(val);
+        if (!varName) {
+            const names = seal.ext.getTemplateConfig(ext, '变量对应名称');
+            const s = `${val}排行榜不存在` + `\n可选变量名称:${names.join(',')}`;
+            seal.replyToSender(ctx, msg, s);
+            return seal.ext.newCmdExecuteResult(true);
+        }
+
+        seal.replyToSender(ctx, msg, cm.showChart(val));
         return seal.ext.newCmdExecuteResult(true);
       }
     }

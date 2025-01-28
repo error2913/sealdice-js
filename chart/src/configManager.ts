@@ -1,6 +1,6 @@
 
 export class ConfigManager {
-    private ext: seal.ExtInfo;
+    ext: seal.ExtInfo;
 
     constructor(ext: seal.ExtInfo) {
         this.ext = ext;
