@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         多骰联合延迟测试
 // @author       错误
-// @version      1.0.1
+// @version      1.0.2
 // @description  需要先用【.乒乓 set main @要设置的骰子】设置一个主机。使用【.乒乓 @骰子】获取帮助。主机需要加载依赖：错误:team:>=4.0.0
 // @timestamp    1737173515
 // 2025-01-18 12:11:55
@@ -13,7 +13,7 @@
 
 let ext = seal.ext.find('ping_auto');
 if (!ext) {
-    ext = seal.ext.new('ping_auto', '错误', '1.0.1');
+    ext = seal.ext.new('ping_auto', '错误', '1.0.2');
     seal.ext.register(ext);
     seal.ext.registerStringConfig(ext, '定时任务cron表达式', '0 */4 * * *', '修改后保存并重载js');
     seal.ext.registerIntConfig(ext, '超时时间/s', 60, '修改后保存并重载js');
@@ -30,12 +30,12 @@ const interval2 = seal.ext.getIntConfig(ext, '二级test延时/ms');
 
 seal.ext.registerTask(ext, "cron", cron, () => {
     for (let i = 0; i < list.length; i++) {
-       const { gid, epId } = list[i];
-       const msg = getMsg(gid, epId);
-       const ctx = getCtx(epId, msg);
-       const ping = Ping.getPing(gid);
+        const { gid, epId } = list[i];
+        const msg = getMsg(gid, epId);
+        const ctx = getCtx(epId, msg);
+        const ping = Ping.getPing(gid);
 
-       start(ctx, msg, gid, ping);
+        start(ctx, msg, gid, ping);
     }
 });
 
@@ -84,17 +84,17 @@ function test1(ctx, msg, ping, index) {
         const text = ping.members.slice(index).map(item => `[CQ:at,qq=${item.replace(/\D+/g, '')}]`).join(' ');
         ping.data[0][index] = Date.now();
         seal.replyToSender(ctx, msg, `.乒乓 ping ${text}`);
-    
+
         ping.timeoutId = setTimeout(() => {
             const lost_uid = ping.members[index];
-    
+
             teamManager.remove(ctx, [lost_uid], []);
-            seal.replyToSender(ctx, msg, `.乒乓 stop [CQ:at,qq=${lost_uid.replace(/\D+/g, '')}]失踪了，移除后重新进行检测`);
+            seal.replyToSender(ctx, msg, `.乒乓 dong [CQ:at,qq=${lost_uid.replace(/\D+/g, '')}] 失踪了，移除后重新进行检测`);
             ctx.notice(`${lost_uid}失踪了`);
-    
+
             start(ctx, msg, gid, ping);
         }, timeout);
-    
+
         Ping.savePing(gid);
     }, interval1);
 }
@@ -103,12 +103,12 @@ function test2(ctx, msg, ping, index) {
     setTimeout(() => {
         ping.row[index] = Date.now();
         seal.replyToSender(ctx, msg, `.乒乓 ping [CQ:at,qq=${ping.members[index].replace(/\D+/g, '')}]`);
-    
+
         ping.timeoutId = setTimeout(() => {
-            seal.replyToSender(ctx, msg, `.乒乓 timeout [CQ:at,qq=${ping.members[index].replace(/\D+/g, '')}]`);
+            seal.replyToSender(ctx, msg, `.乒乓 beep [CQ:at,qq=${ping.members[index].replace(/\D+/g, '')}]`);
             Ping.savePing(gid);
         }, timeout);
-    
+
         Ping.savePing(gid);
     }, interval2);
 }
@@ -236,11 +236,12 @@ class Ping {
 const cmd = seal.ext.newCmdItemInfo();
 cmd.name = '乒乓';
 cmd.help = `帮助:
-【.乒乓 set <main|sub> @要设置的骰子】设置为主机或从机，默认为从机
-【.乒乓 stop】停止检测
-【.乒乓 start】立即开始检测
-【.乒乓 on】开启自动检测
-【.乒乓 off】关闭自动检测`;
+【.乒乓 <main|sub> @要设置的骰子】设置为主机或从机，默认为从机
+【.乒乓 ding】立即开始检测
+【.乒乓 dong】停止检测
+【.乒乓 click】开启自动检测
+【.乒乓 clack】关闭自动检测
+【.乒乓 status】查看自动检测状态`;
 cmd.allowDelegate = true;
 cmd.disabledInPrivate = true;
 cmd.solve = (ctx, msg, cmdArgs) => {
@@ -252,37 +253,37 @@ cmd.solve = (ctx, msg, cmdArgs) => {
     const val = cmdArgs.getArgN(1);
     switch (val) {
         // 广播指令
-        case 'set': {// 来源：用户
+        case 'main': {// 来源：用户
             if (!cmdArgs.amIBeMentionedFirst) {
                 return seal.ext.newCmdExecuteResult(true);
             }
 
-            const val2 = cmdArgs.getArgN(2);
-            switch (val2) {
-                case 'main': {
-                    const extteam = seal.ext.find('team');
-                    if (!extteam || parseInt(extteam.version[0]) < 4) {
-                        seal.replyToSender(ctx, msg, '未找到team插件');
-                        return seal.ext.newCmdExecuteResult(true);
-                    }
-                    ping.main = true;
-                    seal.replyToSender(ctx, msg, '已设置为主机');
-                    Ping.savePing(gid);
-                    return seal.ext.newCmdExecuteResult(true);
-                }
-                case 'sub': {
-                    ping.main = false;
-                    seal.replyToSender(ctx, msg, '已设置为从机');
-                    Ping.savePing(gid);
-                    return seal.ext.newCmdExecuteResult(true);
-                }
-                default: {
-                    seal.replyToSender(ctx, msg, '【.乒乓 set <main|sub> @要设置的骰子】设置为主机或从机，默认为从机');
-                    return seal.ext.newCmdExecuteResult(true);
-                }
+            const extteam = seal.ext.find('team');
+            if (!extteam || parseInt(extteam.version[0]) < 4) {
+                seal.replyToSender(ctx, msg, '未找到team插件');
+                return seal.ext.newCmdExecuteResult(true);
             }
+            ping.main = true;
+            seal.replyToSender(ctx, msg, '已设置为主机');
+            Ping.savePing(gid);
+            return seal.ext.newCmdExecuteResult(true);
         }
-        case 'stop': {// 来源：用户、主机
+        case 'sub': {// 来源：用户
+            if (!cmdArgs.amIBeMentionedFirst) {
+                return seal.ext.newCmdExecuteResult(true);
+            }
+
+            ping.main = false;
+            seal.replyToSender(ctx, msg, '已设置为从机');
+            Ping.savePing(gid);
+            return seal.ext.newCmdExecuteResult(true);
+        }
+        case 'dong': {// 来源：用户、主机
+            if (cmdArgs.amIBeMentionedFirst) {
+                seal.replyToSender(ctx, msg, `.乒乓 boom`);
+                return seal.ext.newCmdExecuteResult(true);
+            }
+
             clearTimeout(ping.timeoutId);
             ping.timeoutId = null;
             ping.members = [];
@@ -334,7 +335,7 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             return seal.ext.newCmdExecuteResult(true);
         }
         // 仅限主机
-        case 'start': {// 来源：用户
+        case 'ding': {// 来源：用户
             if (!ping.main) {
                 return seal.ext.newCmdExecuteResult(true);
             }
@@ -346,7 +347,7 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             start(ctx, msg, gid, ping);
             return seal.ext.newCmdExecuteResult(true);
         }
-        case 'on': {// 来源：用户
+        case 'click': {// 来源：用户
             if (!ping.main) {
                 return seal.ext.newCmdExecuteResult(true);
             }
@@ -365,10 +366,10 @@ cmd.solve = (ctx, msg, cmdArgs) => {
                 ext.storageSet(`list`, JSON.stringify(list));
             }
 
-            seal.replyToSender(ctx, msg, '自动检测已经开启');
+            seal.replyToSender(ctx, msg, '自动检测开启');
             return seal.ext.newCmdExecuteResult(true);
         }
-        case 'off': {// 来源：用户
+        case 'clack': {// 来源：用户
             if (!ping.main) {
                 return seal.ext.newCmdExecuteResult(true);
             }
@@ -379,7 +380,21 @@ cmd.solve = (ctx, msg, cmdArgs) => {
                 ext.storageSet(`list`, JSON.stringify(list));
             }
 
-            seal.replyToSender(ctx, msg, '自动检测已经关闭');
+            seal.replyToSender(ctx, msg, '自动检测关闭');
+            return seal.ext.newCmdExecuteResult(true);
+        }
+        case 'status': {// 来源：用户
+            if (!ping.main) {
+                return seal.ext.newCmdExecuteResult(true);
+            }
+
+            const index = list.findIndex(item => item.gid === gid);
+            if (index !== -1) {
+                seal.replyToSender(ctx, msg, '自动检测已经开启');
+            } else {
+                seal.replyToSender(ctx, msg, '自动检测已经关闭');
+            }
+
             return seal.ext.newCmdExecuteResult(true);
         }
         case 'zing': {// 来源：一级从机 奇怪的拟声词增加了
@@ -417,7 +432,7 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             Ping.savePing(gid);
             return seal.ext.newCmdExecuteResult(true);
         }
-        case 'timeout': {// 来源：一级从机
+        case 'beep': {// 来源：一级从机
             if (!ping.main) {
                 return seal.ext.newCmdExecuteResult(true);
             }
@@ -432,8 +447,29 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             clearTimeout(ping.timeoutId);
             ping.timeoutId = null;
             teamManager.remove(ctx, [lost_uid], []);
-            seal.replyToSender(ctx, msg, `.乒乓 stop [CQ:at,qq=${lost_uid.replace(/\D+/g, '')}]失踪了，移除后重新进行检测`);
+            seal.replyToSender(ctx, msg, `.乒乓 dong [CQ:at,qq=${lost_uid.replace(/\D+/g, '')}] 失踪了，移除后重新进行检测`);
             ctx.notice(`${lost_uid}失踪了`);
+
+            start(ctx, msg, gid, ping);
+            return seal.ext.newCmdExecuteResult(true);
+        }
+        case 'boom': {// 来源：一级从机、二级从机
+            if (!ping.main) {
+                return seal.ext.newCmdExecuteResult(true);
+            }
+
+            const uid = ctx.player.userId;
+
+            const index = ping.members.indexOf(uid);
+            if (index !== -1) {
+                return seal.ext.newCmdExecuteResult(true);
+            }
+
+            clearTimeout(ping.timeoutId);
+            ping.timeoutId = null;
+            teamManager.add(ctx, [uid]);
+            seal.replyToSender(ctx, msg, `.乒乓 dong`);
+            ctx.notice(`${uid}加入了`);
 
             start(ctx, msg, gid, ping);
             return seal.ext.newCmdExecuteResult(true);
