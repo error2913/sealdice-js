@@ -1,11 +1,12 @@
 import { ChartManager } from "./chart";
 import { ConfigManager } from "./configManager";
+import { update } from "./utils";
 
 function main() {
   // 注册扩展
   let ext = seal.ext.find('排行榜');
   if (!ext) {
-    ext = seal.ext.new('排行榜', '错误', '1.1.0');
+    ext = seal.ext.new('排行榜', '错误', '1.1.1');
     seal.ext.register(ext);
   }
 
@@ -47,7 +48,8 @@ function main() {
   const cmd = seal.ext.newCmdItemInfo();
   cmd.name = 'chart';
   cmd.help = `帮助
-【.chart <变量名称>】查看排行榜`;
+【.chart <变量名称>】查看排行榜
+【.chart update】全部数据更新，需要http功能`;
   cmd.solve = (ctx, msg, cmdArgs) => {
     let val = cmdArgs.getArgN(1);
     switch (val) {
@@ -58,14 +60,29 @@ function main() {
         seal.replyToSender(ctx, msg, s);
         return seal.ext.newCmdExecuteResult(true);
       }
+      case 'update': {
+        const exthttp = seal.ext.find('HTTP依赖');
+        if (!exthttp) {
+          seal.replyToSender(ctx, msg, '请先安装 错误:HTTP依赖:>=1.0.0');
+          return seal.ext.newCmdExecuteResult(true);
+        }
+
+        update(ext, cm).then(() => {
+          seal.replyToSender(ctx, msg, '数据更新完成');
+        });
+
+        return seal.ext.newCmdExecuteResult(true);
+      }
       default: {
         const varName = configManager.getVarName(val);
         if (!varName) {
-            const names = seal.ext.getTemplateConfig(ext, '变量对应名称');
-            const s = `${val}排行榜不存在` + `\n可选变量名称:${names.join(',')}`;
-            seal.replyToSender(ctx, msg, s);
-            return seal.ext.newCmdExecuteResult(true);
+          const names = seal.ext.getTemplateConfig(ext, '变量对应名称');
+          const s = `${val}排行榜不存在` + `\n可选变量名称:${names.join(',')}`;
+          seal.replyToSender(ctx, msg, s);
+          return seal.ext.newCmdExecuteResult(true);
         }
+
+        cm.updateVars(ext, ctx);
 
         seal.replyToSender(ctx, msg, cm.showChart(val));
         return seal.ext.newCmdExecuteResult(true);
@@ -74,6 +91,17 @@ function main() {
   };
   ext.cmdMap['chart'] = cmd;
   ext.cmdMap['排行榜'] = cmd;
+
+  seal.ext.registerTask(ext, "cron", "0 */2 * * *", () => {
+    const exthttp = seal.ext.find('HTTP依赖');
+    if (!exthttp) {
+      return;
+    }
+
+    update(ext, cm).then(() => {
+      console.log('排行榜数据更新完成');
+    });
+  });
 }
 
 main();

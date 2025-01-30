@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         变量排行榜
 // @author       错误
-// @version      1.1.0
+// @version      1.1.1
 // @description  为你的豹语变量提供排行榜服务！请在插件设置内填写对应变量和名称，并填写数据更新的条件。插件并不能主动更新排行榜数据，需要被动触发。若图片发送不了请联系错误。
 // @timestamp    1731503833
 // 2024-11-13 21:17:13
@@ -116,11 +116,59 @@
     }
   };
 
+  // src/utils.ts
+  function getMsg(messageType, senderId, groupId = "") {
+    let msg = seal.newMessage();
+    if (messageType == "group") {
+      msg.groupId = groupId;
+      msg.guildId = "";
+    }
+    msg.messageType = messageType;
+    msg.sender.userId = senderId;
+    return msg;
+  }
+  function getCtx(epId, msg) {
+    const eps = seal.getEndPoints();
+    for (let i = 0; i < eps.length; i++) {
+      if (eps[i].userId === epId) {
+        return seal.createTempCtx(eps[i], msg);
+      }
+    }
+    return void 0;
+  }
+  async function update(ext, cm) {
+    const updatedPlayers = /* @__PURE__ */ new Set();
+    const eps = seal.getEndPoints();
+    for (let i = 0; i < eps.length; i++) {
+      const epId = eps[i].userId;
+      const data = await globalThis.http.getData(epId, "get_group_list?no_cache=true");
+      if (data === null) {
+        continue;
+      }
+      for (let j = 0; j < data.length; j++) {
+        const gid = `QQ-Group:${data[j].group_id}`;
+        const data2 = await globalThis.http.getData(epId, `get_group_member_list?group_id=${data[j].group_id}`);
+        if (data2 === null) {
+          continue;
+        }
+        for (let k = 0; k < data2.length; k++) {
+          const uid = `QQ:${data2[k].user_id}`;
+          if (!updatedPlayers.has(uid)) {
+            const msg = getMsg("group", uid, gid);
+            const ctx = getCtx(epId, msg);
+            cm.updateVars(ext, ctx);
+            updatedPlayers.add(uid);
+          }
+        }
+      }
+    }
+  }
+
   // src/index.ts
   function main() {
     let ext = seal.ext.find("排行榜");
     if (!ext) {
-      ext = seal.ext.new("排行榜", "错误", "1.1.0");
+      ext = seal.ext.new("排行榜", "错误", "1.1.1");
       seal.ext.register(ext);
     }
     const configManager = new ConfigManager(ext);
@@ -154,7 +202,8 @@
     const cmd = seal.ext.newCmdItemInfo();
     cmd.name = "chart";
     cmd.help = `帮助
-【.chart <变量名称>】查看排行榜`;
+【.chart <变量名称>】查看排行榜
+【.chart update】全部数据更新，需要http功能`;
     cmd.solve = (ctx, msg, cmdArgs) => {
       let val = cmdArgs.getArgN(1);
       switch (val) {
@@ -166,6 +215,17 @@
           seal.replyToSender(ctx, msg, s);
           return seal.ext.newCmdExecuteResult(true);
         }
+        case "update": {
+          const exthttp = seal.ext.find("HTTP依赖");
+          if (!exthttp) {
+            seal.replyToSender(ctx, msg, "请先安装 错误:HTTP依赖:>=1.0.0");
+            return seal.ext.newCmdExecuteResult(true);
+          }
+          update(ext, cm).then(() => {
+            seal.replyToSender(ctx, msg, "数据更新完成");
+          });
+          return seal.ext.newCmdExecuteResult(true);
+        }
         default: {
           const varName = configManager.getVarName(val);
           if (!varName) {
@@ -175,6 +235,7 @@
             seal.replyToSender(ctx, msg, s);
             return seal.ext.newCmdExecuteResult(true);
           }
+          cm.updateVars(ext, ctx);
           seal.replyToSender(ctx, msg, cm.showChart(val));
           return seal.ext.newCmdExecuteResult(true);
         }
@@ -182,6 +243,15 @@
     };
     ext.cmdMap["chart"] = cmd;
     ext.cmdMap["排行榜"] = cmd;
+    seal.ext.registerTask(ext, "cron", "0 */2 * * *", () => {
+      const exthttp = seal.ext.find("HTTP依赖");
+      if (!exthttp) {
+        return;
+      }
+      update(ext, cm).then(() => {
+        console.log("排行榜数据更新完成");
+      });
+    });
   }
   main();
 })();
