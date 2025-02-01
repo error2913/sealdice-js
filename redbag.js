@@ -335,7 +335,7 @@ seal.ext.registerTask(ext, "cron", "0 */2 * * *", async () => {
 
     const timestamp = Math.floor(Date.now() / 1000);
     for (const gid of Object.keys(data)) {
-        for (let i = 0; i < data[gid].length; i++) {
+        for (let i = 0; i < data[gid].length && i >= 0; i++) {
             if (timestamp - data[gid][i].timestamp > 24 * 60 * 60) {
                 const epId = data[gid][i].epId;
                 const uid = data[gid][i].uid;
