@@ -367,13 +367,13 @@ seal.ext.registerTask(ext, "cron", "0 */2 * * *", async () => {
                 seal.replyToSender(ctx, msg, s);
                 data[gid].splice(i, 1);
                 i--;
-                
-                if (data[gid].length === 0) {
-                    delete data[gid];
-                }
 
                 await new Promise(resolve => setTimeout(resolve, 1000));
             }
+        }
+                        
+        if (data[gid].length === 0) {
+            delete data[gid];
         }
     }
     ext.storageSet('data', JSON.stringify(data));
