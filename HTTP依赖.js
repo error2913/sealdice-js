@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         HTTP依赖
 // @author       错误
-// @version      1.0.0
+// @version      1.0.1
 // @description  为插件提供HTTP依赖管理。\nHTTP端口请按照自己的登录方案自行配置，配置完成后在插件设置填入。插件初始化时会自动获取HTTP地址对应的账号并保存。\n提供指令 .http 可以直接调用\n在其他插件中使用方法: globalThis.http.getData(epId, val, data=null)\nepId为账号QQ:12345，val为方法，如get_login_info。\n方法可参见https://github.com/botuniverse/onebot-11/blob/master/api/public.md#%E5%85%AC%E5%BC%80-api
 // @timestamp    1733626761
 // 2024-12-08 10:59:21
@@ -13,13 +13,31 @@
 
 let ext = seal.ext.find('HTTP依赖');
 if (!ext) {
-    ext = seal.ext.new('HTTP依赖', '错误', '1.0.0');
+    ext = seal.ext.new('HTTP依赖', '错误', '1.0.1');
     seal.ext.register(ext);
 }
 
 seal.ext.registerTemplateConfig(ext, 'HTTP端口地址', ['http://127.0.0.1:8084'], '修改后保存并重载js');
+seal.ext.registerOptionConfig(ext, "打印日志打印方式", "简短", ["永不", "简短", "详细"]);
 
 const urlMap = {};
+const logLevel = seal.ext.getOptionConfig(ext, "打印日志打印方式");
+
+function log(...data) {
+    if (logLevel === "永不") {
+        return;
+    }
+
+    if (logLevel === "简短") {
+        const s = data.map(item => `${item}`).join(" ");
+        if (s.length > 1000) {
+            console.log(s.substring(0, 500), "\n...\n", s.substring(s.length - 500));
+            return;
+        }
+    }
+
+    console.log(...data);
+}
 
 async function fetchData(url, data = null) {
     try {
@@ -36,14 +54,14 @@ async function fetchData(url, data = null) {
         const body = await response.json();
         const result = body.data;
         if (result === null) {
-            console.log('获取数据成功: null');
+            log('获取数据成功: null');
             return null;
         }
         if (result === undefined) {
-            console.log('获取数据成功: undefined');
+            log('获取数据成功: undefined');
             return null;
         }
-        console.log(`获取数据成功: ${JSON.stringify(result, null, 2)}`);
+        log(`获取数据成功: ${JSON.stringify(result, null, 2)}`);
         return result;
     } catch (error) {
         console.error(`获取数据失败: ${error.message}`);
@@ -67,12 +85,12 @@ async function init() {
         for (let i = 0; i < eps.length; i++) {
             if (eps[i].userId === epId) {
                 urlMap[epId] = port;
-                console.log(`找到${epId}端口: ${port}`);
+                log(`找到${epId}端口: ${port}`);
                 break;
             }
         }
     }
-    console.log('初始化完成，urlMap: ', JSON.stringify(urlMap, null, 2));
+    log('初始化完成，urlMap: ', JSON.stringify(urlMap, null, 2));
 }
 init();
 
@@ -88,7 +106,7 @@ class Http {
         }
 
         const url = `${urlMap[epId]}/${val}`;
-        console.log('请求地址: ', url);
+        log('请求地址: ', url);
         const result = await fetchData(url, data);
         return result;
     }
