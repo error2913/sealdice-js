@@ -18,10 +18,10 @@ if (!ext) {
 }
 
 seal.ext.registerTemplateConfig(ext, 'HTTP端口地址', ['http://127.0.0.1:8084'], '修改后保存并重载js');
-seal.ext.registerOptionConfig(ext, "打印日志打印方式", "简短", ["永不", "简短", "详细"]);
+seal.ext.registerOptionConfig(ext, "日志打印方式", "简短", ["永不", "简短", "详细"]);
 
 const urlMap = {};
-const logLevel = seal.ext.getOptionConfig(ext, "打印日志打印方式");
+const logLevel = seal.ext.getOptionConfig(ext, "日志打印方式");
 
 function log(...data) {
     if (logLevel === "永不") {
