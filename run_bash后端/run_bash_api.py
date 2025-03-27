@@ -1,13 +1,15 @@
-import os
+import asyncio
 import re
 from fastapi import FastAPI, Query, HTTPException
-import subprocess
+import logging
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 app = FastAPI()
 
-LINES_THRESHOLD = 20
-CHARS_THRESHOLD_IN_LINE = 47
-CHARS_THRESHOLD = 1000
+LINES_THRESHOLD = 50
+CHARS_THRESHOLD_IN_LINE = 97
+CHARS_THRESHOLD = 5000
 
 def remove_ansi(text):
     """
@@ -48,22 +50,31 @@ async def run_bash_command(cmd: str = Query(..., description="Bash命令字符�
         raise HTTPException(status_code=400, detail="命令不能为空")
 
     try:
-        # 获取当前环境变量
-        env = os.environ.copy()
+        # 创建子进程
+        process = await asyncio.create_subprocess_shell(
+            cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
         
-        # 执行命令并捕获输出、错误信息和退出状态码
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, env=env)
+        # 等待子进程完成或超时
+        try:
+            stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=10)
+        except asyncio.TimeoutError:
+            # 如果超时，尝试终止子进程
+            process.kill()
+            raise TimeoutError(f"Command '{cmd}' timed out after 10 seconds")
 
         return {
-            "output": cut_str(remove_ansi(result.stdout)),
-            "error": cut_str(remove_ansi(result.stderr)),
-            "retcode": result.returncode
+            "output": cut_str(remove_ansi(stdout.decode())),
+            "error": cut_str(remove_ansi(stderr.decode())),
+            "retcode": process.returncode
         }
     except Exception as e:
-        # 如果发生异常，返回错误信息
-        print(f"执行命令时发生错误: {str(e)}")
+        logger.error(f"执行命令时发生错误: {str(e)}")
         raise HTTPException(status_code=500, detail=f"执行命令时发生错误: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
+    logger.info("启动服务，监听端口：3011")
     uvicorn.run(app, host="127.0.0.1", port=3011)

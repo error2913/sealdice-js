@@ -51,11 +51,10 @@ cmd.solve = (ctx, msg, cmdArgs) => {
 
             try {
                 const data = JSON.parse(text);
-                if (data.error) {
-                    seal.replyToSender(ctx, msg, `执行失败! 返回码:${data.retcode}\n错误信息:\n${data.error}`);
-                    return;
-                }
-                seal.replyToSender(ctx, msg, `返回码:${data.retcode}\n输出:\n${data.output}`);
+                const reply = `返回码:${data.retcode}` +
+                    (data.error ? `\n错误信息:\n${data.error}` : '') +
+                    `\n输出:\n${data.output}`;
+                seal.replyToSender(ctx, msg, reply);
                 return;
             } catch (e) {
                 seal.replyToSender(ctx, msg, `解析响应体时出错:${e}\n响应体:${text}`);
