@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         HTTP依赖
 // @author       错误
-// @version      1.0.1
-// @description  为插件提供HTTP依赖管理。\nHTTP端口请按照自己的登录方案自行配置，配置完成后在插件设置填入。插件初始化时会自动获取HTTP地址对应的账号并保存。\n提供指令 .http 可以直接调用\n在其他插件中使用方法: globalThis.http.getData(epId, val, data=null)\nepId为账号QQ:12345，val为方法，如get_login_info。\n方法可参见https://github.com/botuniverse/onebot-11/blob/master/api/public.md#%E5%85%AC%E5%BC%80-api
+// @version      1.1.0
+// @description  为插件提供HTTP依赖管理。\nHTTP端口请按照自己的登录方案自行配置，配置完成后在插件设置填入。插件初始化时会自动获取HTTP地址对应的账号并保存。\n提供指令 .http 可以直接调用\n在其他插件中使用方法: globalThis.http.callApi(epId, method, data=null)\nepId为骰子账号QQ:12345，method为方法，如get_login_info，data为参数。\n方法可参见https://github.com/botuniverse/onebot-11/blob/master/api/public.md#%E5%85%AC%E5%BC%80-api
 // @timestamp    1733626761
 // 2024-12-08 10:59:21
 // @license      MIT
@@ -13,7 +13,7 @@
 
 let ext = seal.ext.find('HTTP依赖');
 if (!ext) {
-    ext = seal.ext.new('HTTP依赖', '错误', '1.0.1');
+    ext = seal.ext.new('HTTP依赖', '错误', '1.1.0');
     seal.ext.register(ext);
 }
 
@@ -48,21 +48,23 @@ async function fetchData(url, data = null) {
             },
             body: JSON.stringify(data),
         });
+
+        const text = await response.text();
+
         if (!response.ok) {
-            throw new Error(`HTTP错误: ${response.status}`);
+            throw new Error(`请求失败! 状态码: ${response.status}\n响应体: ${text}`);
         }
-        const body = await response.json();
-        const result = body.data;
-        if (result === null) {
-            log('获取数据成功: null');
-            return null;
+        if (!text) {
+            throw new Error("响应体为空");
         }
-        if (result === undefined) {
-            log('获取数据成功: undefined');
-            return null;
+
+        try {
+            const data = JSON.parse(text).data;
+            log(`获取数据成功: ${JSON.stringify(data, null, 2)}`);
+            return data;
+        } catch (e) {
+            throw new Error(`解析响应体时出错:${e}\n响应体:${text}`);
         }
-        log(`获取数据成功: ${JSON.stringify(result, null, 2)}`);
-        return result;
     } catch (error) {
         console.error(`获取数据失败: ${error.message}`);
         return null;
@@ -99,13 +101,25 @@ class Http {
         this.urlMap = urlMap;
     }
 
+    /** 兼容旧版本 */
     async getData(epId, val, data = null) {
+        return await this.callApi(epId, val, data);
+    }
+
+    /**
+     * 调用HTTP接口
+     * @param {string} epId 骰子的QQ号
+     * @param {string} method 调用的方法名
+     * @param {object} data 调用的方法的参数，默认为null
+     * @returns 
+     */
+    async callApi(epId, method, data = null) {
         if (!urlMap.hasOwnProperty(epId)) {
             console.error(`未找到端口: ${epId}`);
             return null;
         }
 
-        const url = `${urlMap[epId]}/${val}`;
+        const url = `${urlMap[epId]}/${method}`;
         log('请求地址: ', url);
         const result = await fetchData(url, data);
         return result;
@@ -116,20 +130,44 @@ globalThis.http = new Http(urlMap);
 
 const cmd = seal.ext.newCmdItemInfo();
 cmd.name = 'http';
-cmd.help = '帮助: .http <方法>。\n示例 .http get_login_info';
-cmd.solve = async (ctx, msg, cmdArgs) => {
+cmd.help = `帮助:
+.http <方法>
+--<参数名>=<参数>
+
+示例:
+.http get_login_info
+.http get_version_info
+.http send_group_msg
+--group_id=123456
+--message=[{"type":"text","data":{"text":"嘿嘿"}}]`;
+cmd.solve = (ctx, msg, cmdArgs) => {
     if (ctx.privilegeLevel < 100) {
         seal.replyToSender(ctx, msg, seal.formatTmpl(ctx, "核心:提示_无权限"));
         return seal.ext.newCmdExecuteResult(true);
     }
+
     const epId = ctx.endPoint.userId;
-    const val = cmdArgs.getArgN(1);
-    if (!val) {
-        seal.replyToSender(ctx, msg, '未找到参数1');
-        return seal.ext.newCmdExecuteResult(true);
+    const method = cmdArgs.getArgN(1);
+    if (!method || method === 'help') {
+        const ret = seal.ext.newCmdExecuteResult(true);
+        ret.showHelp = true;
+        return ret;
     }
-    const data = await globalThis.http.getData(epId, val);
-    seal.replyToSender(ctx, msg, JSON.stringify(data, null, 2));
+
+    const data = cmdArgs.kwargs.reduce((acc, kwarg) => {
+        const { name, value } = kwarg;
+        try {
+            acc[name] = JSON.parse(`[${value}]`)[0];
+        } catch (e) {
+            acc[name] = value;
+        }
+        return acc;
+    }, {});
+
+    globalThis.http.callApi(epId, method, data).then(result => {
+        seal.replyToSender(ctx, msg, JSON.stringify(result, null, 2));
+    });
+
     return seal.ext.newCmdExecuteResult(true);
 };
 ext.cmdMap['http'] = cmd;   
