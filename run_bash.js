@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         bash运行
 // @author       错误
-// @version      1.0.0
-// @description  暂无
+// @version      1.0.1
+// @description  发送 .bash 查看帮助，需要搭建相应后端服务
 // @timestamp    1743074450
 // 2025-03-27 19:20:50
 // @license      MIT
@@ -13,7 +13,7 @@
 
 let ext = seal.ext.find('run_bash');
 if (!ext) {
-    ext = seal.ext.new('run_bash', '错误', '1.0.0');
+    ext = seal.ext.new('run_bash', '错误', '1.0.1');
     seal.ext.register(ext);
 }
 
@@ -24,7 +24,7 @@ cmd.name = 'bash';
 cmd.help = `帮助:
 【.bash run <命令>】运行bash命令并返回结果
 【.bash create <命令>】创建bash进程并返回PID
-【.bash check <PID> <行数(可选)>】查看bash进程输出
+【.bash check <PID> <行数起始序号> <行数结束序号>】查看bash进程输出，若无需序号则填null
 【.bash del <PID>】删除bash进程
 【.bash list】列出所有bash进程`;
 cmd.solve = (ctx, msg, cmdArgs) => {
@@ -85,7 +85,7 @@ cmd.solve = (ctx, msg, cmdArgs) => {
                 return;
             }
 
-            if (segments[2] !== val2 && segments[0].endsWith('run')) {
+            if (segments[2] !== val2 && segments[0].endsWith('create')) {
                 segments.splice(2, 0, val2);
             }
 
@@ -119,8 +119,9 @@ cmd.solve = (ctx, msg, cmdArgs) => {
         }
         case 'check': {
             const val2 = cmdArgs.getArgN(2);
-            const val3 = cmdArgs.getArgN(3) || 10;
-            fetch(`${url}/check_process?pid=${val2}&lines=${val3}`).then(response => {
+            const val3 = cmdArgs.getArgN(3);
+            const val4 = cmdArgs.getArgN(4);
+            fetch(`${url}/check_process?pid=${val2}${val3 && val3 !== 'null' ? `&start_index=${val3}` : ``}${val4 && val4 !== 'null' ? `&end_index=${val4}` : ``}`).then(response => {
                 response.text().then(text => {
                     if (!response.ok) {
                         seal.replyToSender(ctx, msg, `请求失败! 状态码: ${response.status}\n响应体: ${text}`);
@@ -191,7 +192,7 @@ cmd.solve = (ctx, msg, cmdArgs) => {
                         const data = JSON.parse(text);
                         const reply = Object.keys(data).map(pid => {
                             const process = data[pid];
-                            return `PID: ${pid}\n命令: ${process.cmd}\n状态: ${process.done? '已完成' : '运行中'}`;
+                            return `PID: ${pid}\n命令: ${process.cmd}\n状态: ${process.done ? '已完成' : '运行中'}`;
                         }).join('\n\n') || '无进程';
                         seal.replyToSender(ctx, msg, reply);
                         return;

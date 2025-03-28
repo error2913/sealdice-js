@@ -16,9 +16,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 app = FastAPI()
 
-LINES_THRESHOLD = 50
-CHARS_THRESHOLD_IN_LINE = 97
-CHARS_THRESHOLD = 5000
+LINES_THRESHOLD = 10
+CHARS_THRESHOLD_IN_LINE = 197
+CHARS_THRESHOLD = 2000
 
 # 进程管理器
 class ProcessManager:
@@ -89,15 +89,19 @@ class ProcessManager:
                 if process_id in self.processes:
                     self.processes[process_id][stream_type].append(decoded_line)
     
-    async def get_process(self, pid: str, lines: int = 10):
+    async def get_process(self, pid: str, start_index: int = 0, end_index: int = None):
         async with self.lock:
             if pid not in self.processes:
                 return None
             
             proc = self.processes[pid]
+
+            output_lines = list(proc["stdout"])[start_index:end_index]
+            error_lines = list(proc["stderr"])[start_index:end_index]
+            
             return {
-                "output": "\n".join(list(proc["stdout"])[-lines:]),
-                "error": "\n".join(list(proc["stderr"])[-lines:]),
+                "output": "\n".join(output_lines),
+                "error": "\n".join(error_lines),
                 "retcode": proc["retcode"],
                 "done": proc["done"]
             }
@@ -221,10 +225,11 @@ async def create_process(cmd: str = Query(..., description="Bash命令字符串"
 @app.get("/check_process")
 async def check_process(
     pid: str = Query(..., description="进程UUID"),
-    lines: int = Query(10, ge=1, le=100, description="获取的行数")
+    start_index: int = Query(-10, description="起始行索引"),
+    end_index: int = Query(None, description="结束行索引")
 ):
     """查看进程输出"""
-    proc_info = await pm.get_process(pid, lines)
+    proc_info = await pm.get_process(pid, start_index, end_index)
     if not proc_info:
         raise HTTPException(status_code=404, detail="进程不存在或已过期")
     
