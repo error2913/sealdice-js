@@ -7,7 +7,7 @@
 // 2024-12-04 12:34:34
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
-// @updateUrl    https://mirror.ghproxy.com/https://raw.githubusercontent.com/error2913/sealdice-js/main/随机抽奖.js
+// @updateUrl    https://raw.gitmirror.com/error2913/sealdice-js/main/随机抽奖.js
 // @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/随机抽奖.js
 // @depends 错误:骰主公告极速版:>=1.1.0
 // ==/UserScript==

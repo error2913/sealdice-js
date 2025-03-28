@@ -7,7 +7,7 @@
 // 2024-08-24 10:58:22
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
-// @updateUrl    https://mirror.ghproxy.com/https://raw.githubusercontent.com/error2913/sealdice-js/main/release/team.js
+// @updateUrl    https://raw.gitmirror.com/error2913/sealdice-js/main/release/team.js
 // @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/release/team.js
 // ==/UserScript==
 

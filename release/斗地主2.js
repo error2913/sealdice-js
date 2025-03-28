@@ -7,7 +7,7 @@
 // 2024-11-01 16:00:43
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
-// @updateUrl    https://mirror.ghproxy.com/https://raw.githubusercontent.com/error2913/sealdice-js/main/release/斗地主2.js
+// @updateUrl    https://raw.gitmirror.com/error2913/sealdice-js/main/release/斗地主2.js
 // @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/release/斗地主2.js
 // @depends 错误:team:>=4.0.0
 // ==/UserScript==

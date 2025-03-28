@@ -7,7 +7,7 @@
 // 2024-11-29 15:51:03
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
-// @updateUrl    https://mirror.ghproxy.com/https://raw.githubusercontent.com/error2913/sealdice-js/main/核弹发射按钮.js
+// @updateUrl    https://raw.gitmirror.com/error2913/sealdice-js/main/核弹发射按钮.js
 // @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/核弹发射按钮.js
 // @depends 错误:game依赖:>=1.0.0
 // ==/UserScript==

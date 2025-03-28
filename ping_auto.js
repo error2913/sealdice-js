@@ -7,7 +7,7 @@
 // 2025-01-18 12:11:55
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
-// @updateUrl    https://mirror.ghproxy.com/https://raw.githubusercontent.com/error2913/sealdice-js/main/ping_auto.js
+// @updateUrl    https://raw.gitmirror.com/error2913/sealdice-js/main/ping_auto.js
 // @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/ping_auto.js
 // ==/UserScript==
 

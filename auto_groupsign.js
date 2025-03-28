@@ -7,7 +7,7 @@
 // 2024-12-13 20:02:16
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
-// @updateUrl    https://mirror.ghproxy.com/https://raw.githubusercontent.com/error2913/sealdice-js/main/auto_groupsign.js
+// @updateUrl    https://raw.gitmirror.com/error2913/sealdice-js/main/auto_groupsign.js
 // @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/auto_groupsign.js
 // @depends 错误:HTTP依赖:>=1.0.0
 // ==/UserScript==
