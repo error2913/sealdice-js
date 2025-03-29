@@ -15,6 +15,8 @@ let ext = seal.ext.find('run_bash');
 if (!ext) {
     ext = seal.ext.new('run_bash', '错误', '1.0.1');
     seal.ext.register(ext);
+
+    seal.ext.registerTemplateConfig(ext, "白名单", ["QQ:1234567890"], "可使用指令的QQ号");
 }
 
 const url = 'http://localhost:3011';
@@ -24,11 +26,11 @@ cmd.name = 'bash';
 cmd.help = `帮助:
 【.bash run <命令>】运行bash命令并返回结果
 【.bash create <命令>】创建bash进程并返回PID
-【.bash check <PID> <行数起始序号> <行数结束序号>】查看bash进程输出，若无需序号则填null
+【.bash check <PID> <行数起始序号(默认为-10)> <行数结束序号(可选)>】查看bash进程输出
 【.bash del <PID>】删除bash进程
 【.bash list】列出所有bash进程`;
 cmd.solve = (ctx, msg, cmdArgs) => {
-    if (ctx.privilegeLevel < 100) {
+    if (!seal.ext.getTemplateConfig(ext, "白名单").includes(ctx.player.userId)) {
         seal.replyToSender(ctx, msg, seal.formatTmpl(ctx, "核心:提示_无权限"));
         return seal.ext.newCmdExecuteResult(true);
     }
@@ -121,7 +123,7 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             const val2 = cmdArgs.getArgN(2);
             const val3 = cmdArgs.getArgN(3);
             const val4 = cmdArgs.getArgN(4);
-            fetch(`${url}/check_process?pid=${val2}${val3 && val3 !== 'null' ? `&start_index=${val3}` : ``}${val4 && val4 !== 'null' ? `&end_index=${val4}` : ``}`).then(response => {
+            fetch(`${url}/check_process?pid=${val2}${val3 ? `&start_index=${val3}` : `&start_index=-10`}${val4 ? `&end_index=${val4}` : ``}`).then(response => {
                 response.text().then(text => {
                     if (!response.ok) {
                         seal.replyToSender(ctx, msg, `请求失败! 状态码: ${response.status}\n响应体: ${text}`);
@@ -136,6 +138,7 @@ cmd.solve = (ctx, msg, cmdArgs) => {
                         const data = JSON.parse(text);
                         const reply = `返回码:${data.retcode}` +
                             `\n进程状态:${data.done ? '已完成' : '运行中'}` +
+                            `\n输出行数:${data.lines}` +
                             (data.error ? `\n错误信息:\n${data.error}` : '') +
                             `\n输出:\n${data.output}`;
                         seal.replyToSender(ctx, msg, reply);

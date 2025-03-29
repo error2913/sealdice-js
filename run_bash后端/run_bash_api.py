@@ -44,8 +44,8 @@ class ProcessManager:
             process_id = await self._generate_pid()
             self.processes[process_id] = {
                 "cmd": cmd,
-                "stdout": deque(maxlen=1000),  # 保留最近1000行
-                "stderr": deque(maxlen=1000),
+                "stdout": deque(maxlen=10000),
+                "stderr": deque(maxlen=10000),
                 "retcode": None,
                 "create_time": asyncio.get_event_loop().time(),
                 "task": None,
@@ -103,6 +103,7 @@ class ProcessManager:
                 "output": "\n".join(output_lines),
                 "error": "\n".join(error_lines),
                 "retcode": proc["retcode"],
+                "lines": len(proc["stdout"]),
                 "done": proc["done"]
             }
     
@@ -225,7 +226,7 @@ async def create_process(cmd: str = Query(..., description="Bash命令字符串"
 @app.get("/check_process")
 async def check_process(
     pid: str = Query(..., description="进程UUID"),
-    start_index: int = Query(-10, description="起始行索引"),
+    start_index: int = Query(None, description="起始行索引"),
     end_index: int = Query(None, description="结束行索引")
 ):
     """查看进程输出"""
@@ -237,6 +238,7 @@ async def check_process(
         "output": remove_ansi(proc_info["output"]),
         "error": remove_ansi(proc_info["error"]),
         "retcode": proc_info["retcode"],
+        "lines": proc_info["lines"],
         "done": proc_info["done"]
     }
 
