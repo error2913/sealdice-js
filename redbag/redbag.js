@@ -7,8 +7,8 @@
 // 2024-12-26 23:17:44
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
-// @updateUrl    https://raw.gitmirror.com/error2913/sealdice-js/main/redbag.js
-// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/redbag.js
+// @updateUrl    https://raw.gitmirror.com/error2913/sealdice-js/main/redbag/redbag.js
+// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/redbag/redbag.js
 // ==/UserScript==
 
 let ext = seal.ext.find('redbag');

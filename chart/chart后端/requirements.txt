@@ -1,0 +1,4 @@
+fastapi==0.115.12
+Pillow==11.1.0
+Requests==2.32.3
+uvicorn==0.34.0

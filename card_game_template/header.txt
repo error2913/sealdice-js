@@ -7,7 +7,7 @@
 // 2024-11-01 16:00:43
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
-// @updateUrl    https://raw.gitmirror.com/error2913/sealdice-js/main/release/xxx.js
-// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/release/xxx.js
+// @updateUrl    https://raw.gitmirror.com/error2913/sealdice-js/main/xxx/dist/xxx.js
+// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/xxx/dist/xxx.js
 // @depends 错误:team:>=4.0.0
 // ==/UserScript==

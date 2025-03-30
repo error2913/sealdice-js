@@ -7,8 +7,8 @@
 // 2025-03-27 19:20:50
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
-// @updateUrl    https://raw.gitmirror.com/error2913/sealdice-js/main/run_bash.js
-// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/run_bash.js
+// @updateUrl    https://raw.gitmirror.com/error2913/sealdice-js/main/run_bash/run_bash.js
+// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/run_bash/run_bash.js
 // ==/UserScript==
 
 let ext = seal.ext.find('run_bash');
