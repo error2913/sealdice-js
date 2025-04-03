@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         bash运行
 // @author       错误
-// @version      1.0.1
+// @version      1.1.0
 // @description  发送 .bash 查看帮助，需要搭建相应后端服务
 // @timestamp    1743074450
 // 2025-03-27 19:20:50
@@ -13,7 +13,7 @@
 
 let ext = seal.ext.find('run_bash');
 if (!ext) {
-    ext = seal.ext.new('run_bash', '错误', '1.0.1');
+    ext = seal.ext.new('run_bash', '错误', '1.1.0');
     seal.ext.register(ext);
 
     seal.ext.registerTemplateConfig(ext, "白名单", ["QQ:1234567890"], "可使用指令的QQ号");
@@ -24,7 +24,7 @@ const url = 'http://localhost:3011';
 const cmd = seal.ext.newCmdItemInfo();
 cmd.name = 'bash';
 cmd.help = `帮助:
-【.bash run <命令>】运行bash命令并返回结果
+【.bash run <命令>】运行bash命令并返回结果，若执行时间超过10秒则会返回超时错误
 【.bash create <命令>】创建bash进程并返回PID
 【.bash check <PID> <行数起始序号(默认为-10)> <行数结束序号(可选)>】查看bash进程输出
 【.bash del <PID>】删除bash进程
@@ -67,8 +67,8 @@ cmd.solve = (ctx, msg, cmdArgs) => {
                     try {
                         const data = JSON.parse(text);
                         const reply = `返回码:${data.retcode}` +
-                            (data.error ? `\n错误信息:\n${data.error}` : '') +
-                            `\n输出:\n${data.output}`;
+                            (data?.error_url ? `\n错误信息:\n[CQ:image,file=${data.error_url}]` : '') +
+                            `\n输出:\n[CQ:image,file=${data.output_url}]`;
                         seal.replyToSender(ctx, msg, reply);
                         return;
                     } catch (e) {
@@ -123,7 +123,7 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             const val2 = cmdArgs.getArgN(2);
             const val3 = cmdArgs.getArgN(3);
             const val4 = cmdArgs.getArgN(4);
-            fetch(`${url}/check_process?pid=${val2}${val3 ? `&start_index=${val3}` : `&start_index=-10`}${val4 ? `&end_index=${val4}` : ``}`).then(response => {
+            fetch(`${url}/check_process?pid=${val2}${val3 ? `&start_index=${val3}` : `&start_index=-100`}${val4 ? `&end_index=${val4}` : ``}`).then(response => {
                 response.text().then(text => {
                     if (!response.ok) {
                         seal.replyToSender(ctx, msg, `请求失败! 状态码: ${response.status}\n响应体: ${text}`);
@@ -139,8 +139,8 @@ cmd.solve = (ctx, msg, cmdArgs) => {
                         const reply = `返回码:${data.retcode}` +
                             `\n进程状态:${data.done ? '已完成' : '运行中'}` +
                             `\n输出行数:${data.lines}` +
-                            (data.error ? `\n错误信息:\n${data.error}` : '') +
-                            `\n输出:\n${data.output}`;
+                            (data?.error_url ? `\n错误信息:\n[CQ:image,file=${data.error_url}]` : '') +
+                            `\n输出:\n[CQ:image,file=${data.output_url}]`;
                         seal.replyToSender(ctx, msg, reply);
                         return;
                     } catch (e) {
