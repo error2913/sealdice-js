@@ -1,19 +1,19 @@
 // ==UserScript==
-// @name         bash运行
+// @name         shell运行
 // @author       错误
 // @version      1.1.0
-// @description  发送 .bash 查看帮助，在插件设置内设置权限，需要搭建相应后端服务。\n进入后端服务目录，运行：\npip install -r requirements.txt\npython main.py
+// @description  发送 .shell 查看帮助，在插件设置内设置权限，需要搭建相应后端服务。\n进入后端服务目录，运行：\npip install -r requirements.txt\npython main.py
 // @timestamp    1743074450
 // 2025-03-27 19:20:50
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
-// @updateUrl    https://raw.gitmirror.com/error2913/sealdice-js/main/run_bash/run_bash.js
-// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/run_bash/run_bash.js
+// @updateUrl    https://raw.gitmirror.com/error2913/sealdice-js/main/run_shell/run_shell.js
+// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/run_shell/run_shell.js
 // ==/UserScript==
 
-let ext = seal.ext.find('run_bash');
+let ext = seal.ext.find('run_shell');
 if (!ext) {
-    ext = seal.ext.new('run_bash', '错误', '1.1.0');
+    ext = seal.ext.new('run_shell', '错误', '1.1.0');
     seal.ext.register(ext);
 
     seal.ext.registerTemplateConfig(ext, "白名单", ["QQ:1234567890"], "可使用指令的QQ号");
@@ -22,13 +22,13 @@ if (!ext) {
 const url = 'http://localhost:3011';
 
 const cmd = seal.ext.newCmdItemInfo();
-cmd.name = 'bash';
+cmd.name = 'shell';
 cmd.help = `帮助:
-【.bash run <命令>】运行bash命令并返回结果，若执行时间超过10秒则会返回超时错误
-【.bash create <命令>】创建bash进程并返回PID
-【.bash check <PID> <行数起始序号(默认为-10)> <行数结束序号(可选)>】查看bash进程输出
-【.bash del <PID>】删除bash进程
-【.bash list】列出所有bash进程`;
+【.shell run <命令>】运行shell命令并返回结果，若执行时间超过10秒则会返回超时错误
+【.shell create <命令>】创建shell进程并返回PID
+【.shell check <PID> <行数起始序号(默认为-10)> <行数结束序号(可选)>】查看shell进程输出
+【.shell del <PID>】删除shell进程
+【.shell list】列出所有shell进程`;
 cmd.solve = (ctx, msg, cmdArgs) => {
     if (!seal.ext.getTemplateConfig(ext, "白名单").includes(ctx.player.userId)) {
         seal.replyToSender(ctx, msg, seal.formatTmpl(ctx, "核心:提示_无权限"));
@@ -53,7 +53,7 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             const command = segments.slice(2).join(' ').replace(/\&/g, '%26');
             console.log(`运行命令: ${command}`);
 
-            fetch(`${url}/bash?cmd=${command}`).then(response => {
+            fetch(`${url}/run?cmd=${command}`).then(response => {
                 response.text().then(text => {
                     if (!response.ok) {
                         seal.replyToSender(ctx, msg, `请求失败! 状态码: ${response.status}\n响应体: ${text}`);
@@ -216,4 +216,4 @@ cmd.solve = (ctx, msg, cmdArgs) => {
     }
 };
 
-ext.cmdMap['bash'] = cmd;   
+ext.cmdMap['shell'] = cmd;   

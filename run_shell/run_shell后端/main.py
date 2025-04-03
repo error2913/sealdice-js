@@ -1,6 +1,6 @@
 # coding: utf-8
 # author: 错误
-# description: 执行Bash命令并返回输出的前几行、错误信息和退出状态码。目前仅支持Linux环境。
+# description: 执行Shell命令并返回输出的前几行、错误信息和退出状态码。目前仅支持Linux环境。
 # version: 1.1.0
 
 import asyncio
@@ -61,10 +61,10 @@ def cut_str(s: str) -> str:
     
     return "\n".join(lines)
 
-@app.get("/bash")
-async def run_bash_command(request: Request, background_tasks: BackgroundTasks, cmd: str = Query(..., description="Bash命令字符串")):
+@app.get("/run")
+async def run_command(request: Request, background_tasks: BackgroundTasks, cmd: str = Query(..., description="Shell命令字符串")):
     """
-    执行Bash命令并返回输出的前几行、错误信息和退出状态码。
+    执行Shell命令并返回输出的前几行、错误信息和退出状态码。
     """
     # 检查命令是否为空
     if not cmd:
@@ -133,7 +133,7 @@ async def run_bash_command(request: Request, background_tasks: BackgroundTasks, 
         raise HTTPException(status_code=500, detail=f"执行命令时发生错误: {str(e)}")
 
 @app.get("/create_process")
-async def create_process(cmd: str = Query(..., description="Bash命令字符串")):
+async def create_process(cmd: str = Query(..., description="Shell命令字符串")):
     """创建新进程并返回UUID"""
     try:
         pid = await pm.create_process(cmd)
