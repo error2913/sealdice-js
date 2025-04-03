@@ -2,7 +2,7 @@
 // @name         bash运行
 // @author       错误
 // @version      1.1.0
-// @description  发送 .bash 查看帮助，需要搭建相应后端服务
+// @description  发送 .bash 查看帮助，需要搭建相应后端服务。\n进入后端服务目录，运行：\npip install -r requirements.txt\npython main.py
 // @timestamp    1743074450
 // 2025-03-27 19:20:50
 // @license      MIT
