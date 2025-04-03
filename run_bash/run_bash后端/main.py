@@ -101,13 +101,12 @@ async def run_bash_command(request: Request, background_tasks: BackgroundTasks, 
             )
             
         output_image = draw_image(cut_str(stdout.decode(errors='replace')))
-        
-        # 生成临时文件名
-        output_temp_filename = f"{uuid.uuid4()}.png"
-        output_temp_filepath = os.path.join(TEMP_DIR, output_temp_filename)
-        
-        # 保存图片到临时目录
-        output_image.save(output_temp_filepath)
+        if output_image:
+            output_temp_filename = f"{uuid.uuid4()}.png"
+            output_temp_filepath = os.path.join(TEMP_DIR, output_temp_filename)
+            output_image.save(output_temp_filepath)
+        else:
+            output_temp_filename = None
         
         error_image = draw_image(cut_str(stderr.decode(errors='replace')))
         if error_image:
@@ -123,7 +122,7 @@ async def run_bash_command(request: Request, background_tasks: BackgroundTasks, 
         base_url = str(request.base_url)
 
         return {
-            "output_url": f"{base_url}temp_images/{output_temp_filename}",
+            "output_url": f"{base_url}temp_images/{output_temp_filename}" if output_temp_filename else None,
             "error_url": f"{base_url}temp_images/{error_temp_filename}" if error_temp_filename else None,
             "retcode": process.returncode
         }
@@ -156,13 +155,12 @@ async def check_process(
         raise HTTPException(status_code=404, detail="进程不存在或已过期")
     
     output_image = draw_image(proc_info["output"])
-    
-    # 生成临时文件名
-    output_temp_filename = f"{uuid.uuid4()}.png"
-    output_temp_filepath = os.path.join(TEMP_DIR, output_temp_filename)
-    
-    # 保存图片到临时目录
-    output_image.save(output_temp_filepath)
+    if output_image:
+        output_temp_filename = f"{uuid.uuid4()}.png"
+        output_temp_filepath = os.path.join(TEMP_DIR, output_temp_filename)
+        output_image.save(output_temp_filepath)
+    else:
+        output_temp_filename = None
     
     error_image = draw_image(proc_info["error"])
     if error_image:
@@ -178,7 +176,7 @@ async def check_process(
     base_url = str(request.base_url)
     
     return {
-        "output_url": f"{base_url}temp_images/{output_temp_filename}",
+        "output_url": f"{base_url}temp_images/{output_temp_filename}" if output_temp_filename else None,
         "error_url": f"{base_url}temp_images/{error_temp_filename}" if error_temp_filename else None,
         "retcode": proc_info["retcode"],
         "lines": proc_info["lines"],

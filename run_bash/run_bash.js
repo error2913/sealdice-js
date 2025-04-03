@@ -2,7 +2,7 @@
 // @name         bash运行
 // @author       错误
 // @version      1.1.0
-// @description  发送 .bash 查看帮助，需要搭建相应后端服务。\n进入后端服务目录，运行：\npip install -r requirements.txt\npython main.py
+// @description  发送 .bash 查看帮助，在插件设置内设置权限，需要搭建相应后端服务。\n进入后端服务目录，运行：\npip install -r requirements.txt\npython main.py
 // @timestamp    1743074450
 // 2025-03-27 19:20:50
 // @license      MIT
@@ -68,7 +68,7 @@ cmd.solve = (ctx, msg, cmdArgs) => {
                         const data = JSON.parse(text);
                         const reply = `返回码:${data.retcode}` +
                             (data?.error_url ? `\n错误信息:\n[CQ:image,file=${data.error_url}]` : '') +
-                            `\n输出:\n[CQ:image,file=${data.output_url}]`;
+                            (data?.output_url ? `\n输出:\n[CQ:image,file=${data.output_url}]` : '');
                         seal.replyToSender(ctx, msg, reply);
                         return;
                     } catch (e) {
@@ -140,7 +140,7 @@ cmd.solve = (ctx, msg, cmdArgs) => {
                             `\n进程状态:${data.done ? '已完成' : '运行中'}` +
                             `\n输出行数:${data.lines}` +
                             (data?.error_url ? `\n错误信息:\n[CQ:image,file=${data.error_url}]` : '') +
-                            `\n输出:\n[CQ:image,file=${data.output_url}]`;
+                            (data?.output_url ? `\n输出:\n[CQ:image,file=${data.output_url}]` : '');
                         seal.replyToSender(ctx, msg, reply);
                         return;
                     } catch (e) {
