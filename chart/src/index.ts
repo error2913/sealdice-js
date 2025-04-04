@@ -6,7 +6,7 @@ function main() {
   // 注册扩展
   let ext = seal.ext.find('排行榜');
   if (!ext) {
-    ext = seal.ext.new('排行榜', '错误', '1.1.1');
+    ext = seal.ext.new('排行榜', '错误', '1.2.0');
     seal.ext.register(ext);
   }
 
@@ -84,7 +84,9 @@ function main() {
 
         cm.updateVars(ext, ctx);
 
-        seal.replyToSender(ctx, msg, cm.showChart(val));
+        cm.showChart(val).then(reply => {
+          seal.replyToSender(ctx, msg, reply);
+        });
         return seal.ext.newCmdExecuteResult(true);
       }
     }

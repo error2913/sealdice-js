@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         变量排行榜
 // @author       错误
-// @version      1.1.1
+// @version      1.2.0
 // @description  为你的豹语变量提供排行榜服务！请在插件设置内填写对应变量和名称，并填写数据更新的条件。插件并不能主动更新排行榜数据，需要被动触发。若图片发送不了请联系错误。
 // @timestamp    1731503833
 // 2024-11-13 21:17:13
@@ -67,11 +67,11 @@
       }
       this.saveData(ext);
     }
-    showChart(name) {
+    async showChart(name) {
       if (!this.data.hasOwnProperty(name)) {
         this.data[name] = new Chart(name, []);
       }
-      return this.data[name].showChart();
+      return await this.data[name].showChart();
     }
   };
   var Chart = class {
@@ -79,14 +79,44 @@
       this.name = name;
       this.data = data;
     }
-    showChart() {
+    async showChart() {
       if (this.data.length === 0) {
         return "暂无数据";
       }
       const url = "http://42.193.236.17:3003";
-      const title = `${this.name}排行榜`;
-      const file = `${url}/chart?title=${title}&data=${JSON.stringify(this.data)}`;
-      return `[CQ:image,file=${file.replace(/\]/g, "%5D").replace(/,/g, "%2C")}]`;
+      const response = await fetch(
+        `${url}/chart`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify({
+            title: `${this.name}排行榜`,
+            data: this.data
+          })
+        }
+      );
+      const text = await response.text();
+      if (!response.ok) {
+        return `请求失败! 状态码: ${response.status}
+响应体: ${text}`;
+      }
+      if (!text) {
+        return "响应体为空";
+      }
+      try {
+        const data = JSON.parse(text);
+        const imageUrl = data.image_url;
+        if (!imageUrl) {
+          return "响应体中缺少 image_url";
+        }
+        return `[CQ:image,file=${imageUrl}]`;
+      } catch (e) {
+        return `解析响应体时出错:${e}
+响应体:${text}`;
+      }
     }
   };
 
@@ -168,7 +198,7 @@
   function main() {
     let ext = seal.ext.find("排行榜");
     if (!ext) {
-      ext = seal.ext.new("排行榜", "错误", "1.1.1");
+      ext = seal.ext.new("排行榜", "错误", "1.2.0");
       seal.ext.register(ext);
     }
     const configManager = new ConfigManager(ext);
@@ -236,7 +266,9 @@
             return seal.ext.newCmdExecuteResult(true);
           }
           cm.updateVars(ext, ctx);
-          seal.replyToSender(ctx, msg, cm.showChart(val));
+          cm.showChart(val).then((reply) => {
+            seal.replyToSender(ctx, msg, reply);
+          });
           return seal.ext.newCmdExecuteResult(true);
         }
       }

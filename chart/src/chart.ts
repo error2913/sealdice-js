@@ -80,12 +80,12 @@ export class ChartManager {
         this.saveData(ext);
     }
 
-    showChart(name: string): string {
+    async showChart(name: string): Promise<string> {
         if (!this.data.hasOwnProperty(name)) {
             this.data[name] = new Chart(name, []);
         }
 
-        return this.data[name].showChart();
+        return await this.data[name].showChart();
     }
 }
 
@@ -106,14 +106,45 @@ export class Chart {
         this.data = data;
     }
 
-    showChart(): string {
+    async showChart(): Promise<string> {
         if (this.data.length === 0) {
             return '暂无数据';
         }
 
         const url = 'http://42.193.236.17:3003';
-        const title = `${this.name}排行榜`;
-        const file = `${url}/chart?title=${title}&data=${JSON.stringify(this.data)}`;
-        return `[CQ:image,file=${file.replace(/\]/g, '%5D').replace(/,/g, '%2C')}]`;
+
+        const response = await fetch(`${url}/chart`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    title: `${this.name}排行榜`,
+                    data: this.data
+                })
+            }
+        );
+
+        const text = await response.text();
+
+        if (!response.ok) {
+            return `请求失败! 状态码: ${response.status}\n响应体: ${text}`;
+        }
+        if (!text) {
+            return "响应体为空";
+        }
+
+        try {
+            const data = JSON.parse(text);
+            const imageUrl = data.image_url;
+            if (!imageUrl) {
+                return "响应体中缺少 image_url"; 
+            }
+            return `[CQ:image,file=${imageUrl}]`;
+        } catch (e) {
+            return `解析响应体时出错:${e}\n响应体:${text}`;
+        }
     }
 }
