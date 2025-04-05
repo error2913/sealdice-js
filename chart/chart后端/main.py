@@ -1,10 +1,9 @@
 from io import BytesIO
-import json
 import logging
 import os
 import time
 import uuid
-from fastapi import BackgroundTasks, FastAPI, Query, Request, Response
+from fastapi import BackgroundTasks, FastAPI, Request
 from PIL import Image, ImageDraw, ImageFont
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -136,18 +135,13 @@ async def chart(request: Request, background_tasks: BackgroundTasks):
             
         images.append(Image.new('RGB', (2000, 100), color = (255, 255, 255)))
         image = vistack_images(images)
-            
-        buf = BytesIO()
-        image.save(buf, format='PNG')
-        buf.seek(0)
         
-                # 生成临时文件名
+        # 生成临时文件名
         temp_filename = f"{uuid.uuid4()}.png"
         temp_filepath = os.path.join(TEMP_DIR, temp_filename)
         
         # 保存图片到临时目录
-        with open(temp_filepath, "wb") as f:
-            f.write(buf.getvalue())
+        image.save(temp_filepath)
             
         # 添加后台任务，清理过期文件
         background_tasks.add_task(cleanup_temp_files)
