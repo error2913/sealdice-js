@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         豹语变量红包
 // @author       错误
-// @version      1.1.1
+// @version      1.2.0
 // @description  在插件设置填入红包使用货币的豹语变量
 // @timestamp    1735226264
 // 2024-12-26 23:17:44
@@ -13,7 +13,7 @@
 
 let ext = seal.ext.find('redbag');
 if (!ext) {
-    ext = seal.ext.new('redbag', '错误', '1.1.1');
+    ext = seal.ext.new('redbag', '错误', '1.2.0');
     seal.ext.register(ext);
 }
 
