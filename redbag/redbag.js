@@ -22,7 +22,7 @@ seal.ext.registerStringConfig(ext, 'URL地址', 'http://localhost:3000', '修改
 const varname = seal.ext.getStringConfig(ext, '豹语变量名');
 const url = seal.ext.getStringConfig(ext, 'URL地址');
 
-const data = JSON.parse(ext.storageGet('data') || '{}');
+const redbagData = JSON.parse(ext.storageGet('data') || '{}');
 
 function getMsg(gid, uid) {
     let msg = seal.newMessage();
@@ -48,11 +48,11 @@ function getCtx(epId, msg) {
 }
 
 function sendRedbag(epId, gid, uid, un, amount, total, muid, mun) {
-    if (!data.hasOwnProperty(gid)) {
-        data[gid] = [];
+    if (!redbagData.hasOwnProperty(gid)) {
+        redbagData[gid] = [];
     }
 
-    const id = data[gid].length === 0 ? 1 : data[gid][data[gid].length - 1].id + 1;
+    const id = redbagData[gid].length === 0 ? 1 : redbagData[gid][redbagData[gid].length - 1].id + 1;
 
     let weight = []; // 用于分配红包的随机数组
     let sum = 0;
@@ -74,7 +74,7 @@ function sendRedbag(epId, gid, uid, un, amount, total, muid, mun) {
         return n + 1;
     });
 
-    data[gid].push({
+    redbagData[gid].push({
         id: id,
         epId: epId,
         uid: uid,
@@ -88,7 +88,7 @@ function sendRedbag(epId, gid, uid, un, amount, total, muid, mun) {
         history: []
     })
 
-    ext.storageSet('data', JSON.stringify(data));
+    ext.storageSet('data', JSON.stringify(redbagData));
 }
 
 const cmdSend = seal.ext.newCmdItemInfo();
@@ -132,10 +132,52 @@ cmdSend.solve = (ctx, msg, cmdArgs) => {
             return seal.ext.newCmdExecuteResult(true);
         }
 
-        sendRedbag(epId, gid, uid, un, amount, 1, muid, mun);
+        fetch(`${url}/send_exclusive_redbag`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    user_id: uid.replace(/\D+/g, ''),
+                    user_name: un,
+                    target_user_id: muid.replace(/\D+/g, ''),
+                    target_user_name: mun,
+                    amount: amount,
+                    text: text ? text : '恭喜发财，大吉大利'
+                })
+            }
+        ).then(response => {
+            response.text().then(text => {
+                if (!response.ok) {
+                    seal.replyToSender(ctx, msg, `请求失败! 状态码: ${response.status}\n响应体: ${text}`);
+                    return;
+                }
+                if (!text) {
+                    seal.replyToSender(ctx, msg, "响应体为空");
+                    return;
+                }
 
-        const file = `${url}/send_exclusive_redbag?user_id=${uid.replace(/\D+/g, '')}&user_name=${un}&target_user_id=${muid.replace(/\D+/g, '')}&target_user_name=${mun}&amount=${amount}&text=${text ? text : '恭喜发财，大吉大利'}`;
-        seal.replyToSender(ctx, msg, `[CQ:image,file=${file.replace(/\]/g, '%5D').replace(/,/g, '%2C')}]`);
+                try {
+                    const data = JSON.parse(text);
+                    const imageUrl = data.image_url;
+                    if (!imageUrl) {
+                        seal.replyToSender(ctx, msg, "响应体中缺少 image_url");
+                        return;
+                    }
+
+                    seal.replyToSender(ctx, msg, `[CQ:image,file=${imageUrl}]`);
+
+                    sendRedbag(epId, gid, uid, un, amount, 1, muid, mun);
+                    seal.vars.intSet(ctx, varname, val - amount);
+                    return;
+                } catch (e) {
+                    seal.replyToSender(ctx, msg, `解析响应体时出错:${e}\n响应体:${text}`);
+                    return;
+                }
+            })
+        });
     } else {
         const total = parseInt(cmdArgs.getArgN(2));
         if (isNaN(total) || total < 1) {
@@ -158,13 +200,53 @@ cmdSend.solve = (ctx, msg, cmdArgs) => {
             seal.replyToSender(ctx, msg, '你不能发送货币数小于红包数的红包');
             return seal.ext.newCmdExecuteResult(true);
         }
-        sendRedbag(epId, gid, uid, un, amount, total, '', '');
 
-        const file = `${url}/send_redbag?user_id=${uid.replace(/\D+/g, '')}&user_name=${un}&amount=${amount}&total=${total}&text=${text ? text : '恭喜发财，大吉大利'}`;
-        seal.replyToSender(ctx, msg, `[CQ:image,file=${file.replace(/\]/g, '%5D').replace(/,/g, '%2C')}]`);
+        fetch(`${url}/send_redbag`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    user_id: uid.replace(/\D+/g, ''),
+                    user_name: un,
+                    amount: amount,
+                    total: total,
+                    text: text ? text : '恭喜发财，大吉大利'
+                })
+            }
+        ).then(response => {
+            response.text().then(text => {
+                if (!response.ok) {
+                    seal.replyToSender(ctx, msg, `请求失败! 状态码: ${response.status}\n响应体: ${text}`);
+                    return;
+                }
+                if (!text) {
+                    seal.replyToSender(ctx, msg, "响应体为空");
+                    return;
+                }
+
+                try {
+                    const data = JSON.parse(text);
+                    const imageUrl = data.image_url;
+                    if (!imageUrl) {
+                        seal.replyToSender(ctx, msg, "响应体中缺少 image_url");
+                        return;
+                    }
+
+                    seal.replyToSender(ctx, msg, `[CQ:image,file=${imageUrl}]`);
+
+                    sendRedbag(epId, gid, uid, un, amount, total, '', '');
+                    seal.vars.intSet(ctx, varname, val - amount);
+                    return;
+                } catch (e) {
+                    seal.replyToSender(ctx, msg, `解析响应体时出错:${e}\n响应体:${text}`);
+                    return;
+                }
+            })
+        });
     }
-
-    seal.vars.intSet(ctx, varname, val - amount);
     return seal.ext.newCmdExecuteResult(true);
 };
 ext.cmdMap['发红包'] = cmdSend;
@@ -186,7 +268,7 @@ cmdGrab.solve = (ctx, msg, cmdArgs) => {
         }
         default: {
             const gid = ctx.group.groupId;
-            if (!data.hasOwnProperty(gid) || data[gid].length === 0) {
+            if (!redbagData.hasOwnProperty(gid) || redbagData[gid].length === 0) {
                 seal.replyToSender(ctx, msg, '当前群无红包');
                 return seal.ext.newCmdExecuteResult(true);
             }
@@ -197,22 +279,22 @@ cmdGrab.solve = (ctx, msg, cmdArgs) => {
             const id = parseInt(arg);
             let index = -1;
             if (!isNaN(id)) {
-                index = data[gid].findIndex(item => item.id === id);
+                index = redbagData[gid].findIndex(item => item.id === id);
                 if (index === -1) {
                     seal.replyToSender(ctx, msg, '该序号红包不存在');
                     return seal.ext.newCmdExecuteResult(true);
                 }
 
-                const muid = data[gid][index].muid;
-                const history = data[gid][index].history;
+                const muid = redbagData[gid][index].muid;
+                const history = redbagData[gid][index].history;
                 if ((muid !== '' && muid !== uid) || history.some(item => item.uid === uid)) {
                     seal.replyToSender(ctx, msg, '无法领取该红包');
                     return seal.ext.newCmdExecuteResult(true);
                 }
             } else {
-                for (let i = data[gid].length - 1; i > -1; i--) {
-                    const muid = data[gid][i].muid;
-                    const history = data[gid][i].history;
+                for (let i = redbagData[gid].length - 1; i > -1; i--) {
+                    const muid = redbagData[gid][i].muid;
+                    const history = redbagData[gid][i].history;
                     if ((muid !== '' && muid !== uid) || history.some(item => item.uid === uid)) {
                         if (i === 0) {
                             seal.replyToSender(ctx, msg, '没有可以领的红包');
@@ -226,10 +308,10 @@ cmdGrab.solve = (ctx, msg, cmdArgs) => {
                 }
             }
 
-            const amount = data[gid][index].amount;
-            const total = data[gid][index].total;
-            const history = data[gid][index].history;
-            const increase = data[gid][index].weight[history.length];
+            const amount = redbagData[gid][index].amount;
+            const total = redbagData[gid][index].total;
+            const history = redbagData[gid][index].history;
+            const increase = redbagData[gid][index].weight[history.length];
             const [val, _] = seal.vars.intGet(ctx, varname);
 
             seal.vars.intSet(ctx, varname, val + increase);
@@ -244,14 +326,56 @@ cmdGrab.solve = (ctx, msg, cmdArgs) => {
                 remaining -= history[i].amount;
             }
 
-            const file = `${url}/open_redbag?user_id=${uid.replace(/\D+/g, '')}&user_name=${un}&sender_user_name=${data[gid][index].un}&amount=${increase}&total=${total}&remaining=${remaining}&history=${JSON.stringify(history)}`;
-            seal.replyToSender(ctx, msg, `[CQ:image,file=${file.replace(/\]/g, '%5D').replace(/,/g, '%2C')}]`);
+            fetch(`${url}/open_redbag`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        user_id: uid.replace(/\D+/g, ''),
+                        user_name: un,
+                        sender_user_name: redbagData[gid][index].un,
+                        amount: increase,
+                        total: total,
+                        remaining: remaining,
+                        history: history
+                    })
+                }
+            ).then(response => {
+                response.text().then(text => {
+                    if (!response.ok) {
+                        seal.replyToSender(ctx, msg, `请求失败! 状态码: ${response.status}\n响应体: ${text}`);
+                        return;
+                    }
+                    if (!text) {
+                        seal.replyToSender(ctx, msg, "响应体为空");
+                        return;
+                    }
 
-            if (history.length === total) {
-                data[gid].splice(index, 1);
-            }
+                    try {
+                        const data = JSON.parse(text);
+                        const imageUrl = data.image_url;
+                        if (!imageUrl) {
+                            seal.replyToSender(ctx, msg, "响应体中缺少 image_url");
+                            return;
+                        }
 
-            ext.storageSet('data', JSON.stringify(data));
+                        seal.replyToSender(ctx, msg, `[CQ:image,file=${imageUrl}]`);
+
+                        if (history.length === total) {
+                            redbagData[gid].splice(index, 1);
+                        }
+
+                        ext.storageSet('data', JSON.stringify(redbagData));
+                        return;
+                    } catch (e) {
+                        seal.replyToSender(ctx, msg, `解析响应体时出错:${e}\n响应体:${text}`);
+                        return;
+                    }
+                })
+            });
             return seal.ext.newCmdExecuteResult(true);
         }
     }
@@ -265,25 +389,25 @@ cmdShow.help = '这有什么好写帮助的';
 cmdShow.disabledInPrivate = true;
 cmdShow.solve = (ctx, msg, cmdArgs) => {
     const gid = ctx.group.groupId;
-    if (!data.hasOwnProperty(gid) || data[gid].length === 0) {
+    if (!redbagData.hasOwnProperty(gid) || redbagData[gid].length === 0) {
         seal.replyToSender(ctx, msg, '当前群无红包');
         return seal.ext.newCmdExecuteResult(true);
     }
 
     const id = parseInt(cmdArgs.getArgN(1));
     if (!isNaN(id)) {
-        const index = data[gid].findIndex(item => item.id === id);
+        const index = redbagData[gid].findIndex(item => item.id === id);
         if (index === -1) {
             seal.replyToSender(ctx, msg, '该序号红包不存在');
             return seal.ext.newCmdExecuteResult(true);
         }
 
-        const un = data[gid][index].un;
-        const amount = data[gid][index].amount;
-        const total = data[gid][index].total;
-        const muid = data[gid][index].muid;
-        const mun = data[gid][index].mun;
-        const history = data[gid][index].history;
+        const un = redbagData[gid][index].un;
+        const amount = redbagData[gid][index].amount;
+        const total = redbagData[gid][index].total;
+        const muid = redbagData[gid][index].muid;
+        const mun = redbagData[gid][index].mun;
+        const history = redbagData[gid][index].history;
 
         let s = '';
         if (muid === '') {
@@ -300,17 +424,56 @@ cmdShow.solve = (ctx, msg, cmdArgs) => {
                 remaining -= history[i].amount;
             }
 
-            const file = `${url}/history?total=${total}&remaining=${remaining}&history=${JSON.stringify(history)}`;
-            s += `[CQ:image,file=${file.replace(/\]/g, '%5D').replace(/,/g, '%2C')}]`;
+            fetch(`${url}/history`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        total: total,
+                        remaining: remaining,
+                        history: history
+                    })
+                }
+            ).then(response => {
+                response.text().then(text => {
+                    if (!response.ok) {
+                        seal.replyToSender(ctx, msg, `请求失败! 状态码: ${response.status}\n响应体: ${text}`);
+                        return;
+                    }
+                    if (!text) {
+                        seal.replyToSender(ctx, msg, "响应体为空");
+                        return;
+                    }
+
+                    try {
+                        const data = JSON.parse(text);
+                        const imageUrl = data.image_url;
+                        if (!imageUrl) {
+                            seal.replyToSender(ctx, msg, "响应体中缺少 image_url");
+                            return;
+                        }
+
+                        s += `[CQ:image,file=${imageUrl}]`;
+
+                        seal.replyToSender(ctx, msg, s);
+                        return;
+                    } catch (e) {
+                        seal.replyToSender(ctx, msg, `解析响应体时出错:${e}\n响应体:${text}`);
+                        return;
+                    }
+                })
+            });
         } else {
             s += `\n数量:${total}`;
+            seal.replyToSender(ctx, msg, s);
         }
-
-        seal.replyToSender(ctx, msg, s);
         return seal.ext.newCmdExecuteResult(true);
     }
 
-    const s = data[gid].map(item => {
+    const s = redbagData[gid].map(item => {
         if (item.muid === '') {
             return `${item.id}.来自<${item.un}>的红包`;
         } else {
@@ -334,49 +497,86 @@ seal.ext.registerTask(ext, "cron", "0 */2 * * *", async () => {
     console.log('清除过期红包任务开始');
 
     const timestamp = Math.floor(Date.now() / 1000);
-    for (const gid of Object.keys(data)) {
-        for (let i = 0; i < data[gid].length && i >= 0; i++) {
-            if (timestamp - data[gid][i].timestamp > 24 * 60 * 60) {
-                const epId = data[gid][i].epId;
-                const uid = data[gid][i].uid;
+    for (const gid of Object.keys(redbagData)) {
+        for (let i = 0; i < redbagData[gid].length && i >= 0; i++) {
+            if (timestamp - redbagData[gid][i].timestamp > 24 * 60 * 60) {
+                const epId = redbagData[gid][i].epId;
+                const uid = redbagData[gid][i].uid;
                 const msg = getMsg(gid, uid);
                 const ctx = getCtx(epId, msg);
 
-                const amount = data[gid][i].amount;
-                const total = data[gid][i].total;
-                const history = data[gid][i].history;
+                const amount = redbagData[gid][i].amount;
+                const total = redbagData[gid][i].total;
+                const history = redbagData[gid][i].history;
                 const [val, _] = seal.vars.intGet(ctx, varname);
 
-                let s = `<${data[gid][i].un}>的红包已退回`;
+                let s = `<${redbagData[gid][i].un}>的红包已退回`;
 
                 if (history.length > 0) {
                     let remaining = amount;
                     for (let i = 0; i < history.length; i++) {
                         remaining -= history[i].amount;
                     }
-                    
-                    seal.vars.intSet(ctx, varname, val + remaining);
 
-                    const file = `${url}/history?total=${total}&remaining=${remaining}&history=${JSON.stringify(history)}`;
-                    s += `[CQ:image,file=${file.replace(/\]/g, '%5D').replace(/,/g, '%2C')}]`;
+                    const response = await fetch(`${url}/history`,
+                        {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                total: total,
+                                remaining: remaining,
+                                history: history
+                            })
+                        }
+                    );
+
+                    const text = await response.text();
+
+                    if (!response.ok) {
+                        console.error(`请求失败! 状态码: ${response.status}\n响应体: ${text}`);
+                        return;
+                    }
+                    if (!text) {
+                        console.error("响应体为空");
+                        return;
+                    }
+
+                    try {
+                        const data = JSON.parse(text);
+                        const imageUrl = data.image_url;
+                        if (!imageUrl) {
+                            console.error("响应体中缺少 image_url");
+                            return;
+                        }
+
+                        s += `[CQ:image,file=${imageUrl}]`;
+
+                        seal.vars.intSet(ctx, varname, val + remaining);
+                    } catch (e) {
+                        console.error(`解析响应体时出错:${e}\n响应体:${text}`);
+                        return;
+                    }
                 } else {
                     seal.vars.intSet(ctx, varname, val + amount);
                     s += `\n总金额:${amount}`;
                 }
 
                 seal.replyToSender(ctx, msg, s);
-                data[gid].splice(i, 1);
+                redbagData[gid].splice(i, 1);
                 i--;
 
                 await new Promise(resolve => setTimeout(resolve, 1000));
             }
         }
-                        
-        if (data[gid].length === 0) {
-            delete data[gid];
+
+        if (redbagData[gid].length === 0) {
+            delete redbagData[gid];
         }
     }
-    ext.storageSet('data', JSON.stringify(data));
+    ext.storageSet('data', JSON.stringify(redbagData));
 
     isTaskRunning = false;
     console.log('清除过期红包任务结束');
@@ -389,7 +589,7 @@ ext.onNotCommandReceived = (ctx, msg) => {
 
     if (msg.message === '开') {
         const gid = ctx.group.groupId;
-        if (!data.hasOwnProperty(gid) || data[gid].length === 0) {
+        if (!redbagData.hasOwnProperty(gid) || redbagData[gid].length === 0) {
             seal.replyToSender(ctx, msg, '当前群无红包');
             return seal.ext.newCmdExecuteResult(true);
         }
@@ -398,9 +598,9 @@ ext.onNotCommandReceived = (ctx, msg) => {
         const un = ctx.player.name;
 
         let index = -1;
-        for (let i = data[gid].length - 1; i > -1; i--) {
-            const muid = data[gid][i].muid;
-            const history = data[gid][i].history;
+        for (let i = redbagData[gid].length - 1; i > -1; i--) {
+            const muid = redbagData[gid][i].muid;
+            const history = redbagData[gid][i].history;
             if ((muid !== '' && muid !== uid) || history.some(item => item.uid === uid)) {
                 if (i === 0) {
                     seal.replyToSender(ctx, msg, '没有可以领的红包');
@@ -413,10 +613,10 @@ ext.onNotCommandReceived = (ctx, msg) => {
             break;
         }
 
-        const amount = data[gid][index].amount;
-        const total = data[gid][index].total;
-        const history = data[gid][index].history;
-        const increase = data[gid][index].weight[history.length];
+        const amount = redbagData[gid][index].amount;
+        const total = redbagData[gid][index].total;
+        const history = redbagData[gid][index].history;
+        const increase = redbagData[gid][index].weight[history.length];
         const [val, _] = seal.vars.intGet(ctx, varname);
 
         seal.vars.intSet(ctx, varname, val + increase);
@@ -431,13 +631,55 @@ ext.onNotCommandReceived = (ctx, msg) => {
             remaining -= history[i].amount;
         }
 
-        const file = `${url}/open_redbag?user_id=${uid.replace(/\D+/g, '')}&user_name=${un}&sender_user_name=${data[gid][index].un}&amount=${increase}&total=${total}&remaining=${remaining}&history=${JSON.stringify(history)}`;
-        seal.replyToSender(ctx, msg, `[CQ:image,file=${file.replace(/\]/g, '%5D').replace(/,/g, '%2C')}]`);
+        fetch(`${url}/open_redbag`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    user_id: uid.replace(/\D+/g, ''),
+                    user_name: un,
+                    sender_user_name: redbagData[gid][index].un,
+                    amount: increase,
+                    total: total,
+                    remaining: remaining,
+                    history: history
+                })
+            }
+        ).then(response => {
+            response.text().then(text => {
+                if (!response.ok) {
+                    seal.replyToSender(ctx, msg, `请求失败! 状态码: ${response.status}\n响应体: ${text}`);
+                    return;
+                }
+                if (!text) {
+                    seal.replyToSender(ctx, msg, "响应体为空");
+                    return;
+                }
 
-        if (history.length === total) {
-            data[gid].splice(index, 1);
-        }
+                try {
+                    const data = JSON.parse(text);
+                    const imageUrl = data.image_url;
+                    if (!imageUrl) {
+                        seal.replyToSender(ctx, msg, "响应体中缺少 image_url");
+                        return;
+                    }
 
-        ext.storageSet('data', JSON.stringify(data));
+                    seal.replyToSender(ctx, msg, `[CQ:image,file=${imageUrl}]`);
+
+                    if (history.length === total) {
+                        redbagData[gid].splice(index, 1);
+                    }
+
+                    ext.storageSet('data', JSON.stringify(redbagData));
+                    return;
+                } catch (e) {
+                    seal.replyToSender(ctx, msg, `解析响应体时出错:${e}\n响应体:${text}`);
+                    return;
+                }
+            })
+        });
     }
 }
