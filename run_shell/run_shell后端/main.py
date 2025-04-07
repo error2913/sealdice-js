@@ -17,6 +17,8 @@ from fastapi.staticfiles import StaticFiles
 from process_manager import ProcessManager
 from image_utils import draw_image
 
+TOKEN = "123456"  # 替换为你的实际token
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 app = FastAPI()
@@ -62,10 +64,13 @@ def cut_str(s: str) -> str:
     return "\n".join(lines)
 
 @app.get("/run")
-async def run_command(request: Request, background_tasks: BackgroundTasks, cmd: str = Query(..., description="Shell命令字符串")):
+async def run_command(request: Request, background_tasks: BackgroundTasks, token: str = Query(), cmd: str = Query(..., description="Shell命令字符串")):
     """
     执行Shell命令并返回输出的前几行、错误信息和退出状态码。
     """
+    if token != TOKEN:
+        raise HTTPException(status_code=401, detail="无效的token")
+    
     # 检查命令是否为空
     if not cmd:
         raise HTTPException(status_code=400, detail="命令不能为空")
@@ -133,8 +138,11 @@ async def run_command(request: Request, background_tasks: BackgroundTasks, cmd: 
         raise HTTPException(status_code=500, detail=f"执行命令时发生错误: {str(e)}")
 
 @app.get("/create_process")
-async def create_process(cmd: str = Query(..., description="Shell命令字符串")):
+async def create_process(token: str = Query(), cmd: str = Query(..., description="Shell命令字符串")):
     """创建新进程并返回UUID"""
+    if token != TOKEN:
+        raise HTTPException(status_code=401, detail="无效的token")
+    
     try:
         pid = await pm.create_process(cmd)
         return {"pid": pid}
@@ -145,11 +153,15 @@ async def create_process(cmd: str = Query(..., description="Shell命令字符串
 @app.get("/check_process")
 async def check_process(
     request: Request, background_tasks: BackgroundTasks,
+    token: str = Query(), 
     pid: str = Query(..., description="进程UUID"),
     start_index: int = Query(None, description="起始行索引"),
     end_index: int = Query(None, description="结束行索引")
 ):
     """查看进程输出"""
+    if token != TOKEN:
+        raise HTTPException(status_code=401, detail="无效的token")
+    
     proc_info = await pm.get_process(pid, start_index, end_index)
     if not proc_info:
         raise HTTPException(status_code=404, detail="进程不存在或已过期")
@@ -184,20 +196,27 @@ async def check_process(
     }
 
 @app.get("/del_process")
-async def del_process(pid: str = Query(..., description="进程UUID")):
+async def del_process(token: str = Query(), pid: str = Query(..., description="进程UUID")):
     """删除指定进程"""
+    if token != TOKEN:
+        raise HTTPException(status_code=401, detail="无效的token")
+    
     success = await pm.delete_process(pid)
     if not success:
         raise HTTPException(status_code=404, detail="进程不存在")
     return {"status": "已删除"}
 
 @app.get("/list_process")
-async def list_process():
+async def list_process(token: str = Query()):
     """列出所有进程"""
+    if token != TOKEN:
+        raise HTTPException(status_code=401, detail="无效的token")
+    
     async with pm.lock:
         return {pid: {"cmd": proc["cmd"], "done": proc["done"]} for pid, proc in pm.processes.items()}
 
 if __name__ == "__main__":
     import uvicorn
     logger.info("启动服务，监听端口：3011")
+    logger.info(f"token: {TOKEN}")
     uvicorn.run(app, host="127.0.0.1", port=3011)

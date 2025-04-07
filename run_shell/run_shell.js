@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         shell运行
 // @author       错误
-// @version      1.1.0
+// @version      1.1.1
 // @description  发送 .shell 查看帮助，在插件设置内设置权限，需要搭建相应后端服务。\n进入后端服务目录，运行：\npip install -r requirements.txt\npython main.py
 // @timestamp    1743074450
 // 2025-03-27 19:20:50
@@ -13,10 +13,11 @@
 
 let ext = seal.ext.find('run_shell');
 if (!ext) {
-    ext = seal.ext.new('run_shell', '错误', '1.1.0');
+    ext = seal.ext.new('run_shell', '错误', '1.1.1');
     seal.ext.register(ext);
 
     seal.ext.registerTemplateConfig(ext, "白名单", ["QQ:1234567890"], "可使用指令的QQ号");
+    seal.ext.registerStringConfig(ext, "token", "123456", "访问令牌，请在后端服务main.py文件中设置");
 }
 
 const url = 'http://localhost:3011';
@@ -35,6 +36,8 @@ cmd.solve = (ctx, msg, cmdArgs) => {
         return seal.ext.newCmdExecuteResult(true);
     }
 
+    const token = seal.ext.getStringConfig(ext, "token");
+
     const message = msg.message;
     const segments = message.split(/[\s\n]+/);
     const val = cmdArgs.getArgN(1);
@@ -50,10 +53,10 @@ cmd.solve = (ctx, msg, cmdArgs) => {
                 segments.splice(2, 0, val2);
             }
 
-            const command = segments.slice(2).join(' ').replace(/\&/g, '%26');
+            const command = segments.slice(2).join(' ');
             console.log(`运行命令: ${command}`);
 
-            fetch(`${url}/run?cmd=${command}`).then(response => {
+            fetch(`${url}/run?token=${encodeURIComponent(token)}&cmd=${encodeURIComponent(command)}`).then(response => {
                 response.text().then(text => {
                     if (!response.ok) {
                         seal.replyToSender(ctx, msg, `请求失败! 状态码: ${response.status}\n响应体: ${text}`);
@@ -91,10 +94,10 @@ cmd.solve = (ctx, msg, cmdArgs) => {
                 segments.splice(2, 0, val2);
             }
 
-            const command = segments.slice(2).join(' ').replace(/\&/g, '%26');
+            const command = segments.slice(2).join(' ');
             console.log(`运行命令: ${command}`);
 
-            fetch(`${url}/create_process?cmd=${command}`).then(response => {
+            fetch(`${url}/create_process?token=${encodeURIComponent(token)}&cmd=${encodeURIComponent(command)}`).then(response => {
                 response.text().then(text => {
                     if (!response.ok) {
                         seal.replyToSender(ctx, msg, `请求失败! 状态码: ${response.status}\n响应体: ${text}`);
@@ -123,7 +126,7 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             const val2 = cmdArgs.getArgN(2);
             const val3 = cmdArgs.getArgN(3);
             const val4 = cmdArgs.getArgN(4);
-            fetch(`${url}/check_process?pid=${val2}${val3 ? `&start_index=${val3}` : `&start_index=-100`}${val4 ? `&end_index=${val4}` : ``}`).then(response => {
+            fetch(`${url}/check_process?token=${encodeURIComponent(token)}&pid=${val2}${val3 ? `&start_index=${val3}` : `&start_index=-100`}${val4 ? `&end_index=${val4}` : ``}`).then(response => {
                 response.text().then(text => {
                     if (!response.ok) {
                         seal.replyToSender(ctx, msg, `请求失败! 状态码: ${response.status}\n响应体: ${text}`);
@@ -154,7 +157,7 @@ cmd.solve = (ctx, msg, cmdArgs) => {
         }
         case 'del': {
             const val2 = cmdArgs.getArgN(2);
-            fetch(`${url}/del_process?pid=${val2}`).then(response => {
+            fetch(`${url}/del_process?token=${encodeURIComponent(token)}&pid=${val2}`).then(response => {
                 response.text().then(text => {
                     if (!response.ok) {
                         seal.replyToSender(ctx, msg, `请求失败! 状态码: ${response.status}\n响应体: ${text}`);
@@ -179,8 +182,7 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             return seal.ext.newCmdExecuteResult(true);
         }
         case 'list': {
-            const val2 = cmdArgs.getArgN(2);
-            fetch(`${url}/list_process?pid=${val2}`).then(response => {
+            fetch(`${url}/list_process?token=${encodeURIComponent(token)}`).then(response => {
                 response.text().then(text => {
                     if (!response.ok) {
                         seal.replyToSender(ctx, msg, `请求失败! 状态码: ${response.status}\n响应体: ${text}`);
