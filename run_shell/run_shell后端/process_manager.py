@@ -48,9 +48,14 @@ class ProcessManager:
                 cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                preexec_fn=os.setsid
+                preexec_fn=os.setsid  # 创建新进程组
             )
             
+            # 保存子进程PID到字典
+            async with self.lock:
+                if process_id in self.processes:
+                    self.processes[process_id]["pid"] = process.pid
+
             # 创建输出读取任务
             stdout_task = asyncio.create_task(self._read_stream(process_id, 'stdout', process.stdout))
             stderr_task = asyncio.create_task(self._read_stream(process_id, 'stderr', process.stderr))
@@ -66,8 +71,9 @@ class ProcessManager:
         except Exception as e:
             logger.error(f"进程执行失败: {str(e)}")
             async with self.lock:
-                self.processes[process_id]["stderr"].append(f"Process execution failed: {str(e)}")
-                self.processes[process_id]["done"] = True
+                if process_id in self.processes:
+                    self.processes[process_id]["stderr"].append(f"Process execution failed: {str(e)}")
+                    self.processes[process_id]["done"] = True
 
     async def _read_stream(self, process_id: str, stream_type: str, stream):
         async for line in stream:
@@ -107,14 +113,20 @@ class ProcessManager:
         if proc and not proc["done"]:
             try:
                 task = proc["task"]
-                task.cancel()
-                # 如果进程仍在运行则终止进程组
-                if proc["task"].done():
-                    return
-                try:
-                    pgid = os.getpgid(proc["task"].get_loop())
-                    os.killpg(pgid, signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
+                task.cancel()  # 取消监控协程
+                
+                # 终止进程组
+                if "pid" in proc:
+                    try:
+                        # 使用保存的PID获取进程组ID
+                        pgid = os.getpgid(proc["pid"])
+                        os.killpg(pgid, signal.SIGKILL)  # 杀死整个进程组
+                    except ProcessLookupError:
+                        pass  # 进程已终止
+                    except Exception as e:
+                        logger.error(f"终止进程组失败: {str(e)}")
+                else:
+                    logger.warning(f"进程 {process_id} 没有记录PID")
+                    
             except Exception as e:
                 logger.error(f"终止进程失败: {str(e)}")

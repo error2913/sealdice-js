@@ -1,7 +1,7 @@
 # coding: utf-8
 # author: 错误
 # description: 执行Shell命令并返回输出的前几行、错误信息和退出状态码。目前仅支持Linux环境。
-# version: 1.1.0
+# version: 1.1.1
 
 import asyncio
 from collections import deque
