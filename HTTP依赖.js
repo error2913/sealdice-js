@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         HTTP依赖
 // @author       错误
-// @version      1.1.0
+// @version      1.1.1
 // @description  为插件提供HTTP依赖管理。\nHTTP端口请按照自己的登录方案自行配置，配置完成后在插件设置填入。插件初始化时会自动获取HTTP地址对应的账号并保存。\n提供指令 .http 可以直接调用\n在其他插件中使用方法: globalThis.http.callApi(epId, method, data=null)\nepId为骰子账号QQ:12345，method为方法，如get_login_info，data为参数。\n方法可参见https://github.com/botuniverse/onebot-11/blob/master/api/public.md#%E5%85%AC%E5%BC%80-api
 // @timestamp    1733626761
 // 2024-12-08 10:59:21
@@ -13,7 +13,7 @@
 
 let ext = seal.ext.find('HTTP依赖');
 if (!ext) {
-    ext = seal.ext.new('HTTP依赖', '错误', '1.1.0');
+    ext = seal.ext.new('HTTP依赖', '错误', '1.1.1');
     seal.ext.register(ext);
 }
 
@@ -23,21 +23,54 @@ seal.ext.registerOptionConfig(ext, "日志打印方式", "简短", ["永不", "�
 const urlMap = {};
 const logLevel = seal.ext.getOptionConfig(ext, "日志打印方式");
 
-function log(...data) {
-    if (logLevel === "永不") {
-        return;
+class Logger {
+    constructor(name) {
+        this.name = name;
     }
 
-    if (logLevel === "简短") {
-        const s = data.map(item => `${item}`).join(" ");
-        if (s.length > 1000) {
-            console.log(s.substring(0, 500), "\n...\n", s.substring(s.length - 500));
-            return;
+    handleLog(...data) {
+        if (logLevel === "永不") {
+            return '';
+        } else if (logLevel === "简短") {
+            const s = data.map(item => `${item}`).join(" ");
+            if (s.length > 1000) {
+                return s.substring(0, 500) + "\n...\n" + s.substring(s.length - 500);
+            } else {
+                return s;
+            }
+        } else if (logLevel === "详细") {
+            return data.map(item => `${item}`).join(" ");
+        } else {
+            return '';
         }
     }
 
-    console.log(...data);
+    info(...data) {
+        const s = this.handleLog(...data);
+        if (!s) {
+            return;
+        }
+        console.log(`【${this.name}】: ${s}`);
+    }
+
+    warning(...data) {
+        const s = this.handleLog(...data);
+        if (!s) {
+            return;
+        }
+        console.warn(`【${this.name}】: ${s}`);
+    }
+
+    error(...data) {
+        const s = this.handleLog(...data);
+        if (!s) {
+            return;
+        }
+        console.error(`【${this.name}】: ${s}`);
+    }
 }
+
+const logger = new Logger('http');
 
 async function fetchData(url, data = null) {
     try {
@@ -60,13 +93,13 @@ async function fetchData(url, data = null) {
 
         try {
             const data = JSON.parse(text).data;
-            log(`获取数据成功: ${JSON.stringify(data, null, 2)}`);
+            logger.info(`获取数据成功: ${JSON.stringify(data, null, 2)}`);
             return data;
         } catch (e) {
             throw new Error(`解析响应体时出错:${e}\n响应体:${text}`);
         }
     } catch (error) {
-        console.error(`获取数据失败: ${error.message}`);
+        logger.error(`获取数据失败: ${error.message}`);
         return null;
     }
 }
@@ -79,7 +112,7 @@ async function init() {
         const url = `${port}/get_login_info`;
         const data = await fetchData(url);
         if (data === null) {
-            console.error(`获取登录信息失败: ${port}`);
+            logger.error(`获取登录信息失败: ${port}`);
             continue;
         }
         const epId = `QQ:${data.user_id}`;
@@ -87,12 +120,12 @@ async function init() {
         for (let i = 0; i < eps.length; i++) {
             if (eps[i].userId === epId) {
                 urlMap[epId] = port;
-                log(`找到${epId}端口: ${port}`);
+                logger.info(`找到${epId}端口: ${port}`);
                 break;
             }
         }
     }
-    log('初始化完成，urlMap: ', JSON.stringify(urlMap, null, 2));
+    logger.info('初始化完成，urlMap: ', JSON.stringify(urlMap, null, 2));
 }
 init();
 
@@ -115,12 +148,12 @@ class Http {
      */
     async callApi(epId, method, data = null) {
         if (!urlMap.hasOwnProperty(epId)) {
-            console.error(`未找到端口: ${epId}`);
+            logger.error(`未找到端口: ${epId}，请检查配置`);
             return null;
         }
 
         const url = `${urlMap[epId]}/${method}`;
-        log('请求地址: ', url);
+        logger.info('请求地址: ', url, '\n请求参数: ', JSON.stringify(data));
         const result = await fetchData(url, data);
         return result;
     }
