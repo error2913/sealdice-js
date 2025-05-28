@@ -27,7 +27,7 @@ cmd.name = 'shell';
 cmd.help = `帮助:
 【.shell run <命令>】运行shell命令并返回结果，若执行时间超过10秒则会返回超时错误
 【.shell create <命令>】创建shell进程并返回PID
-【.shell check <PID> <行数起始序号(默认为-10)> <行数结束序号(可选)>】查看shell进程输出
+【.shell check <PID> <行数起始序号(默认为-100)> <行数结束序号(可选)>】查看shell进程输出
 【.shell del <PID>】删除shell进程
 【.shell list】列出所有shell进程`;
 cmd.solve = (ctx, msg, cmdArgs) => {
