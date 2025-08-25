@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         HTTP依赖
 // @author       错误
-// @version      1.1.2
+// @version      1.2.0
 // @description  为插件提供HTTP依赖管理。\nHTTP端口请按照自己的登录方案自行配置，配置完成后在插件设置填入。插件初始化时会自动获取HTTP地址对应的账号并保存。\n提供指令 .http 可以直接调用\n在其他插件中使用方法: globalThis.http.callApi(epId, method, data=null)\nepId为骰子账号QQ:12345，method为方法，如get_login_info，data为参数。\n方法可参见https://github.com/botuniverse/onebot-11/blob/master/api/public.md#%E5%85%AC%E5%BC%80-api
 // @timestamp    1755278205
 // 2025-08-16 01:16:58
@@ -13,7 +13,7 @@
 
 let ext = seal.ext.find('HTTP依赖');
 if (!ext) {
-    ext = seal.ext.new('HTTP依赖', '错误', '1.1.1');
+    ext = seal.ext.new('HTTP依赖', '错误', '1.2.0');
     seal.ext.register(ext);
 }
 
@@ -21,8 +21,8 @@ seal.ext.registerTemplateConfig(ext, 'HTTP端口地址', ['http://127.0.0.1:8084
 seal.ext.registerTemplateConfig(ext, 'HTTP Access Token', [''], '在这里填入你的Access Token，与上面的端口地址一一对应，如果没有则留空');
 seal.ext.registerOptionConfig(ext, "日志打印方式", "简短", ["永不", "简短", "详细"], '修改后保存并重载js');
 
-
-const urlMap = {};
+let urlMap = {};
+let initDone = false;
 const logLevel = seal.ext.getOptionConfig(ext, "日志打印方式");
 
 class Logger {
@@ -119,6 +119,8 @@ async function fetchData(url, token = '', data = null) {
 
 
 async function init() {
+    urlMap = {};
+
     const ports = seal.ext.getTemplateConfig(ext, 'HTTP端口地址');
     const tokens = seal.ext.getTemplateConfig(ext, 'HTTP Access Token');
 
@@ -126,8 +128,8 @@ async function init() {
         const port = ports[i];
         const token = tokens[i] || '';
         const url = `${port}/get_login_info`;
-        
-        const data = await fetchData(url, token); 
+
+        const data = await fetchData(url, token);
         if (data === null) {
             logger.error(`获取登录信息失败: ${port}`);
             continue;
@@ -142,10 +144,10 @@ async function init() {
             }
         }
     }
-    logger.info('初始化完成，urlMap: ', JSON.stringify(urlMap, null, 2));
-}
 
-init();
+    logger.info('初始化完成，urlMap: ', JSON.stringify(urlMap, null, 2));
+    initDone = true;
+}
 
 class Http {
     constructor(urlMap) {
@@ -165,16 +167,20 @@ class Http {
      * @returns 
      */
     async callApi(epId, method, data = null) {
+        if (!initDone) {
+            await init();
+        }
+
         if (!urlMap.hasOwnProperty(epId)) {
             logger.error(`未找到端口: ${epId}，请检查配置`);
             return null;
         }
 
-        const { url: baseUrl, token } = urlMap[epId]; 
+        const { url: baseUrl, token } = urlMap[epId];
         const url = `${baseUrl}/${method}`;
 
         logger.info('请求地址: ', url, '\n请求参数: ', JSON.stringify(data));
-        
+
         const result = await fetchData(url, token, data);
         return result;
     }
@@ -186,6 +192,7 @@ globalThis.http = new Http(urlMap);
 const cmd = seal.ext.newCmdItemInfo();
 cmd.name = 'http';
 cmd.help = `帮助:
+.http init 初始化HTTP依赖
 .http <方法>
 --<参数名>=<参数>
 
@@ -202,27 +209,47 @@ cmd.solve = (ctx, msg, cmdArgs) => {
     }
 
     const epId = ctx.endPoint.userId;
+    const ret = seal.ext.newCmdExecuteResult(true);
     const method = cmdArgs.getArgN(1);
-    if (!method || method === 'help') {
-        const ret = seal.ext.newCmdExecuteResult(true);
-        ret.showHelp = true;
-        return ret;
-    }
-
-    const data = cmdArgs.kwargs.reduce((acc, kwarg) => {
-        const { name, value } = kwarg;
-        try {
-            acc[name] = JSON.parse(`[${value}]`)[0];
-        } catch (e) {
-            acc[name] = value;
+    switch (method) {
+        case 'init': {
+            init().then(() => seal.replyToSender(ctx, msg, '初始化完成'));
+            return ret;
         }
-        return acc;
-    }, {});
+        case '':
+        case 'help': {
+            ret.showHelp = true;
+            return ret;
+        }
+        default: {
+            const data = cmdArgs.kwargs.reduce((acc, kwarg) => {
+                const { name, value } = kwarg;
+                try {
+                    acc[name] = JSON.parse(`[${value}]`)[0];
+                } catch (e) {
+                    acc[name] = value;
+                }
+                return acc;
+            }, {});
 
-    globalThis.http.callApi(epId, method, data).then(result => {
-        seal.replyToSender(ctx, msg, JSON.stringify(result, null, 2));
-    });
+            globalThis.http.callApi(epId, method, data).then(result => {
+                seal.replyToSender(ctx, msg, JSON.stringify(result, null, 2));
+            });
 
-    return seal.ext.newCmdExecuteResult(true);
+            return ret;
+        }
+    }
 };
-ext.cmdMap['http'] = cmd;   
+ext.cmdMap['http'] = cmd;
+
+ext.onNotCommandReceived = (ctx, msg) => {
+    if (!initDone) {
+        init();
+    }
+}
+
+ext.onCommandReceived = (ctx, msg, cmdArgs) => {
+    if (!initDone) {
+        init();
+    }
+}
