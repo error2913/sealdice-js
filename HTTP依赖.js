@@ -241,15 +241,3 @@ cmd.solve = (ctx, msg, cmdArgs) => {
     }
 };
 ext.cmdMap['http'] = cmd;
-
-ext.onNotCommandReceived = (ctx, msg) => {
-    if (!initDone) {
-        init();
-    }
-}
-
-ext.onCommandReceived = (ctx, msg, cmdArgs) => {
-    if (!initDone) {
-        init();
-    }
-}
