@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         shell运行
 // @author       错误
-// @version      1.1.1
+// @version      1.1.2
 // @description  发送 .shell 查看帮助，在插件设置内设置权限，需要搭建相应后端服务。\n进入后端服务目录，运行：\npip install -r requirements.txt\npython main.py
 // @timestamp    1743074450
 // 2025-03-27 19:20:50
@@ -13,14 +13,15 @@
 
 let ext = seal.ext.find('run_shell');
 if (!ext) {
-    ext = seal.ext.new('run_shell', '错误', '1.1.1');
+    ext = seal.ext.new('run_shell', '错误', '1.1.2');
     seal.ext.register(ext);
 
+    seal.ext.registerStringConfig(ext, '后端url地址', 'http://localhost:3011', '修改后保存并重载js');
     seal.ext.registerTemplateConfig(ext, "白名单", ["QQ:1234567890"], "可使用指令的QQ号");
     seal.ext.registerStringConfig(ext, "token", "123456", "访问令牌，请在后端服务main.py文件中设置");
 }
 
-const url = 'http://localhost:3011';
+const url = seal.ext.getStringConfig(ext, '后端url地址');
 
 const cmd = seal.ext.newCmdItemInfo();
 cmd.name = 'shell';
