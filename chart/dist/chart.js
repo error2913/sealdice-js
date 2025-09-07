@@ -83,7 +83,7 @@
       if (this.data.length === 0) {
         return "暂无数据";
       }
-      const url = "http://42.193.236.17:3003";
+      const url = "http://chart.error2913.com";
       const response = await fetch(
         `${url}/chart`,
         {
