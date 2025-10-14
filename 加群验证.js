@@ -139,6 +139,10 @@ cmd.help = `帮助:
 `;
 cmd.solve = (ctx, msg, cmdArgs) => {
     const ret = seal.ext.newCmdExecuteResult(true);
+    if (ctx.privilegeLevel < 50) {
+        seal.replyToSender(ctx, msg, seal.formatTmpl(ctx, "核心:提示_无权限"));
+        return ret;
+    }
     const epId = ctx.endPoint.userId;
     const setting = Setting.getSetting(ctx.group.groupId);
     const val = cmdArgs.getArgN(1);
