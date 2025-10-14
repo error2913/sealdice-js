@@ -2,11 +2,13 @@
 // @name         加群验证
 // @author       错误
 // @version      1.0.0
-// @description  123
+// @description  使用 .agv 查看帮助，需要有管理员权限才可运行
 // @timestamp    1760422268
 // 2025-10-14 14:11:08
 // @license      MIT
-// @homepageURL  https://github.com/sealdice/javascript
+// @homepageURL  https://github.com/error2913/sealdice-js/
+// @updateUrl    https://raw.gitmirror.com/error2913/sealdice-js/main/加群验证.js
+// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/加群验证.js
 // @depends 错误&白鱼:ob11网络连接依赖:>=2.0.0
 // ==/UserScript==
 
