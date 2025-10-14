@@ -18,6 +18,23 @@ if (!ext) {
 
 const net = globalThis.net;
 
+function generateCode() {
+    return Array.from({ length: 6 }, () => Math.floor(Math.random() * 10)).join('');
+}
+
+async function getQQLevel(epId, user_id) {
+    try {
+        const data = await net.callApi(epId, 'get_stranger_info', {
+            user_id,
+            no_cache: true
+        })
+        return data.qq_level;
+    } catch (error) {
+        console.error(`获取用户 ${user_id} QQ等级失败：${error}`);
+        return 0;
+    }
+}
+
 function createMsg(messageType, senderId, groupId = '') {
     let msg = seal.newMessage();
 
@@ -63,8 +80,11 @@ class Setting {
         this.reqMod = 0; // 0: 关闭，1: 按预设答案，2: 按预设答案，错误后由我确认，3: 由我确认
         this.vrfMod = 0; // 0: 关闭，1: 自动生成验证码，忽略邀请加入，2: 按预设验证码验证，忽略邀请加入，3: 自动生成验证码，4: 按预设验证码验证
         this.ansArr = [];
+        this.vrfQQLevel = 10; // 需要验证的QQ等级
+        this.vrfInterval = 300; // 验证码过期时间，单位秒
         this.vrfInfoArr = []; // 验证码信息数组，每个元素为 { q: 问题, a: 答案[] }
         this.flagMap = {}; // 加群请求标志位，key为user_id，value为string
+        this.vrfMap = {}; // 加群验证定时器，key为user_id，value为{ timer: 定时器ID, code: 验证码[] }
     }
 
     static getSetting(gid) {
@@ -77,7 +97,7 @@ class Setting {
 }
 
 const cmd = seal.ext.newCmdItemInfo();
-cmd.name = 'agv'; // 指令名字，可用中文
+cmd.name = 'agv';
 cmd.help = `帮助:
 【.agv status】查看当前状态
 
@@ -88,25 +108,37 @@ cmd.help = `帮助:
 0: 关闭，1: 自动生成验证码，忽略邀请加入，2: 按预设验证码验证，忽略邀请加入，3: 自动生成验证码，4: 按预设验证码验证
 
 【.agv ans [答案1] [答案2] ...】设置加群申请预设答案
+【.agv lv [等级]】设置需要验证的QQ等级，默认10
+【.agv t [秒数]】设置加群验证的验证码过期时间，单位秒
 【.agv vi show】查看加群验证的验证码问题和答案
 【.agv vi add [问题] [验证码1] [验证码2] ...】添加验证码问题和答案
 【.agv vi del [问题] [问题2] ...】删除验证码问题和答案
 `;
 cmd.solve = (ctx, msg, cmdArgs) => {
-    let val = cmdArgs.getArgN(1);
+    const ret = seal.ext.newCmdExecuteResult(true);
+    const val = cmdArgs.getArgN(1);
     switch (val) {
-        case 'help': {
-            const ret = seal.ext.newCmdExecuteResult(true);
+        case 'status': {
+        }
+        case 'req': {
+        }
+        case 'vrf': {
+        }
+        case 'ans': {
+        }
+        case 'lv': {
+        }
+        case 't': {
+        }
+        case 'vi': {
+        }
+        default: {
             ret.showHelp = true;
             return ret;
         }
-        default: {
-
-            return seal.ext.newCmdExecuteResult(true);
-        }
     }
 };
-// 将命令注册到扩展中
+
 ext.cmdMap['agv'] = cmd;
 
 net.getWs(ext)
@@ -120,15 +152,139 @@ net.getWs(ext)
                 const setting = Setting.getSetting(`QQ-Group:${group_id}`);
                 switch (setting.vrfMod) {
                     case 1: {
+                        if (setting.vrfMap[user_id]) {
+                            break;
+                        }
+                        if (sub_type === 'invite') {
+                            break;
+                        }
+
+                        getQQLevel(epId, user_id).then((qqLevel) => {
+                            if (qqLevel <= setting.vrfQQLevel) {
+                                const timer = setTimeout(() => {
+                                    console.log(`用户 ${user_id} 未验证加群 ${group_id}，超时 ${setting.vrfInterval} 秒`);
+                                    net.callApi(epId, 'set_group_kick', {
+                                        group_id,
+                                        user_id,
+                                        reject_add_request: false
+                                    }).then(() => {
+                                        replyToGroup(epId, group_id, `用户 ${user_id} 未验证加群 ${group_id}，超时 ${setting.vrfInterval} 秒，已被踢出`);
+                                    }).catch((err) => {
+                                        console.error(`踢出用户 ${user_id} 加群 ${group_id} 失败: ${err}`);
+                                    });
+                                    delete setting.vrfMap[user_id];
+                                }, setting.vrfInterval * 1000);
+
+                                const code = generateCode();
+                                setting.vrfMap[user_id] = { timer, code: [code] };
+                                replyToGroup(epId, group_id, `用户 ${user_id}
+QQ等级: ${qqLevel}
+请在 ${setting.vrfInterval} 秒内输入验证码：${code}`);
+                            }
+                        });
+
                         break;
                     }
                     case 2: {
+                        if (setting.vrfMap[user_id]) {
+                            break;
+                        }
+                        if (sub_type === 'invite') {
+                            break;
+                        }
+
+                        getQQLevel(epId, user_id).then((qqLevel) => {
+                            if (qqLevel <= setting.vrfQQLevel) {
+                                const timer = setTimeout(() => {
+                                    console.log(`用户 ${user_id} 未验证加群 ${group_id}，超时 ${setting.vrfInterval} 秒`);
+                                    net.callApi(epId, 'set_group_kick', {
+                                        group_id,
+                                        user_id,
+                                        reject_add_request: false
+                                    }).then(() => {
+                                        replyToGroup(epId, group_id, `用户 ${user_id} 未验证加群 ${group_id}，超时 ${setting.vrfInterval} 秒，已被踢出`);
+                                    }).catch((err) => {
+                                        console.error(`踢出用户 ${user_id} 加群 ${group_id} 失败: ${err}`);
+                                    });
+                                    delete setting.vrfMap[user_id];
+                                }, setting.vrfInterval * 1000);
+
+                                const qIndex = Math.floor(Math.random() * setting.vrfInfoArr.length);
+                                const q = setting.vrfInfoArr[qIndex].q;
+                                const ans = setting.vrfInfoArr[qIndex].ans;
+                                setting.vrfMap[user_id] = { timer, code: ans };
+                                replyToGroup(epId, group_id, `用户 ${user_id}
+QQ等级: ${qqLevel}
+请在 ${setting.vrfInterval} 秒内回答问题：
+${q}`);
+                            }
+                        });
+
                         break;
                     }
                     case 3: {
+                        if (setting.vrfMap[user_id]) {
+                            break;
+                        }
+
+                        getQQLevel(epId, user_id).then((qqLevel) => {
+                            if (qqLevel <= setting.vrfQQLevel) {
+                                const timer = setTimeout(() => {
+                                    console.log(`用户 ${user_id} 未验证加群 ${group_id}，超时 ${setting.vrfInterval} 秒`);
+                                    net.callApi(epId, 'set_group_kick', {
+                                        group_id,
+                                        user_id,
+                                        reject_add_request: false
+                                    }).then(() => {
+                                        replyToGroup(epId, group_id, `用户 ${user_id} 未验证加群 ${group_id}，超时 ${setting.vrfInterval} 秒，已被踢出`);
+                                    }).catch((err) => {
+                                        console.error(`踢出用户 ${user_id} 加群 ${group_id} 失败: ${err}`);
+                                    });
+                                    delete setting.vrfMap[user_id];
+                                }, setting.vrfInterval * 1000);
+
+                                const code = generateCode();
+                                setting.vrfMap[user_id] = { timer, code: [code] };
+                                replyToGroup(epId, group_id, `用户 ${user_id}
+QQ等级: ${qqLevel}
+请在 ${setting.vrfInterval} 秒内输入验证码：${code}`);
+                            }
+                        });
+
                         break;
                     }
                     case 4: {
+                        if (setting.vrfMap[user_id]) {
+                            break;
+                        }
+
+                        getQQLevel(epId, user_id).then((qqLevel) => {
+                            if (qqLevel <= setting.vrfQQLevel) {
+                                const timer = setTimeout(() => {
+                                    console.log(`用户 ${user_id} 未验证加群 ${group_id}，超时 ${setting.vrfInterval} 秒`);
+                                    net.callApi(epId, 'set_group_kick', {
+                                        group_id,
+                                        user_id,
+                                        reject_add_request: false
+                                    }).then(() => {
+                                        replyToGroup(epId, group_id, `用户 ${user_id} 未验证加群 ${group_id}，超时 ${setting.vrfInterval} 秒，已被踢出`);
+                                    }).catch((err) => {
+                                        console.error(`踢出用户 ${user_id} 加群 ${group_id} 失败: ${err}`);
+                                    });
+                                    delete setting.vrfMap[user_id];
+                                }, setting.vrfInterval * 1000);
+
+                                const qIndex = Math.floor(Math.random() * setting.vrfInfoArr.length);
+                                const q = setting.vrfInfoArr[qIndex].q;
+                                const ans = setting.vrfInfoArr[qIndex].ans;
+                                setting.vrfMap[user_id] = { timer, code: ans };
+                                replyToGroup(epId, group_id, `用户 ${user_id}
+QQ等级: ${qqLevel}
+请在 ${setting.vrfInterval} 秒内回答问题：
+${q}`);
+                            }
+                        });
+
                         break;
                     }
                 }
@@ -146,6 +302,7 @@ net.getWs(ext)
                     case 1: {
                         if (setting.flagMap.hasOwnProperty(user_id)) {
                             console.log(`用户 ${user_id} 重复申请加入群 ${group_id}`);
+                            delete setting.flagMap[user_id];
                             break;
                         }
                         if (!setting.ansArr.includes(comment)) {
@@ -184,6 +341,7 @@ QQ: ${user_id}
                     case 2: {
                         if (setting.flagMap.hasOwnProperty(user_id)) {
                             console.log(`用户 ${user_id} 重复申请加入群 ${group_id}`);
+                            delete setting.flagMap[user_id];
                             break;
                         }
                         if (!setting.ansArr.includes(comment)) {
@@ -214,6 +372,7 @@ QQ: ${user_id}
                     case 3: {
                         if (setting.flagMap.hasOwnProperty(user_id)) {
                             console.log(`用户 ${user_id} 重复申请加入群 ${group_id}`);
+                            delete setting.flagMap[user_id];
                             break;
                         }
                         console.log(`用户 ${user_id} 申请加入群 ${group_id}`);
@@ -232,5 +391,4 @@ QQ: ${user_id}
     });
 
 ext.onNotCommandReceived = (ctx, msg) => {
-
 }
