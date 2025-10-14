@@ -87,11 +87,8 @@ async function fetchData(url, token = '', data = null) {
         const options = {
             method: data === null ? 'GET' : 'POST',
             headers: headers,
+            body: data ? JSON.stringify(data) : null
         };
-
-        if (data !== null) {
-            options.body = JSON.stringify(data);
-        }
 
         const response = await fetch(url, options);
         const text = await response.text();
