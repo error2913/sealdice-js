@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         shell运行
 // @author       错误
-// @version      1.1.2
+// @version      1.1.3
 // @description  发送 .shell 查看帮助，在插件设置内设置权限，需要搭建相应后端服务。\n进入后端服务目录，运行：\npip install -r requirements.txt\npython main.py
 // @timestamp    1743074450
 // 2025-03-27 19:20:50
@@ -13,7 +13,7 @@
 
 let ext = seal.ext.find('run_shell');
 if (!ext) {
-    ext = seal.ext.new('run_shell', '错误', '1.1.2');
+    ext = seal.ext.new('run_shell', '错误', '1.1.3');
     seal.ext.register(ext);
 
     seal.ext.registerStringConfig(ext, '后端url地址', 'http://localhost:3011', '修改后保存并重载js');
@@ -39,7 +39,7 @@ cmd.solve = (ctx, msg, cmdArgs) => {
 
     const token = seal.ext.getStringConfig(ext, "token");
 
-    const message = msg.message;
+    const message = msg.message.trim().replace(/^(\[CQ:at,qq=[0-9]+\][\s\n]*)+/, '').trim();
     const segments = message.split(/[\s\n]+/);
     const val = cmdArgs.getArgN(1);
     switch (val) {

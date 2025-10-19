@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         加群验证
 // @author       错误
-// @version      1.0.0
+// @version      1.0.1
 // @description  使用 .agv 查看帮助，需要有管理员权限才可运行
 // @timestamp    1760422268
 // 2025-10-14 14:11:08
@@ -14,11 +14,15 @@
 
 let ext = seal.ext.find('加群验证');
 if (!ext) {
-    ext = seal.ext.new('加群验证', '错误', '1.0.0');
+    ext = seal.ext.new('加群验证', '错误', '1.0.1');
     seal.ext.register(ext);
 }
 
 const net = globalThis.net;
+if (!net) {
+    console.error('加群验证 未找到 ob11 网络连接依赖');
+    return;
+}
 
 function generateCode() {
     return Array.from({ length: 6 }, () => Math.floor(Math.random() * 10)).join('');
@@ -306,6 +310,10 @@ ext.cmdMap['agv'] = cmd;
 
 net.getWs(ext)
     .then((ws) => {
+        if (!ws || !ws.name) {
+            console.error('加群验证 获取ws 失败');
+            return;
+        }
         ws.onNoticeEvent = (epId, event) => {
             console.log('onNoticeEvent', epId, JSON.stringify(event));
 
@@ -460,6 +468,12 @@ ${q}`);
             if (event.request_type === 'group' && event.sub_type === 'add') {
                 const { sub_type, group_id, user_id, comment, flag } = event;
                 console.log(`加群申请，群ID: ${group_id}，用户ID: ${user_id}，申请信息: ${comment}，标志位: ${flag}`);
+
+                const ans = comment.match(/^问题：(?:.*)\n答案：(.*)/)?.[1];
+                if (ans) {
+                    console.log(`用户 ${user_id} 回答问题：${ans}`);
+                }
+
                 const setting = Setting.getSetting(`QQ-Group:${group_id}`);
                 switch (setting.reqMod) {
                     case 1: {
@@ -468,7 +482,7 @@ ${q}`);
                             delete setting.reqMap[user_id];
                             break;
                         }
-                        if (!setting.ansArr.includes(comment)) {
+                        if (!setting.ansArr.includes(comment) && (!ans || !setting.ansArr.includes(ans))) {
                             console.log(`拒绝用户 ${user_id} 申请加入群 ${group_id}，答案错误`);
                             net.callApi(epId, 'set_group_add_request', {
                                 flag,
@@ -507,7 +521,7 @@ QQ: ${user_id}
                             delete setting.reqMap[user_id];
                             break;
                         }
-                        if (!setting.ansArr.includes(comment)) {
+                        if (!setting.ansArr.includes(comment) && (!ans || !setting.ansArr.includes(ans))) {
                             console.log(`未拒绝用户 ${user_id} 申请加入群 ${group_id}，答案错误`);
                             setting.reqMap[user_id] = { flag, sub_type };
                             setting.saveSetting();
