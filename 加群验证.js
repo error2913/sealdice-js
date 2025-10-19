@@ -308,13 +308,13 @@ ${setting.vrfInfoArr.map(vi => `${vi.q}：\n${vi.a.join('、')}`).join('\n\n')}`
 
 ext.cmdMap['agv'] = cmd;
 
-net.getWs(ext)
-    .then((ws) => {
-        if (!ws || !ws.name) {
+net.getEventDispatcher(ext)
+    .then((ed) => {
+        if (!ed || !ed.name) {
             console.error('加群验证 获取ws 失败');
             return;
         }
-        ws.onNoticeEvent = (epId, event) => {
+        ed.onNoticeEvent = (epId, event) => {
             console.log('onNoticeEvent', epId, JSON.stringify(event));
 
             if (event.notice_type === 'group_increase') {
@@ -462,7 +462,7 @@ ${q}`);
             }
         };
 
-        ws.onRequestEvent = (epId, event) => {
+        ed.onRequestEvent = (epId, event) => {
             console.log('onRequestEvent', epId, JSON.stringify(event));
 
             if (event.request_type === 'group' && event.sub_type === 'add') {
@@ -477,11 +477,6 @@ ${q}`);
                 const setting = Setting.getSetting(`QQ-Group:${group_id}`);
                 switch (setting.reqMod) {
                     case 1: {
-                        if (setting.reqMap.hasOwnProperty(user_id)) {
-                            console.log(`用户 ${user_id} 重复申请加入群 ${group_id}`);
-                            delete setting.reqMap[user_id];
-                            break;
-                        }
                         if (!setting.ansArr.includes(comment) && (!ans || !setting.ansArr.includes(ans))) {
                             console.log(`拒绝用户 ${user_id} 申请加入群 ${group_id}，答案错误`);
                             net.callApi(epId, 'set_group_add_request', {
@@ -516,11 +511,6 @@ QQ: ${user_id}
                         break;
                     }
                     case 2: {
-                        if (setting.reqMap.hasOwnProperty(user_id)) {
-                            console.log(`用户 ${user_id} 重复申请加入群 ${group_id}`);
-                            delete setting.reqMap[user_id];
-                            break;
-                        }
                         if (!setting.ansArr.includes(comment) && (!ans || !setting.ansArr.includes(ans))) {
                             console.log(`未拒绝用户 ${user_id} 申请加入群 ${group_id}，答案错误`);
                             setting.reqMap[user_id] = { flag, sub_type };
@@ -548,11 +538,6 @@ QQ: ${user_id}
                         break;
                     }
                     case 3: {
-                        if (setting.reqMap.hasOwnProperty(user_id)) {
-                            console.log(`用户 ${user_id} 重复申请加入群 ${group_id}`);
-                            delete setting.reqMap[user_id];
-                            break;
-                        }
                         console.log(`用户 ${user_id} 申请加入群 ${group_id}`);
                         setting.reqMap[user_id] = { flag, sub_type };
                         setting.saveSetting();
@@ -566,7 +551,7 @@ QQ: ${user_id}
         };
     })
     .catch((err) => {
-        console.error('getWs error:', err);
+        console.error('getEventDispatcher error:', err);
     });
 
 ext.onNotCommandReceived = (ctx, msg) => {
