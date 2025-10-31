@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         加群验证
 // @author       错误
-// @version      1.0.2
+// @version      1.0.3
 // @description  使用 .agv 查看帮助，需要有管理员权限才可运行
 // @timestamp    1760422268
 // 2025-10-14 14:11:08
@@ -14,7 +14,7 @@
 
 let ext = seal.ext.find('加群验证');
 if (!ext) {
-    ext = seal.ext.new('加群验证', '错误', '1.0.2');
+    ext = seal.ext.new('加群验证', '错误', '1.0.3');
     seal.ext.register(ext);
 }
 
@@ -28,6 +28,51 @@ function generateCode() {
     return Array.from({ length: 6 }, () => Math.floor(Math.random() * 10)).join('');
 }
 
+function transformTextToArray(text) {
+    const segments = text.split(/(\[CQ:.*?\])/).filter(segment => segment);
+    const messageArray = [];
+    for (const segment of segments) {
+        if (segment.startsWith('[CQ:')) {
+            const match = segment.match(/^\[CQ:([^,]+),?([^\]]*)\]$/);
+            if (match) {
+                const type = match[1].trim();
+                const params = {};
+                if (match[2]) {
+                    match[2].trim().split(',').forEach(param => {
+                        const eqIndex = param.indexOf('=');
+                        if (eqIndex === -1) {
+                            return;
+                        }
+
+                        const key = param.slice(0, eqIndex).trim();
+                        const value = param.slice(eqIndex + 1).trim();
+
+                        // 这对吗？nc是这样的吗？
+                        if (type === 'image' && key === 'file') {
+                            params['url'] = value;
+                        }
+
+                        if (key) {
+                            params[key] = value;
+                        }
+                    });
+                }
+
+                messageArray.push({
+                    type: type,
+                    data: params
+                });
+            } else {
+                logger.error(`无法解析CQ码：${segment}`);
+            }
+        } else {
+            messageArray.push({ type: 'text', data: { text: segment } });
+        }
+    }
+
+    return messageArray;
+}
+
 async function getQQLevel(epId, user_id) {
     try {
         const data = await net.callApi(epId, 'get_stranger_info', {
@@ -36,7 +81,7 @@ async function getQQLevel(epId, user_id) {
         })
         return data.qqLevel;
     } catch (e) {
-        console.error(`获取用户 ${user_id} QQ等级失败：${e}`);
+        console.error(`获取用户 ${user_id} 信息失败：${e}`);
         return 0;
     }
 }
@@ -49,7 +94,7 @@ async function getQQLevelAndNickname(epId, user_id) {
         })
         return { qqLevel: data.qqLevel, nickname: data.nickname };
     } catch (e) {
-        console.error(`获取用户 ${user_id} QQ等级失败：${e}`);
+        console.error(`获取用户 ${user_id} 信息失败：${e}`);
         return 0;
     }
 }
@@ -79,51 +124,25 @@ async function setGroupKick(epId, group_id, user_id) {
     }
 }
 
+async function replyToGroup(epId, gid, s) {
+    try {
+        const data = await net.callApi(epId, 'send_group_msg', {
+            group_id: gid.replace(/^.+:/, ''),
+            message: transformTextToArray(s)
+        });
+        return data.message_id;
+    } catch (e) {
+        console.error(`对群 ${gid} 发送群聊消息失败: ${e}`);
+        return null;
+    }
+}
+
 async function buildRequestUserInfo(epId, user_id) {
     const { qqLevel, nickname } = await getQQLevelAndNickname(epId, user_id);
     return `[CQ:image,file=https://q.qlogo.cn/headimg_dl?dst_uin=${user_id}&spec=640&img_type=jpg]
 QQ: ${user_id}
 昵称: ${nickname}
 等级: ${qqLevel}`
-}
-
-function createMsg(messageType, senderId, groupId = '') {
-    let msg = seal.newMessage();
-
-    if (messageType === 'group') {
-        msg.groupId = groupId;
-        msg.guildId = '';
-    }
-
-    msg.messageType = messageType;
-    msg.sender.userId = senderId;
-    return msg;
-}
-
-function createCtx(epId, msg) {
-    const eps = seal.getEndPoints();
-
-    for (let i = 0; i < eps.length; i++) {
-        if (eps[i].userId === epId) {
-            const ctx = seal.createTempCtx(eps[i], msg);
-
-            ctx.isPrivate = msg.messageType === 'private';
-
-            if (ctx.player.userId === epId) {
-                ctx.player.name = seal.formatTmpl(ctx, "核心:骰子名字");
-            }
-
-            return ctx;
-        }
-    }
-
-    return undefined;
-}
-
-function replyToGroup(epId, gid, s) {
-    const msg = createMsg('group', '', gid);
-    const ctx = createCtx(epId, msg);
-    seal.replyToSender(ctx, msg, s);
 }
 
 class Setting {
@@ -137,8 +156,8 @@ class Setting {
         this.vrfQQLevel = 10; // 需要验证的QQ等级
         this.vrfInterval = 300; // 验证码过期时间，单位秒
         this.vrfInfoArr = []; // 验证码信息数组，每个元素为 { q: 问题, a: 答案[] }
-        this.reqMap = {}; // 加群请求，key为user_id，value为{ flag: 加群请求标志位, sub_type: 加群请求子类型 }
-        this.vrfMap = {}; // 加群验证定时器，key为user_id，value为{ timer: 定时器ID, code: 验证码[] }，重载后不恢复数据
+        this.reqMap = {}; // 加群请求，key为user_id，value为{ flag: 加群请求标志位, sub_type: 加群请求子类型, msgId: 加群请求消息ID }
+        this.vrfMap = {}; // 加群验证定时器，key为user_id，value为{ timer: 定时器ID, code: 验证码[], msgId: 加群验证消息ID }，重载后不恢复数据
     }
 
     static getSetting(gid) {
@@ -171,9 +190,9 @@ const cmd = seal.ext.newCmdItemInfo();
 cmd.name = 'agv';
 cmd.help = `帮助:
 【.agv status】查看当前状态
-【.agv ap [user_id]】批准加群请求
-【.agv dp [user_id]】拒绝加群请求
-【.agv cc [user_id]】取消加群验证
+【.agv ap [user_id]】批准加群请求，或引用消息发送“同意”
+【.agv dp [user_id]】拒绝加群请求，或引用消息发送“拒绝”
+【.agv cc [user_id]】取消加群验证，或引用消息发送“取消”
 
 【.agv req [mod]】设置加群处理模式
 0: 关闭，1: 按预设答案，2: 按预设答案，错误后由我确认，3: 由我确认
@@ -257,7 +276,6 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             }
             clearTimeout(setting.vrfMap[user_id].timer);
             delete setting.vrfMap[user_id];
-            setting.saveSetting();
             seal.replyToSender(ctx, msg, `用户 ${user_id} 的加群验证已取消`);
             return ret;
         }
@@ -392,16 +410,16 @@ net.getEventDispatcher(ext)
                             const timer = setTimeout(async () => {
                                 console.log(`用户 ${user_id} 未验证加群 ${group_id}，超时 ${setting.vrfInterval} 秒`);
                                 await setGroupKick(epId, group_id, user_id);
-                                replyToGroup(epId, `QQ-Group:${group_id}`, `用户 ${user_id} 未验证加群 ${group_id}，超时 ${setting.vrfInterval} 秒，已被踢出`);
+                                await replyToGroup(epId, `QQ-Group:${group_id}`, `用户 ${user_id} 未验证加群 ${group_id}，超时 ${setting.vrfInterval} 秒，已被踢出`);
                                 delete setting.vrfMap[user_id];
                             }, setting.vrfInterval * 1000);
 
                             const code = generateCode();
-                            setting.vrfMap[user_id] = { timer, code: [code] };
-                            replyToGroup(epId, `QQ-Group:${group_id}`, `[CQ:at,qq=${user_id}]
+                            const msgId = await replyToGroup(epId, `QQ-Group:${group_id}`, `[CQ:at,qq=${user_id}]
 用户 ${user_id}
 QQ等级: ${qqLevel}
 请在 ${setting.vrfInterval} 秒内输入验证码：${code}`);
+                            setting.vrfMap[user_id] = { timer, code: [code], msgId };
                         }
                         break;
                     }
@@ -417,19 +435,19 @@ QQ等级: ${qqLevel}
                             const timer = setTimeout(async () => {
                                 console.log(`用户 ${user_id} 未验证加群 ${group_id}，超时 ${setting.vrfInterval} 秒`);
                                 await setGroupKick(epId, group_id, user_id);
-                                replyToGroup(epId, `QQ-Group:${group_id}`, `用户 ${user_id} 未验证加群 ${group_id}，超时 ${setting.vrfInterval} 秒，已被踢出`);
+                                await replyToGroup(epId, `QQ-Group:${group_id}`, `用户 ${user_id} 未验证加群 ${group_id}，超时 ${setting.vrfInterval} 秒，已被踢出`);
                                 delete setting.vrfMap[user_id];
                             }, setting.vrfInterval * 1000);
 
                             const qIndex = Math.floor(Math.random() * setting.vrfInfoArr.length);
                             const q = setting.vrfInfoArr[qIndex].q;
                             const a = setting.vrfInfoArr[qIndex].a;
-                            setting.vrfMap[user_id] = { timer, code: a };
-                            replyToGroup(epId, `QQ-Group:${group_id}`, `[CQ:at,qq=${user_id}]
+                            const msgId = await replyToGroup(epId, `QQ-Group:${group_id}`, `[CQ:at,qq=${user_id}]
 用户 ${user_id}
 QQ等级: ${qqLevel}
 请在 ${setting.vrfInterval} 秒内回答问题：
 ${q}`);
+                            setting.vrfMap[user_id] = { timer, code: a, msgId };
                         }
                         break;
                     }
@@ -442,16 +460,16 @@ ${q}`);
                             const timer = setTimeout(async () => {
                                 console.log(`用户 ${user_id} 未验证加群 ${group_id}，超时 ${setting.vrfInterval} 秒`);
                                 await setGroupKick(epId, group_id, user_id);
-                                replyToGroup(epId, `QQ-Group:${group_id}`, `用户 ${user_id} 未验证加群 ${group_id}，超时 ${setting.vrfInterval} 秒，已被踢出`);
+                                await replyToGroup(epId, `QQ-Group:${group_id}`, `用户 ${user_id} 未验证加群 ${group_id}，超时 ${setting.vrfInterval} 秒，已被踢出`);
                                 delete setting.vrfMap[user_id];
                             }, setting.vrfInterval * 1000);
 
                             const code = generateCode();
-                            setting.vrfMap[user_id] = { timer, code: [code] };
-                            replyToGroup(epId, `QQ-Group:${group_id}`, `[CQ:at,qq=${user_id}]
+                            const msgId = await replyToGroup(epId, `QQ-Group:${group_id}`, `[CQ:at,qq=${user_id}]
 用户 ${user_id}
 QQ等级: ${qqLevel}
 请在 ${setting.vrfInterval} 秒内输入验证码：${code}`);
+                            setting.vrfMap[user_id] = { timer, code: [code], msgId };
                         }
                         break;
                     }
@@ -464,19 +482,19 @@ QQ等级: ${qqLevel}
                             const timer = setTimeout(async () => {
                                 console.log(`用户 ${user_id} 未验证加群 ${group_id}，超时 ${setting.vrfInterval} 秒`);
                                 await setGroupKick(epId, group_id, user_id);
-                                replyToGroup(epId, `QQ-Group:${group_id}`, `用户 ${user_id} 未验证加群 ${group_id}，超时 ${setting.vrfInterval} 秒，已被踢出`);
+                                await replyToGroup(epId, `QQ-Group:${group_id}`, `用户 ${user_id} 未验证加群 ${group_id}，超时 ${setting.vrfInterval} 秒，已被踢出`);
                                 delete setting.vrfMap[user_id];
                             }, setting.vrfInterval * 1000);
 
                             const qIndex = Math.floor(Math.random() * setting.vrfInfoArr.length);
                             const q = setting.vrfInfoArr[qIndex].q;
                             const a = setting.vrfInfoArr[qIndex].a;
-                            setting.vrfMap[user_id] = { timer, code: a };
-                            replyToGroup(epId, `QQ-Group:${group_id}`, `[CQ:at,qq=${user_id}]
+                            const msgId = await replyToGroup(epId, `QQ-Group:${group_id}`, `[CQ:at,qq=${user_id}]
 用户 ${user_id}
 QQ等级: ${qqLevel}
 请在 ${setting.vrfInterval} 秒内回答问题：
 ${q}`);
+                            setting.vrfMap[user_id] = { timer, code: a, msgId };
                         }
                         break;
                     }
@@ -503,7 +521,7 @@ ${q}`);
                             console.log(`拒绝用户 ${user_id} 申请加入群 ${group_id}，答案错误`);
                             await setGroupAddRequest(epId, flag, sub_type, false, '答案错误');
                             const userInfo = await buildRequestUserInfo(epId, user_id);
-                            replyToGroup(epId, setting.gid, `${userInfo}
+                            await replyToGroup(epId, setting.gid, `${userInfo}
 申请信息: ${comment}
 答案错误，已拒绝`);
                             break;
@@ -511,7 +529,7 @@ ${q}`);
                         console.log(`用户 ${user_id} 申请加入群 ${group_id}，答案正确`);
                         await setGroupAddRequest(epId, flag, sub_type, true, '');
                         const userInfo = await buildRequestUserInfo(epId, user_id);
-                        replyToGroup(epId, setting.gid, `${userInfo}
+                        await replyToGroup(epId, setting.gid, `${userInfo}
 申请信息: ${comment}
 答案正确，已同意`);
                         break;
@@ -519,29 +537,29 @@ ${q}`);
                     case 2: {
                         if (!setting.ansArr.includes(comment) && (!ans || !setting.ansArr.includes(ans))) {
                             console.log(`未拒绝用户 ${user_id} 申请加入群 ${group_id}，答案错误`);
-                            setting.reqMap[user_id] = { flag, sub_type };
-                            setting.saveSetting();
                             const userInfo = await buildRequestUserInfo(epId, user_id);
-                            replyToGroup(epId, setting.gid, `${userInfo}
+                            const msgId = await replyToGroup(epId, setting.gid, `${userInfo}
 申请信息: ${comment}
 答案错误，未拒绝`);
+                            setting.reqMap[user_id] = { flag, sub_type, msgId };
+                            setting.saveSetting();
                             break;
                         }
                         console.log(`用户 ${user_id} 申请加入群 ${group_id}，答案正确`);
                         await setGroupAddRequest(epId, flag, sub_type, true, '');
                         const userInfo = await buildRequestUserInfo(epId, user_id);
-                        replyToGroup(epId, setting.gid, `${userInfo}
+                        await replyToGroup(epId, setting.gid, `${userInfo}
 申请信息: ${comment}
 答案正确，已同意`);
                         break;
                     }
                     case 3: {
                         console.log(`用户 ${user_id} 申请加入群 ${group_id}`);
-                        setting.reqMap[user_id] = { flag, sub_type };
-                        setting.saveSetting();
                         const userInfo = await buildRequestUserInfo(epId, user_id);
-                        replyToGroup(epId, setting.gid, `${userInfo}
+                        const msgId = await replyToGroup(epId, setting.gid, `${userInfo}
 申请信息: ${comment}`);
+                        setting.reqMap[user_id] = { flag, sub_type, msgId };
+                        setting.saveSetting();
                         break;
                     }
                 }
@@ -557,20 +575,71 @@ ext.onNotCommandReceived = (ctx, msg) => {
         return;
     }
     const setting = Setting.getSetting(ctx.group.groupId);
-    if (setting.vrfMod === 0) {
+    if (setting.vrfMod === 0 && setting.reqMod === 0) {
         return;
     }
+
+    const epId = ctx.endPoint.userId;
+    const message = msg.message;
+
+    // 加群验证码
     const user_id = ctx.player.userId.replace(/\D/g, '');
-    if (!setting.vrfMap.hasOwnProperty(user_id)) {
-        return;
-    }
-    const { timer, code } = setting.vrfMap[user_id];
-    if (!code.includes(msg.message)) {
-        return;
-    }
-    clearTimeout(timer);
-    delete setting.vrfMap[user_id];
-    seal.replyToSender(ctx, msg, `加群验证:
+    if (setting.vrfMap.hasOwnProperty(user_id) && setting.vrfMap[user_id].code.includes(message)) {
+        clearTimeout(setting.vrfMap[user_id].timer);
+        delete setting.vrfMap[user_id];
+        seal.replyToSender(ctx, msg, `加群验证:
 QQ: ${user_id}
 验证成功，欢迎加入！`);
+    }
+
+    const match = message.match(/^\[CQ:reply,id=(-?\d+)\]\s*(?:\[CQ:at,qq=\d+\])?\s*(.+)/);
+    if (match && !isNaN(match[1]) && match[2].trim()) {
+        const msgId = parseInt(match[1]);
+        const cmd = match[2].trim();
+        switch (cmd) {
+            case 'ap':
+            case '同意': {
+                for (const [user_id, req] of Object.entries(setting.reqMap)) {
+                    if (req.msgId === msgId) {
+                        const { flag, sub_type } = req;
+                        setGroupAddRequest(epId, flag, sub_type, true, '');
+                        delete setting.reqMap[user_id];
+                        setting.saveSetting();
+                        seal.replyToSender(ctx, msg, `用户 ${user_id} 的加群请求已批准`);
+                        break;
+                    }
+                }
+                console.warn(`未找到回复 ${msgId} 的加群请求`);
+                break;
+            }
+            case 'dp':
+            case '拒绝': {
+                for (const [user_id, req] of Object.entries(setting.reqMap)) {
+                    if (req.msgId === msgId) {
+                        const { flag, sub_type } = req;
+                        setGroupAddRequest(epId, flag, sub_type, false, '');
+                        delete setting.reqMap[user_id];
+                        setting.saveSetting();
+                        seal.replyToSender(ctx, msg, `用户 ${user_id} 的加群请求已拒绝`);
+                        break;
+                    }
+                }
+                console.warn(`未找到回复 ${msgId} 的加群请求`);
+                break;
+            }
+            case 'cc':
+            case '取消': {
+                for (const [user_id, vrf] of Object.entries(setting.vrfMap)) {
+                    if (vrf.msgId === msgId) {
+                        clearTimeout(vrf.timer);
+                        delete setting.vrfMap[user_id];
+                        seal.replyToSender(ctx, msg, `用户 ${user_id} 的加群验证已取消`);
+                        break;
+                    }
+                }
+                console.warn(`未找到回复 ${msgId} 的加群验证`);
+                break;
+            }
+        }
+    }
 }
