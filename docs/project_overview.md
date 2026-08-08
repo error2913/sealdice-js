@@ -48,8 +48,8 @@ sealdice-js/
 | link.js | [LINK!!!](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/LINK.md) | 连接群聊与私聊消息，使用 `.link` 查看帮助 |
 | ping_3d.js | [三骰联合延迟测试](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/ping_3d.md) | 三个骰子同时安装时测试指令延迟，使用 `.乒` 开始测试 |
 | ping_auto.js | [多骰联合延迟测试](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/ping_auto.md) | 自动化的多骰延迟测试，依赖 team 插件，使用 `.乒乓` 查看帮助 |
-| postnow.js | [骰主公告极速版](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/postnow.md) | 发送公告/广告，安装 ob11 依赖后自动启用 HTTP 模式，使用 `.pn` 查看帮助（`.pnh` 兼容） |
-| rename.js | [群名片集体修改器](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/rename.md) | 批量修改群名片，安装 ob11 依赖后自动启用 HTTP 模式，使用 `.rn` 查看帮助（`.rnh` 兼容） |
+| postnow.js | [骰主公告极速版](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/postnow.md) | 发送公告/广告，安装 ob11 依赖后自动启用 HTTP 模式，使用 `.pn` 查看帮助 |
+| rename.js | [群名片集体修改器](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/rename.md) | 批量修改群名片，安装 ob11 依赖后自动启用 HTTP 模式，使用 `.rn` 查看帮助 |
 
 ## TypeScript 插件项目
 

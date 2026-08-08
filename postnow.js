@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         骰主公告极速版
 // @author       错误
-// @version      1.2.0
-// @description  让骰主掌握立即发公告、或者广告的权利。使用 .pn 查看帮助（.pnh 为HTTP版兼容指令）。安装 ob11 网络连接依赖(>=2.1.0) 后自动启用HTTP模式，向当前账号的所有群发送公告；未安装时使用普通模式，仅发送给安装后一周内活跃过的群聊。每四个小时自动储存一次数据，期间重载js可能导致数据丢失，可使用 .pn save 保存数据。
+// @version      1.2.1
+// @description  让骰主掌握立即发公告、或者广告的权利。使用 .pn 查看帮助。安装 ob11 网络连接依赖(>=2.1.0) 后自动启用HTTP模式，向当前账号的所有群发送公告；未安装时使用普通模式，仅发送给安装后一周内活跃过的群聊。每四个小时自动储存一次数据，期间重载js可能导致数据丢失，可使用 .pn save 保存数据。
 // @timestamp    1732543168
 // 2024-11-25 21:59:28
 // @license      MIT
@@ -12,7 +12,7 @@
 
 let ext = seal.ext.find('postnow');
 if (!ext) {
-    ext = seal.ext.new('postnow', '错误', '1.2.0');
+    ext = seal.ext.new('postnow', '错误', '1.2.1');
     seal.ext.register(ext);
 
     let readyToSend = false;
@@ -311,8 +311,7 @@ if (!ext) {
 【.pn chaseat <ID> <公告内容>】发布追杀公告，且@对应玩家
 【.pn save】保存数据
 【.pn send】确认发送
-【.pn cancel】取消发送
-提示: .pnh 为HTTP版旧指令，同样可用`;
+【.pn cancel】取消发送`;
     cmd.solve = async (ctx, msg, cmdArgs) => {
         if (ctx.privilegeLevel < 100) {
             const s = seal.formatTmpl(ctx, "核心:提示_无权限");
@@ -435,7 +434,6 @@ if (!ext) {
         }
     };
     ext.cmdMap['pn'] = cmd;
-    ext.cmdMap['pnh'] = cmd;
 
     globalThis.getPostData = () => {
         return JSON.parse(JSON.stringify(data));

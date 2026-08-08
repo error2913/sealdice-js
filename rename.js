@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         群名片集体修改器
 // @author       错误
-// @version      1.1.0
-// @description  指令 .rn 获取帮助（.rnh 为HTTP版兼容指令）。安装 ob11 网络连接依赖(>=2.1.0) 后自动使用HTTP模式，为全部群成员修改名片；未安装时使用普通模式，仅为七天内发言的用户修改（需要骰主公告极速版）。骰娘需要管理员权限。使用指令需要管理员权限。
+// @version      1.1.1
+// @description  指令 .rn 获取帮助。安装 ob11 网络连接依赖(>=2.1.0) 后自动使用HTTP模式，为全部群成员修改名片；未安装时使用普通模式，仅为七天内发言的用户修改（需要骰主公告极速版）。骰娘需要管理员权限。使用指令需要管理员权限。
 // @timestamp    1733286874
 // 2024-12-04 12:34:34
 // @license      MIT
@@ -12,7 +12,7 @@
 
 let ext = seal.ext.find('rename');
 if (!ext) {
-    ext = seal.ext.new('rename', '错误', '1.1.0');
+    ext = seal.ext.new('rename', '错误', '1.1.1');
     seal.ext.register(ext);
 }
 
@@ -177,8 +177,7 @@ cmd.help = `帮助:
 【.rn fmt <前缀> <后缀>】为群名片添加前缀和后缀
 【.rn draw】将群成员的群名片设置为牌堆抽取结果
 【.rn amon】阿蒙！
-【.rn clr】恢复群名片
-提示: .rnh 为HTTP版旧指令，同样可用`;
+【.rn clr】恢复群名片`;
 cmd.solve = async (ctx, msg, cmdArgs) => {
     if (ctx.privilegeLevel < 50) {
         const s = seal.formatTmpl(ctx, "核心:提示_无权限");
@@ -319,5 +318,4 @@ cmd.solve = async (ctx, msg, cmdArgs) => {
         }
     }
 };
-ext.cmdMap['rn'] = cmd;
-ext.cmdMap['rnh'] = cmd;
+    ext.cmdMap['rn'] = cmd;
