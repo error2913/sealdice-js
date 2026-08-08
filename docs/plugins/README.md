@@ -10,9 +10,7 @@
 - [意见箱](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/suggestion_box.md)
 - [自动群打卡](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/auto_group_sign.md)
 - [群名片集体修改器](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/rename.md)
-- [群名片集体修改器HTTP版](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/rename_http.md)
 - [骰主公告极速版](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/postnow.md)
-- [骰主公告极速版HTTP版](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/postnow_http.md)
 - [公告订阅版](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/announcement_subscribe.md)
 
 ## 跑团 / COC

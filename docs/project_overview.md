@@ -48,10 +48,8 @@ sealdice-js/
 | link.js | [LINK!!!](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/LINK.md) | 连接群聊与私聊消息，使用 `.link` 查看帮助 |
 | ping_3d.js | [三骰联合延迟测试](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/ping_3d.md) | 三个骰子同时安装时测试指令延迟，使用 `.乒` 开始测试 |
 | ping_auto.js | [多骰联合延迟测试](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/ping_auto.md) | 自动化的多骰延迟测试，依赖 team 插件，使用 `.乒乓` 查看帮助 |
-| postnow_http.js | [骰主公告极速版HTTP版](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/postnow_http.md) | 通过 HTTP 直接发送公告/广告，使用 `.pnh help` 查看帮助 |
-| postnow.js | [骰主公告极速版](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/postnow.md) | 向活跃群发送公告/广告，使用 `.pn help` 查看帮助 |
-| rename_http.js | [群名片集体修改器HTTP版](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/rename_http.md) | 批量修改群名片，需要管理员权限，使用 `.rnh` 查看帮助 |
-| rename.js | [群名片集体修改器](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/rename.md) | 批量修改群名片（七天内活跃用户），需要管理员权限，使用 `.rn` 查看帮助 |
+| postnow.js | [骰主公告极速版](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/postnow.md) | 发送公告/广告，安装 ob11 依赖后自动启用 HTTP 模式，使用 `.pn` 查看帮助（`.pnh` 兼容） |
+| rename.js | [群名片集体修改器](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/rename.md) | 批量修改群名片，安装 ob11 依赖后自动启用 HTTP 模式，使用 `.rn` 查看帮助（`.rnh` 兼容） |
 
 ## TypeScript 插件项目
 
@@ -102,10 +100,11 @@ sealdice-js/
 
 部分插件之间存在依赖关系，例如：
 
-- `auto_groupsign.js`、`postnow_http.js`、`rename_http.js`、`coc_forward_msg.js` 依赖 `ob11网络连接依赖`（>= 2.1.0）
+- `auto_groupsign.js`、`coc_forward_msg.js` 依赖 `ob11网络连接依赖`（>= 2.1.0）
 - `join_group_verify.js` 依赖 `ob11网络连接依赖`（>= 2.1.0）
+- `postnow.js`、`rename.js` 安装 `ob11网络连接依赖` 后自动启用 HTTP 模式（可选）
 - `ping_auto.js` 依赖 `team` 插件
 - `random_lottery.js` 依赖 `骰主公告极速版`
-- `rename.js` 依赖 `骰主公告极速版`
+- `rename.js` 普通模式依赖 `骰主公告极速版`
 
 安装前请确认对应依赖已加载。

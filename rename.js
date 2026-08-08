@@ -1,19 +1,18 @@
 // ==UserScript==
 // @name         群名片集体修改器
 // @author       错误
-// @version      1.0.1
-// @description  指令 .rn 获取帮助。七天内发言的用户才可被修改群名片。骰娘需要管理员权限。使用指令需要管理员权限。依赖于错误:骰主公告极速版:>=1.1.0。
+// @version      1.1.0
+// @description  指令 .rn 获取帮助（.rnh 为HTTP版兼容指令）。安装 ob11 网络连接依赖(>=2.1.0) 后自动使用HTTP模式，为全部群成员修改名片；未安装时使用普通模式，仅为七天内发言的用户修改（需要骰主公告极速版）。骰娘需要管理员权限。使用指令需要管理员权限。
 // @timestamp    1733286874
 // 2024-12-04 12:34:34
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
 // @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/rename.js
-// @depends 错误:骰主公告极速版:>=1.1.0
 // ==/UserScript==
 
 let ext = seal.ext.find('rename');
 if (!ext) {
-    ext = seal.ext.new('rename', '错误', '1.0.1');
+    ext = seal.ext.new('rename', '错误', '1.1.0');
     seal.ext.register(ext);
 }
 
@@ -40,15 +39,43 @@ function getCtx(epId, msg) {
     return undefined;
 }
 
-async function setNameByTmpl(epId, gid, tmpl) {
-    const data = globalThis.getPostData();
-    if (!data.hasOwnProperty(epId) || !data[epId].hasOwnProperty(gid)) {
-        return { result: null, err: new Error('未找到数据') };
+// 获取待修改群成员列表：有 ob11 网络连接依赖时用HTTP模式拉取全部成员，否则用骰主公告极速版的活跃数据
+async function getUids(epId, gid) {
+    if (globalThis.net) {
+        const data = await globalThis.net.callApi(epId, `get_group_member_list?group_id=${gid.replace(/\D+/, '')}`);
+        if (data === null) {
+            return { uids: null, err: new Error('未找到数据') };
+        }
+
+        const uids = data.map(item => `QQ:${item.user_id}`);
+        if (uids.length === 0) {
+            return { uids: null, err: new Error('当前群聊没有用户数据') };
+        }
+
+        return { uids, err: null };
     }
 
-    const uids = Object.keys(data[epId][gid].members);
-    if (uids.length === 0) {
-        return { result: null, err: new Error('当前群聊没有用户数据') };
+    if (typeof globalThis.getPostData === 'function') {
+        const data = globalThis.getPostData();
+        if (!data.hasOwnProperty(epId) || !data[epId].hasOwnProperty(gid)) {
+            return { uids: null, err: new Error('未找到数据') };
+        }
+
+        const uids = Object.keys(data[epId][gid].members);
+        if (uids.length === 0) {
+            return { uids: null, err: new Error('当前群聊没有用户数据') };
+        }
+
+        return { uids, err: null };
+    }
+
+    return { uids: null, err: new Error('未找到数据，请安装 ob11 网络连接依赖或骰主公告极速版') };
+}
+
+async function setNameByTmpl(epId, gid, tmpl) {
+    const { uids, err } = await getUids(epId, gid);
+    if (err !== null) {
+        return { result: null, err };
     }
 
     const f = 10;
@@ -89,14 +116,9 @@ async function setNameByTmpl(epId, gid, tmpl) {
 }
 
 async function setNameByDraw(epId, gid, name) {
-    const data = globalThis.getPostData();
-    if (!data.hasOwnProperty(epId) || !data[epId].hasOwnProperty(gid)) {
-        return { result: null, err: new Error('未找到数据') };
-    }
-
-    const uids = Object.keys(data[epId][gid].members);
-    if (uids.length === 0) {
-        return { result: null, err: new Error('当前群聊没有用户数据') };
+    const { uids, err } = await getUids(epId, gid);
+    if (err !== null) {
+        return { result: null, err };
     }
 
     const f = 10;
@@ -155,7 +177,8 @@ cmd.help = `帮助:
 【.rn fmt <前缀> <后缀>】为群名片添加前缀和后缀
 【.rn draw】将群成员的群名片设置为牌堆抽取结果
 【.rn amon】阿蒙！
-【.rn clr】恢复群名片`;
+【.rn clr】恢复群名片
+提示: .rnh 为HTTP版旧指令，同样可用`;
 cmd.solve = async (ctx, msg, cmdArgs) => {
     if (ctx.privilegeLevel < 50) {
         const s = seal.formatTmpl(ctx, "核心:提示_无权限");
@@ -297,3 +320,4 @@ cmd.solve = async (ctx, msg, cmdArgs) => {
     }
 };
 ext.cmdMap['rn'] = cmd;
+ext.cmdMap['rnh'] = cmd;
