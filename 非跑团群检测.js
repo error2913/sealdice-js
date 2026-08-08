@@ -35,10 +35,10 @@ function getRegexConfig(key) {
             return new RegExp(regexes.join('|'));
         } catch (e) {
             console.error(`正则表达式错误，内容:${regexes.join('|')}，错误信息:${e.message}`);
-            return /[^]/;
+            return /(?!)/;
         }
     }
-    return /[^]/;
+    return /(?!)/;
 }
 
 function checkMsg(ctx) {

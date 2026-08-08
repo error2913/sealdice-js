@@ -142,7 +142,14 @@ async function buildRequestUserInfo(epId, user_id) {
     return `[CQ:image,file=https://q.qlogo.cn/headimg_dl?dst_uin=${user_id}&spec=640&img_type=jpg]
 QQ: ${user_id}
 昵称: ${nickname}
-等级: ${qqLevel}`
+等级: ${qqLevel}`;
+}
+
+async function buildLeavedUserInfo(epId, user_id) {
+    const { nickname } = await getQQLevelAndNickname(epId, user_id);
+    return `[CQ:image,file=https://q.qlogo.cn/headimg_dl?dst_uin=${user_id}&spec=640&img_type=jpg]
+QQ: ${user_id}
+昵称: ${nickname}`;
 }
 
 class Setting {
@@ -152,12 +159,14 @@ class Setting {
         this.gid = gid;
         this.reqMod = 0; // 0: 关闭，1: 按预设答案，2: 按预设答案，错误后由我确认，3: 由我确认
         this.vrfMod = 0; // 0: 关闭，1: 自动生成验证码，忽略邀请加入，2: 按预设验证码验证，忽略邀请加入，3: 自动生成验证码，4: 按预设验证码验证
-        this.ansArr = [];
+        this.ansArr = []; // 预设答案数组，每个元素为预设答案
+        this.wrongAnsArr = []; // 错误答案数组，每个元素为错误答案
         this.vrfQQLevel = 10; // 需要验证的QQ等级
         this.vrfInterval = 300; // 验证码过期时间，单位秒
         this.vrfInfoArr = []; // 验证码信息数组，每个元素为 { q: 问题, a: 答案[] }
         this.reqMap = {}; // 加群请求，key为user_id，value为{ flag: 加群请求标志位, sub_type: 加群请求子类型, msgId: 加群请求消息ID }
         this.vrfMap = {}; // 加群验证定时器，key为user_id，value为{ timer: 定时器ID, code: 验证码[], msgId: 加群验证消息ID }，重载后不恢复数据
+        this.showLeave = false; // 是否显示退群消息
     }
 
     static getSetting(gid) {
@@ -168,10 +177,12 @@ class Setting {
                 setting.reqMod = data.reqMod || 0;
                 setting.vrfMod = data.vrfMod || 0;
                 setting.ansArr = data.ansArr || [];
+                setting.wrongAnsArr = data.wrongAnsArr || [];
                 setting.vrfQQLevel = data.vrfQQLevel || 10;
                 setting.vrfInterval = data.vrfInterval || 300;
                 setting.vrfInfoArr = data.vrfInfoArr || [];
                 setting.reqMap = data.reqMap || {};
+                setting.showLeave = data.showLeave || false;
             } catch (error) {
                 console.error(`从数据库中获取${`setting_${gid}`}失败:`, error);
             }
@@ -201,11 +212,13 @@ cmd.help = `帮助:
 0: 关闭，1: 自动生成验证码，忽略邀请加入，2: 按预设验证码验证，忽略邀请加入，3: 自动生成验证码，4: 按预设验证码验证
 
 【.agv ans [答案1] [答案2] ...】设置加群申请预设答案
+【.agv wrong [答案1] [答案2] ...】设置加群申请错误答案
 【.agv lv [等级]】设置需要验证的QQ等级，默认10
 【.agv t [秒数]】设置加群验证的验证码过期时间，单位秒
 【.agv vi show】查看加群验证的验证码问题和答案
 【.agv vi add [问题] [验证码1] [验证码2] ...】添加验证码问题和答案
 【.agv vi del [问题] [问题2] ...】删除验证码问题和答案
+【.agv leave [show/hide]】是否显示退群消息，默认隐藏
 `;
 cmd.solve = (ctx, msg, cmdArgs) => {
     const ret = seal.ext.newCmdExecuteResult(true);
@@ -220,10 +233,13 @@ cmd.solve = (ctx, msg, cmdArgs) => {
         case 'status': {
             seal.replyToSender(ctx, msg, `加群处理模式: ${setting.reqMod}
 预设加群申请答案: ${setting.ansArr.join('、')}
+错误答案: ${setting.wrongAnsArr.join('、')}
 
 加群验证模式: ${setting.vrfMod}
 需要验证的QQ等级: ${setting.vrfQQLevel}
 加群验证过期时间: ${setting.vrfInterval} 秒
+
+是否显示退群消息: ${setting.showLeave ? '显示' : '隐藏'}
 `);
             return ret;
         }
@@ -314,6 +330,17 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             seal.replyToSender(ctx, msg, `加群预设答案已设置为 ${ansArr.join('、')}`);
             return ret;
         }
+        case 'wrong': {
+            const wrongAnsArr = cmdArgs.args.slice(1);
+            if (wrongAnsArr.length === 0) {
+                seal.replyToSender(ctx, msg, '加群错误答案参数错误，必须至少有一个错误答案');
+                return ret;
+            }
+            setting.wrongAnsArr = wrongAnsArr;
+            setting.saveSetting();
+            seal.replyToSender(ctx, msg, `加群错误答案已设置为 ${wrongAnsArr.join('、')}`);
+            return ret;
+        }
         case 'lv': {
             const val2 = cmdArgs.getArgN(2);
             const lv = parseInt(val2);
@@ -374,6 +401,23 @@ ${setting.vrfInfoArr.map(vi => `${vi.q}：\n${vi.a.join('、')}`).join('\n\n')}`
                     return ret;
                 }
             }
+        }
+        case 'leave': {
+            const val2 = cmdArgs.getArgN(2);
+            switch (val2) {
+                case 'show': {
+                    setting.showLeave = true;
+                    setting.saveSetting();
+                    break;
+                }
+                case 'hide': {
+                    setting.showLeave = false;
+                    setting.saveSetting();
+                    break;
+                }
+            }
+            seal.replyToSender(ctx, msg, `是否显示退群消息: ${setting.showLeave ? '显示' : '隐藏'}`);
+            return ret;
         }
         default: {
             ret.showHelp = true;
@@ -499,6 +543,28 @@ ${q}`);
                         break;
                     }
                 }
+                return;
+            }
+            if (event.notice_type === 'group_decrease') {
+                const { sub_type, group_id, operator_id, user_id } = event;
+                console.log(`群成员减少，退群方式: ${sub_type}，群ID: ${group_id}，操作人ID: ${operator_id}，用户ID: ${user_id}`);
+                const setting = Setting.getSetting(`QQ-Group:${group_id}`);
+                if (!setting.showLeave) return;
+                switch (sub_type) {
+                    case 'leave': {
+                        const userInfo = await buildLeavedUserInfo(epId, user_id);
+                        await replyToGroup(epId, `QQ-Group:${group_id}`, `${userInfo}
+主动退群了`);
+                        break;
+                    }
+                    case 'kick': {
+                        const userInfo = await buildLeavedUserInfo(epId, user_id);
+                        await replyToGroup(epId, `QQ-Group:${group_id}`, `${userInfo}
+被 ${operator_id} 踢出群了`);
+                        break;
+                    }
+                }
+                return;
             }
         };
 
@@ -515,15 +581,25 @@ ${q}`);
                 }
 
                 const setting = Setting.getSetting(`QQ-Group:${group_id}`);
+                if (setting.wrongAnsArr.includes(comment) || (ans && setting.wrongAnsArr.includes(ans))) {
+                    console.log(`用户 ${user_id} 申请加入群 ${group_id}，答案错误`);
+                    await setGroupAddRequest(epId, flag, sub_type, false, '答案错误');
+                    const userInfo = await buildRequestUserInfo(epId, user_id);
+                    await replyToGroup(epId, setting.gid, `${userInfo}
+申请信息: ${comment}
+答案错误，已拒绝`);
+                    return;
+                }
+
                 switch (setting.reqMod) {
                     case 1: {
                         if (!setting.ansArr.includes(comment) && (!ans || !setting.ansArr.includes(ans))) {
-                            console.log(`拒绝用户 ${user_id} 申请加入群 ${group_id}，答案错误`);
-                            await setGroupAddRequest(epId, flag, sub_type, false, '答案错误');
+                            console.log(`拒绝用户 ${user_id} 申请加入群 ${group_id}，答案不正确`);
+                            await setGroupAddRequest(epId, flag, sub_type, false, '答案不正确');
                             const userInfo = await buildRequestUserInfo(epId, user_id);
                             await replyToGroup(epId, setting.gid, `${userInfo}
 申请信息: ${comment}
-答案错误，已拒绝`);
+答案不正确，已拒绝`);
                             break;
                         }
                         console.log(`用户 ${user_id} 申请加入群 ${group_id}，答案正确`);
@@ -536,11 +612,11 @@ ${q}`);
                     }
                     case 2: {
                         if (!setting.ansArr.includes(comment) && (!ans || !setting.ansArr.includes(ans))) {
-                            console.log(`未拒绝用户 ${user_id} 申请加入群 ${group_id}，答案错误`);
+                            console.log(`未拒绝用户 ${user_id} 申请加入群 ${group_id}，答案不正确`);
                             const userInfo = await buildRequestUserInfo(epId, user_id);
                             const msgId = await replyToGroup(epId, setting.gid, `${userInfo}
 申请信息: ${comment}
-答案错误，未拒绝`);
+答案不正确，未拒绝`);
                             setting.reqMap[user_id] = { flag, sub_type, msgId };
                             setting.saveSetting();
                             break;
