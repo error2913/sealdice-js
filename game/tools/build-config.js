@@ -1,4 +1,4 @@
-var filename = 'game依赖.js'
+var filename = 'game_dependency.js'
 
 module.exports = {
   dev: {

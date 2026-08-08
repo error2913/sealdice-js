@@ -1,6 +1,6 @@
 # card_game_template（卡牌游戏模板）
 
-- 目录：[card_game_template/](../../card_game_template/)
+- 目录：[card_game_template/](https://github.com/error2913/sealdice-js/tree/main/card_game_template/)
 - 扩展名：cardGameTemplate
 - 版本：1.0.0
 - 作者：错误

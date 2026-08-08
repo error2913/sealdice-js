@@ -1,0 +1,21 @@
+# 螺旋飞行海豹
+
+- 源码：[fly_seal.js](https://github.com/error2913/sealdice-js/blob/main/fly_seal.js)
+- 版本：1.0.1
+- 作者：错误
+- 依赖：无
+
+## 简介
+
+让海豹飞起来的互动娱乐插件。使用 `.fly` 开始游戏，`.seal` 查看信息。
+
+## 指令
+
+```text
+.fly             开始游戏
+.fly 选项数字    做出选择
+.fly next        跳过本次选择
+.fly end         结束游戏
+.fly help        查看帮助
+.seal            查看海豹信息
+```

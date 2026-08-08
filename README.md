@@ -7,15 +7,15 @@
 
 ## 目录
 
-项目详细说明见 [项目总览](docs/项目总览.md)，包含以下内容：
+项目详细说明见 [项目总览](https://github.com/error2913/sealdice-js/blob/main/docs/project_overview.md)，包含以下内容：
 
-- [仓库结构](docs/项目总览.md#仓库结构)
-- [JS 插件列表](docs/项目总览.md#js-插件列表)
-- [TypeScript 插件项目](docs/项目总览.md#typescript-插件项目)
-- [牌堆资源](docs/项目总览.md#牌堆资源)
-- [后端服务](docs/项目总览.md#后端服务)
-- [安装与使用](docs/项目总览.md#安装与使用)
-- [插件文档目录](docs/plugins/README.md)
+- [仓库结构](https://github.com/error2913/sealdice-js/blob/main/docs/project_overview.md#仓库结构)
+- [JS 插件列表](https://github.com/error2913/sealdice-js/blob/main/docs/project_overview.md#js-插件列表)
+- [TypeScript 插件项目](https://github.com/error2913/sealdice-js/blob/main/docs/project_overview.md#typescript-插件项目)
+- [牌堆资源](https://github.com/error2913/sealdice-js/blob/main/docs/project_overview.md#牌堆资源)
+- [后端服务](https://github.com/error2913/sealdice-js/blob/main/docs/project_overview.md#后端服务)
+- [安装与使用](https://github.com/error2913/sealdice-js/blob/main/docs/project_overview.md#安装与使用)
+- [插件文档目录](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/README.md)
 
 ## 快速开始
 

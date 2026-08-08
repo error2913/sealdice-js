@@ -1,6 +1,6 @@
 # animal_world（动物世界）
 
-- 目录：[animal_world/](../../animal_world/)
+- 目录：[animal_world/](https://github.com/error2913/sealdice-js/tree/main/animal_world/)
 - 扩展名：animalWorld
 - 版本：1.0.0
 - 作者：错误

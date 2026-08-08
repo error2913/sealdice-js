@@ -1,4 +1,4 @@
-var filename = '斗地主2.js'
+var filename = 'fight_with_landlord.js'
 
 module.exports = {
   dev: {

@@ -1,6 +1,6 @@
 # game（综合游戏框架）
 
-- 目录：[game/](../../game/)
+- 目录：[game/](https://github.com/error2913/sealdice-js/tree/main/game/)
 - 扩展名：game依赖
 - 版本：1.0.0
 - 作者：错误
@@ -8,7 +8,7 @@
 
 ## 简介
 
-TypeScript 编写的综合游戏依赖框架，本身不提供直接指令，为其他插件（如[核弹发射按钮](核弹发射按钮.md)）提供基础能力。
+TypeScript 编写的综合游戏依赖框架，本身不提供直接指令，为其他插件（如[核弹发射按钮](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/nuclear_button.md)）提供基础能力。
 
 ## 模块
 

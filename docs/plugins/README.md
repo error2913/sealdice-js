@@ -4,53 +4,53 @@
 
 ## 群管理与通知
 
-- [加群验证](加群验证.md)
-- [非跑团群检测](非跑团群检测.md)
-- [集骰监听](集骰监听.md)
-- [意见箱](意见箱.md)
-- [自动群打卡](自动群打卡.md)
-- [群名片集体修改器](群名片集体修改器.md)
-- [群名片集体修改器HTTP版](群名片集体修改器HTTP版.md)
-- [骰主公告极速版](骰主公告极速版.md)
-- [骰主公告极速版HTTP版](骰主公告极速版HTTP版.md)
-- [公告订阅版](公告订阅版.md)
+- [加群验证](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/join_group_verify.md)
+- [非跑团群检测](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/non_trpg_group_detect.md)
+- [集骰监听](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/dice_group_monitor.md)
+- [意见箱](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/suggestion_box.md)
+- [自动群打卡](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/auto_group_sign.md)
+- [群名片集体修改器](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/rename.md)
+- [群名片集体修改器HTTP版](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/rename_http.md)
+- [骰主公告极速版](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/postnow.md)
+- [骰主公告极速版HTTP版](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/postnow_http.md)
+- [公告订阅版](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/announcement_subscribe.md)
 
 ## 跑团 / COC
 
-- [不定性疯狂提醒](不定性疯狂提醒.md)
-- [coc7指令中文版](coc7指令中文版.md)
-- [COC生成属性合并消息](COC生成属性合并消息.md)
-- [穗好感](穗好感.md)
+- [不定性疯狂提醒](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/insane_notice.md)
+- [coc7指令中文版](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/coc7_cn.md)
+- [COC生成属性合并消息](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/coc_forward_msg.md)
+- [穗好感](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/sui_favorability.md)
 
 ## 游戏与娱乐
 
-- [成语接龙](成语接龙.md)
-- [核弹发射按钮](核弹发射按钮.md)
-- [蟹脚小游戏](蟹脚小游戏.md)
-- [随机抽奖](随机抽奖.md)
-- [投票](投票.md)
-- [螺旋飞行海豹](螺旋飞行海豹.md)
-- [历史上的今天](历史上的今天.md)
+- [成语接龙](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/idiom.md)
+- [核弹发射按钮](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/nuclear_button.md)
+- [蟹脚小游戏](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/crab_cult_game.md)
+- [随机抽奖](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/random_lottery.md)
+- [投票](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/vote.md)
+- [螺旋飞行海豹](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/fly_seal.md)
+- [历史上的今天](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/today_in_history.md)
 
 ## 工具与依赖
 
-- [HTTP依赖](HTTP依赖.md)
-- [LINK!!!](LINK.md)
-- [三骰联合延迟测试](三骰联合延迟测试.md)
-- [多骰联合延迟测试](多骰联合延迟测试.md)
-- [消息合并](消息合并.md)
+- [HTTP依赖](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/http_dependency.md)
+- [LINK!!!](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/LINK.md)
+- [三骰联合延迟测试](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/ping_3d.md)
+- [多骰联合延迟测试](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/ping_auto.md)
+- [消息合并](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/message_merge.md)
 
 ## 目录内插件
 
-- [豹语变量红包](豹语变量红包.md)（`redbag/`）
-- [shell运行](shell运行.md)（`run_shell/`）
+- [豹语变量红包](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/redbag.md)（`redbag/`）
+- [shell运行](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/run_shell.md)（`run_shell/`）
 
 ## TypeScript 插件项目
 
-- [game（综合游戏框架）](game.md)
-- [排行榜](排行榜.md)（`chart/`）
-- [team（队伍系统）](team.md)
-- [animal_world（动物世界）](animal_world.md)
-- [card_game_template（卡牌游戏模板）](card_game_template.md)
-- [fight_with_landlord（斗地主）](fight_with_landlord.md)
-- [UNO](UNO.md)
+- [game（综合游戏框架）](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/game.md)
+- [排行榜](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/chart.md)（`chart/`）
+- [team（队伍系统）](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/team.md)
+- [animal_world（动物世界）](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/animal_world.md)
+- [card_game_template（卡牌游戏模板）](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/card_game_template.md)
+- [fight_with_landlord（斗地主）](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/fight_with_landlord.md)
+- [UNO](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/UNO.md)

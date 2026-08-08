@@ -1,6 +1,6 @@
 # team（队伍系统）
 
-- 目录：[team/](../../team/)
+- 目录：[team/](https://github.com/error2913/sealdice-js/tree/main/team/)
 - 扩展名：team
 - 版本：4.0.2
 - 作者：错误

@@ -1,6 +1,6 @@
 # fight_with_landlord（斗地主）
 
-- 目录：[fight_with_landlord/](../../fight_with_landlord/)
+- 目录：[fight_with_landlord/](https://github.com/error2913/sealdice-js/tree/main/fight_with_landlord/)
 - 扩展名：FightWithLandlord2
 - 版本：2.0.0
 - 作者：错误

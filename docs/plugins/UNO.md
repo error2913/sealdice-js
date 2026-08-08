@@ -1,6 +1,6 @@
 # UNO
 
-- 目录：[UNO/](../../UNO/)
+- 目录：[UNO/](https://github.com/error2913/sealdice-js/tree/main/UNO/)
 - 扩展名：UNO
 - 版本：1.0.0
 - 作者：错误
