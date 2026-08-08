@@ -1,19 +1,19 @@
 // ==UserScript==
 // @name         群名片集体修改器HTTP版
 // @author       错误
-// @version      1.0.0
-// @description  指令 .rnh 获取帮助。骰娘需要管理员权限。使用指令需要管理员权限。依赖于错误:HTTP依赖:>=1.0.0。
+// @version      1.0.1
+// @description  指令 .rnh 获取帮助。骰娘需要管理员权限。使用指令需要管理员权限。依赖于错误&白鱼:ob11网络连接依赖:>=2.1.0。
 // @timestamp    1733286874
 // 2024-12-04 12:34:34
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
 // @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/rename_http.js
-// @depends 错误:HTTP依赖:>=1.0.0
+// @depends 错误&白鱼:ob11网络连接依赖:>=2.1.0
 // ==/UserScript==
 
 let ext = seal.ext.find('rename_http');
 if (!ext) {
-    ext = seal.ext.new('rename_http', '错误', '1.0.0');
+    ext = seal.ext.new('rename_http', '错误', '1.0.1');
     seal.ext.register(ext);
 }
 
@@ -41,7 +41,7 @@ function getCtx(epId, msg) {
 }
 
 async function setNameByTmpl(epId, gid, tmpl) {
-    const data = await globalThis.http.getData(epId, `get_group_member_list?group_id=${gid.replace(/\D+/, '')}`);
+    const data = await globalThis.net.callApi(epId, `get_group_member_list?group_id=${gid.replace(/\D+/, '')}`);
     if (data === null) {
         return { result: null, err: new Error('未找到数据') };
     }
@@ -89,7 +89,7 @@ async function setNameByTmpl(epId, gid, tmpl) {
 }
 
 async function setNameByDraw(epId, gid, name) {
-    const data = await globalThis.http.getData(epId, `get_group_member_list?group_id=${gid.replace(/\D+/, '')}`);
+    const data = await globalThis.net.callApi(epId, `get_group_member_list?group_id=${gid.replace(/\D+/, '')}`);
     if (data === null) {
         return { result: null, err: new Error('未找到数据') };
     }

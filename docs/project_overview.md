@@ -102,7 +102,8 @@ sealdice-js/
 
 部分插件之间存在依赖关系，例如：
 
-- `auto_groupsign.js`、`postnow_http.js`、`rename_http.js`、`coc_forward_msg.js` 依赖 `http_dependency.js`
+- `auto_groupsign.js`、`postnow_http.js`、`rename_http.js`、`coc_forward_msg.js` 依赖 `ob11网络连接依赖`（>= 2.1.0）
+- `join_group_verify.js` 依赖 `ob11网络连接依赖`（>= 2.1.0）
 - `ping_auto.js` 依赖 `team` 插件
 - `random_lottery.js` 依赖 `骰主公告极速版`
 - `rename.js` 依赖 `骰主公告极速版`

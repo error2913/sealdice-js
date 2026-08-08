@@ -2,9 +2,9 @@
 
 - 目录：[chart/](https://github.com/error2913/sealdice-js/tree/main/chart/)
 - 扩展名：排行榜
-- 版本：1.2.0
+- 版本：1.2.1
 - 作者：错误
-- 依赖：HTTP依赖（用于更新数据）
+- 依赖：ob11 网络连接依赖（>= 2.1.0，用于更新数据）
 
 ## 简介
 

@@ -1,9 +1,9 @@
 # 骰主公告极速版HTTP版
 
 - 源码：[postnow_http.js](https://github.com/error2913/sealdice-js/blob/main/postnow_http.js)
-- 版本：1.0.0
+- 版本：1.0.1
 - 作者：错误
-- 依赖：HTTP依赖（>= 1.0.0）
+- 依赖：ob11 网络连接依赖（>= 2.1.0）
 
 ## 简介
 

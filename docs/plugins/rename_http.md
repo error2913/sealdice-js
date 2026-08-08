@@ -1,9 +1,9 @@
 # 群名片集体修改器HTTP版
 
 - 源码：[rename_http.js](https://github.com/error2913/sealdice-js/blob/main/rename_http.js)
-- 版本：1.0.0
+- 版本：1.0.1
 - 作者：错误
-- 依赖：HTTP依赖（>= 1.0.0）、deck 牌堆扩展
+- 依赖：ob11 网络连接依赖（>= 2.1.0）、deck 牌堆扩展
 
 ## 简介
 

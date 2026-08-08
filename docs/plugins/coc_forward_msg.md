@@ -1,9 +1,9 @@
 # COC生成属性合并消息
 
 - 源码：[coc_forward_msg.js](https://github.com/error2913/sealdice-js/blob/main/coc_forward_msg.js)
-- 版本：1.0.1
+- 版本：1.0.2
 - 作者：错误
-- 依赖：HTTP依赖（>= 1.0.0）、内置 coc7 指令
+- 依赖：ob11 网络连接依赖（>= 2.1.0）、内置 coc7 指令
 
 ## 简介
 

@@ -1,19 +1,19 @@
 // ==UserScript==
 // @name         骰主公告极速版HTTP版
 // @author       错误
-// @version      1.0.0
-// @description  让骰主掌握立即发公告、或者广告的权利。使用 .pnh help 查看帮助。依赖于错误:HTTP依赖:>=1.0.0。
+// @version      1.0.1
+// @description  让骰主掌握立即发公告、或者广告的权利。使用 .pnh help 查看帮助。依赖于错误&白鱼:ob11网络连接依赖:>=2.1.0。
 // @timestamp    1732543168
 // 2024-11-25 21:59:28
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
 // @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/postnow_http.js
-// @depends 错误:HTTP依赖:>=1.0.0
+// @depends 错误&白鱼:ob11网络连接依赖:>=2.1.0
 // ==/UserScript==
 
 let ext = seal.ext.find('postnow_http');
 if (!ext) {
-    ext = seal.ext.new('postnow_http', '错误', '1.0.0');
+    ext = seal.ext.new('postnow_http', '错误', '1.0.1');
     seal.ext.register(ext);
 
     let readyToSend = false;
@@ -64,7 +64,7 @@ if (!ext) {
         for (let i = 0; i < eps.length; i++) {
             const epId = eps[i].userId;
 
-            const data = await globalThis.http.getData(epId,'get_group_list?no_cache=true');
+            const data = await globalThis.net.callApi(epId, 'get_group_list?no_cache=true');
             if (data === null) {
                 continue;
             }
@@ -103,7 +103,7 @@ if (!ext) {
         for (let i = 0; i < eps.length; i++) {
             const epId = eps[i].userId;
 
-            const data = await globalThis.http.getData(epId,'get_group_list?no_cache=true');
+            const data = await globalThis.net.callApi(epId, 'get_group_list?no_cache=true');
             if (data === null) {
                 continue;
             }
@@ -113,7 +113,7 @@ if (!ext) {
             let arr = [];
             for (let j = 0; j < gids.length; j++) {
                 const gid = gids[j];
-                const group_member_list = await globalThis.http.getData(epId, `get_group_member_list?group_id=${gid.replace(/\D+/, '')}`);
+                const group_member_list = await globalThis.net.callApi(epId, `get_group_member_list?group_id=${gid.replace(/\D+/, '')}`);
                 if (group_member_list === null) {
                     continue;
                 }

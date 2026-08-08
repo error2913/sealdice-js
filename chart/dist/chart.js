@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         变量排行榜
 // @author       错误
-// @version      1.2.0
+// @version      1.2.1
 // @description  为你的豹语变量提供排行榜服务！请在插件设置内填写对应变量和名称，并填写数据更新的条件。插件并不能主动更新排行榜数据，需要被动触发。若图片发送不了请联系错误。
 // @timestamp    1731503833
 // 2024-11-13 21:17:13
@@ -9,7 +9,9 @@
 // @homepageURL  https://github.com/error2913/sealdice-js/
 // @updateUrl    https://raw.gitmirror.com/error2913/sealdice-js/main/chart/dist/chart.js
 // @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/chart/dist/chart.js
+// @depends 错误&白鱼:ob11网络连接依赖:>=2.1.0
 // ==/UserScript==
+
 (() => {
   // src/chart.ts
   var ChartManager = class _ChartManager {
@@ -171,13 +173,13 @@
     const eps = seal.getEndPoints();
     for (let i = 0; i < eps.length; i++) {
       const epId = eps[i].userId;
-      const data = await globalThis.http.getData(epId, "get_group_list?no_cache=true");
+      const data = await globalThis.net.callApi(epId, "get_group_list?no_cache=true");
       if (data === null) {
         continue;
       }
       for (let j = 0; j < data.length; j++) {
         const gid = `QQ-Group:${data[j].group_id}`;
-        const data2 = await globalThis.http.getData(epId, `get_group_member_list?group_id=${data[j].group_id}`);
+        const data2 = await globalThis.net.callApi(epId, `get_group_member_list?group_id=${data[j].group_id}`);
         if (data2 === null) {
           continue;
         }
@@ -198,7 +200,7 @@
   function main() {
     let ext = seal.ext.find("排行榜");
     if (!ext) {
-      ext = seal.ext.new("排行榜", "错误", "1.2.0");
+      ext = seal.ext.new("排行榜", "错误", "1.2.1");
       seal.ext.register(ext);
     }
     const configManager = new ConfigManager(ext);
@@ -246,9 +248,9 @@
           return seal.ext.newCmdExecuteResult(true);
         }
         case "update": {
-          const exthttp = seal.ext.find("HTTP依赖");
-          if (!exthttp) {
-            seal.replyToSender(ctx, msg, "请先安装 错误:HTTP依赖:>=1.0.0");
+          const net = globalThis.net;
+          if (!net) {
+            seal.replyToSender(ctx, msg, "请先安装 错误&白鱼:ob11网络连接依赖:>=2.1.0");
             return seal.ext.newCmdExecuteResult(true);
           }
           update(ext, cm).then(() => {
@@ -276,8 +278,8 @@
     ext.cmdMap["chart"] = cmd;
     ext.cmdMap["排行榜"] = cmd;
     seal.ext.registerTask(ext, "cron", "0 */2 * * *", () => {
-      const exthttp = seal.ext.find("HTTP依赖");
-      if (!exthttp) {
+      const net = globalThis.net;
+      if (!net) {
         return;
       }
       update(ext, cm).then(() => {

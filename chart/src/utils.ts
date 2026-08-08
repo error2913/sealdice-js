@@ -31,14 +31,14 @@ export async function update(ext: seal.ExtInfo, cm: ChartManager) {
     for (let i = 0; i < eps.length; i++) {
         const epId = eps[i].userId;
 
-        const data = await globalThis.http.getData(epId,'get_group_list?no_cache=true');
+        const data = await globalThis.net.callApi(epId, 'get_group_list?no_cache=true');
         if (data === null) {
             continue;
         }
 
         for (let j = 0; j < data.length; j++) {
             const gid = `QQ-Group:${data[j].group_id}`
-            const data2 = await globalThis.http.getData(epId, `get_group_member_list?group_id=${data[j].group_id}`);
+            const data2 = await globalThis.net.callApi(epId, `get_group_member_list?group_id=${data[j].group_id}`);
             if (data2 === null) {
                 continue;
             }

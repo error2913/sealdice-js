@@ -9,6 +9,8 @@
 
 为其他插件提供 OneBot HTTP API 调用能力。HTTP 端口请按照自己的登录方案自行配置，配置完成后在插件设置填入。插件初始化时会自动获取 HTTP 地址对应的账号并保存。
 
+> 注意：本插件已由 [ob11 网络连接依赖](https://github.com/error2913/sealdice-plugin-ob11-net-connection) 替代，仅为兼容旧插件保留。
+
 在其他插件中使用：
 
 ```js

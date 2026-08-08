@@ -1,20 +1,20 @@
 // ==UserScript==
 // @name         自动群打卡
 // @author       错误
-// @version      1.0.0
-// @description  使用 .gs help 查看帮助。目前好像只有napcat可以用？依赖于错误:HTTP依赖:>=1.0.0。
+// @version      1.0.1
+// @description  使用 .gs help 查看帮助。目前好像只有napcat可以用？依赖于错误&白鱼:ob11网络连接依赖:>=2.1.0。
 // @timestamp    1734091336
 // 2024-12-13 20:02:16
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
 // @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/auto_groupsign.js
-// @depends 错误:HTTP依赖:>=1.0.0
+// @depends 错误&白鱼:ob11网络连接依赖:>=2.1.0
 // ==/UserScript==
 
 // 首先检查是否已经存在
 let ext = seal.ext.find('auto_groupsign');
 if (!ext) {
-    ext = seal.ext.new('auto_groupsign', '错误', '1.0.0');
+    ext = seal.ext.new('auto_groupsign', '错误', '1.0.1');
     seal.ext.register(ext);
 }
 
@@ -33,7 +33,7 @@ async function sign() {
     for (let i = 0; i < eps.length; i++) {
         const epId = eps[i].userId;
 
-        const data = await globalThis.http.getData(epId, 'get_group_list?no_cache=true');
+        const data = await globalThis.net.callApi(epId, 'get_group_list?no_cache=true');
         if (data === null) {
             continue;
         }
@@ -50,7 +50,7 @@ async function sign() {
                 for (let k = 0; k < arr_copy.length; k++) {
                     const gid = arr_copy[k];
 
-                    await globalThis.http.getData(epId, `send_group_sign?group_id=${gid.replace(/\D+/, '')}`);
+                    await globalThis.net.callApi(epId, `send_group_sign?group_id=${gid.replace(/\D+/, '')}`);
                     result++;
                 }
 
