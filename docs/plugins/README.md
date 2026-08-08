@@ -54,4 +54,3 @@
 - [card_game_template（卡牌游戏模板）](card_game_template.md)
 - [fight_with_landlord（斗地主）](fight_with_landlord.md)
 - [UNO](UNO.md)
-- [sealdice-js-ext-template（扩展模板）](sealdice-js-ext-template.md)
