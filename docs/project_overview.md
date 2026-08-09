@@ -1,6 +1,6 @@
 # sealdice-js 项目总览
 
-本仓库为海豹（SealDice）骰娘生态的插件集合，包含纯 JS 插件、TypeScript 插件工程、牌堆资源和配套后端服务。
+本仓库为海豹（SealDice）骰娘生态的插件集合，包含纯 JS 插件、TypeScript 插件工程和牌堆资源。
 
 ## 仓库结构
 
@@ -9,12 +9,9 @@ sealdice-js/
 ├── *.js                  # 纯 JS 插件，可直接放入海豹 js 插件目录使用
 ├── animal_world/         # TS 插件：动物世界（养成玩法）
 ├── card_game_template/   # TS 插件：卡牌游戏模板（deck/game/player 结构示例）
-├── chart/                # TS 插件：排行榜图表
 ├── deck/                 # 牌堆资源（.deck / .json）
 ├── fight_with_landlord/  # TS 插件：斗地主
 ├── game/                 # TS 插件：综合游戏框架（背包/商店/市场/队伍等）
-├── redbag/               # 红包插件（JS + Python 后端）
-├── run_shell/            # 命令行执行插件（JS + Python 后端）
 ├── team/                 # TS 插件：队伍系统
 ├── UNO/                  # TS 插件：UNO 卡牌游戏
 └── README.md
@@ -59,7 +56,6 @@ sealdice-js/
 | --- | --- |
 | animal_world | [动物世界](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/animal_world.md)，包含动物养成、玩家管理与排行榜 |
 | card_game_template | [卡牌游戏模板](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/card_game_template.md)，展示 deck/game/player 的标准结构 |
-| chart | [排行榜图表](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/chart.md)，可同步变量并生成图表 |
 | fight_with_landlord | [斗地主](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/fight_with_landlord.md) |
 | game | [综合游戏框架](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/game.md)，含背包、商店、市场、队伍、道具等模块 |
 | team | [队伍系统](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/team.md)，`.team` 创建/管理队伍，供其他插件依赖 |
@@ -75,12 +71,7 @@ sealdice-js/
 
 ## 后端服务
 
-部分插件带有独立的 Python 后端，需要按对应目录内的说明部署：
-
-| 目录 | 说明 |
-| --- | --- |
-| redbag/ | [豹语变量红包](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/redbag.md)，前端为 `redbag.js`，后端为 FastAPI 服务（生成红包图片等） |
-| run_shell/ | [shell运行](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/run_shell.md)，前端为 `run_shell.js`，后端负责进程管理与输出渲染 |
+带 Python 后端的项目（chart、redbag、run_shell）已移出本仓库，统一存放在 [error-backends](https://github.com/error2913/error-backends)（待建）仓库。
 
 ## 安装与使用
 

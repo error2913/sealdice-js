@@ -38,15 +38,9 @@
 - [多骰联合延迟测试](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/ping_auto.md)
 - [消息合并](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/message_merge.md)
 
-## 目录内插件
-
-- [豹语变量红包](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/redbag.md)（`redbag/`）
-- [shell运行](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/run_shell.md)（`run_shell/`）
-
 ## TypeScript 插件项目
 
 - [game（综合游戏框架）](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/game.md)
-- [排行榜](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/chart.md)（`chart/`）
 - [team（队伍系统）](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/team.md)
 - [animal_world（动物世界）](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/animal_world.md)
 - [card_game_template（卡牌游戏模板）](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/card_game_template.md)
