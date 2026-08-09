@@ -32,7 +32,7 @@
 
 ## 工具与依赖
 
-- [HTTP依赖](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/http_dependency.md)
+- [ob11网络连接依赖](https://github.com/error2913/sealdice-plugin-ob11-net-connection)（基础依赖插件，提供 `globalThis.net.callApi()`，替代已删除的旧 HTTP依赖）
 - [LINK!!!](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/LINK.md)
 - [三骰联合延迟测试](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/ping_3d.md)
 - [多骰联合延迟测试](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/ping_auto.md)

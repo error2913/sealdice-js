@@ -39,10 +39,9 @@ sealdice-js/
 | message_merge.js | [消息合并](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/message_merge.md) | 将多段消息合并为图文混排消息发送 |
 | crab_cult_game.js | [蟹脚小游戏](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/crab_cult_game.md) | 克苏鲁题材养成小游戏，`.cult` 查看指引、`.cult master` 查看骰主指令 |
 | suggestion_box.js | [意见箱](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/suggestion_box.md) | 收集和管理用户意见，使用 `.意见` 查看帮助 |
-| auto_groupsign.js | [自动群打卡](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/auto_group_sign.md) | 自动群签到，需 HTTP 依赖，使用 `.gs help` 查看帮助 |
+| auto_groupsign.js | [自动群打卡](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/auto_group_sign.md) | 自动群签到，需 ob11 网络连接依赖，使用 `.gs help` 查看帮助 |
 | coc7_cn.js | [coc7指令中文版](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/coc7_cn.md) | 将内置 COC7 指令改写为中文别名 |
-| coc_forward_msg.js | [COC生成属性合并消息](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/coc_forward_msg.md) | 修改内置 `.coc`，将生成结果合并为一条消息，需 HTTP 依赖 |
-| http_dependency.js | [HTTP依赖](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/http_dependency.md) | 基础依赖插件，提供 `globalThis.http.callApi()` 供其他插件调用 OneBot API |
+| coc_forward_msg.js | [COC生成属性合并消息](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/coc_forward_msg.md) | 修改内置 `.coc`，将生成结果合并为一条消息，需 ob11 网络连接依赖 |
 | link.js | [LINK!!!](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/LINK.md) | 连接群聊与私聊消息，使用 `.link` 查看帮助 |
 | ping_3d.js | [三骰联合延迟测试](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/ping_3d.md) | 三个骰子同时安装时测试指令延迟，使用 `.乒` 开始测试 |
 | ping_auto.js | [多骰联合延迟测试](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/ping_auto.md) | 自动化的多骰延迟测试，依赖 team 插件，使用 `.乒乓` 查看帮助 |
