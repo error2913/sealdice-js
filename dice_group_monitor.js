@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         集骰监听
 // @author       错误
-// @version      1.0.1
+// @version      1.0.2
 // @description  会把疑似集骰的群号发给通知列表，极大可能误报，仅作参考。\n个性化设置请移步 插件设置。\n白名单修改指令: .monitor\n可前往 https://github.com/baiyu-yu/plug-in/blob/main/%E5%85%A8%E8%87%AA%E5%8A%A8%E9%9B%86%E9%AA%B0%E6%A3%80%E6%B5%8B%E5%92%8C%E7%9B%91%E5%90%AC.js 获取升级版本
 // @timestamp    1727866889
 // 2024-10-02 19:01:29
@@ -12,7 +12,7 @@
 // 首先检查是否已经存在
 let ext = seal.ext.find('集骰监听');
 if (!ext) {
-    ext = seal.ext.new(('集骰监听'), '错误', '1.0.1');
+    ext = seal.ext.new(('集骰监听'), '错误', '1.0.2');
     // 注册扩展
     seal.ext.register(ext);
     seal.ext.registerIntConfig(ext, "集骰通知阈值", 3, "包括自己");
@@ -76,12 +76,12 @@ if (!ext) {
             return seal.ext.newCmdExecuteResult(true);
         }
         if (val == "del") {
-            whiteList[val2] = { time: 2000000000, dices: [], notice: true };
             delete whiteList[val2]
             seal.replyToSender(ctx, msg, '删除成功');
             ext.storageSet("whiteList", JSON.stringify(whiteList));
             return seal.ext.newCmdExecuteResult(true);
         }
+        return seal.ext.newCmdExecuteResult(true);
     };
     // 将命令注册到扩展中
     ext.cmdMap['monitor'] = cmdmonitor;

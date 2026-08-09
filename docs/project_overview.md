@@ -71,7 +71,7 @@ sealdice-js/
 
 ## 后端服务
 
-带 Python 后端的项目（chart、redbag、run_shell）已移出本仓库，统一存放在 [error-backends](https://github.com/error2913/error-backends)（待建）仓库。
+带 Python 后端的项目（chart、redbag、run_shell）已移出本仓库，统一存放在 [error-backends](https://github.com/error2913/error-backends) 仓库。
 
 ## 安装与使用
 

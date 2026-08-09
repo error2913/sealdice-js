@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         随机抽奖
 // @author       错误
-// @version      1.0.0
+// @version      1.0.1
 // @description  指令 .lo <数量> <附加文本> 进行随机抽奖。七天内发言的用户才可被抽取。同一次抽取中奖者不会重复。使用指令需要骰主权限。依赖于错误:骰主公告极速版:>=1.1.0。
 // @timestamp    1733286874
 // 2024-12-04 12:34:34
@@ -13,7 +13,7 @@
 
 let ext = seal.ext.find('lottery');
 if (!ext) {
-    ext = seal.ext.new('lottery', '错误', '1.0.0');
+    ext = seal.ext.new('lottery', '错误', '1.0.1');
     seal.ext.register(ext);
 }
 
@@ -41,6 +41,10 @@ function getCtx(epId, msg) {
 }
 
 function getAlluids(epId) {
+    if (typeof globalThis.getPostData !== 'function') {
+        return { alluids: null, err: new Error('未找到骰主公告极速版数据') };
+    }
+
     const data = globalThis.getPostData();
     if (!data.hasOwnProperty(epId)) {
         return { alluids: null, err: new Error('未找到数据') };
@@ -150,6 +154,7 @@ cmd.solve = async (ctx, msg, cmdArgs) => {
     const n = parseInt(val);
     if (isNaN(n) || n < 1) {
         seal.replyToSender(ctx, msg, '请输入大于0的数字');
+        return seal.ext.newCmdExecuteResult(true);
     }
 
     const s = cmdArgs.getRestArgsFrom(2);

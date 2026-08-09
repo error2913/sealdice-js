@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         HTTP依赖
 // @author       错误
-// @version      1.2.0
+// @version      1.2.1
 // @description  为插件提供HTTP依赖管理。\nHTTP端口请按照自己的登录方案自行配置，配置完成后在插件设置填入。插件初始化时会自动获取HTTP地址对应的账号并保存。\n提供指令 .http 可以直接调用\n在其他插件中使用方法: globalThis.http.callApi(epId, method, data=null)\nepId为骰子账号QQ:12345，method为方法，如get_login_info，data为参数。\n方法可参见https://github.com/botuniverse/onebot-11/blob/master/api/public.md#%E5%85%AC%E5%BC%80-api
 // @timestamp    1755278205
 // 2025-08-16 01:16:58
@@ -12,7 +12,7 @@
 
 let ext = seal.ext.find('HTTP依赖');
 if (!ext) {
-    ext = seal.ext.new('HTTP依赖', '错误', '1.2.0');
+    ext = seal.ext.new('HTTP依赖', '错误', '1.2.1');
     seal.ext.register(ext);
 }
 
@@ -230,6 +230,8 @@ cmd.solve = (ctx, msg, cmdArgs) => {
 
             globalThis.http.callApi(epId, method, data).then(result => {
                 seal.replyToSender(ctx, msg, JSON.stringify(result, null, 2));
+            }).catch(error => {
+                seal.replyToSender(ctx, msg, `调用失败: ${error.message}`);
             });
 
             return ret;

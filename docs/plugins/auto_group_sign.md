@@ -1,7 +1,7 @@
 # 自动群打卡
 
 - 源码：[auto_groupsign.js](https://github.com/error2913/sealdice-js/blob/main/auto_groupsign.js)
-- 版本：1.0.1
+- 版本：1.0.2
 - 作者：错误
 - 依赖：ob11 网络连接依赖（>= 2.1.0）
 

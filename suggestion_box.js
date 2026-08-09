@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         意见箱
 // @author       错误
-// @version      1.0.1
+// @version      1.0.2
 // @description  使用 .意见 来获取帮助。\n这是一个提供给用户提意见的插件，它能储存和管理用户提交的意见。插件接收到的意见不像 .send 那样具有时效性，所以不用担心会打扰到骰主的好梦，从而让用户没有后顾之忧地提出意见。
 // @timestamp    1732016949
 // 2024-11-19 19:49:09
@@ -12,7 +12,7 @@
 
 let ext = seal.ext.find('意见箱');
 if (!ext) {
-    ext = seal.ext.new('意见箱', '错误', '1.0.1');
+    ext = seal.ext.new('意见箱', '错误', '1.0.2');
     seal.ext.register(ext);
 
     seal.ext.registerIntConfig(ext, '意见箱通知上限', 100, '意见箱内意见达到上线后会向通知列表发送提醒')
@@ -53,7 +53,7 @@ if (!ext) {
                 continue;
             }
 
-            const item = box.splice(index, 1)[0];
+            const item = box[index];
 
             suggestions.push(item.s);
         }
@@ -89,7 +89,7 @@ if (!ext) {
 
         for (let i = 0; i < n; i++) {
             const index = Math.floor(Math.random() * box.length);
-            const item = box.splice(index, 1)[0];
+            const item = box[index];
 
             suggestions.push(item.s);
         }
@@ -112,7 +112,7 @@ if (!ext) {
             arr.push(s);
 
             if (i % pageSize === pageSize - 1 || i === box.length - 1) {
-                const pageNum = i === 0 ? 1 : Math.ceil(i / pageSize);
+                const pageNum = Math.ceil((i + 1) / pageSize);
 
                 const s = `意见箱列表:\n` + arr.join('\n') + `\n第${pageNum}/${totalPages}页`;
                 pages.push(s);

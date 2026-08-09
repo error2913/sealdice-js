@@ -1,7 +1,7 @@
 # 多骰联合延迟测试
 
 - 源码：[ping_auto.js](https://github.com/error2913/sealdice-js/blob/main/ping_auto.js)
-- 版本：1.0.2
+- 版本：1.0.3
 - 作者：错误
 - 依赖：team（>= 4.0.0）
 

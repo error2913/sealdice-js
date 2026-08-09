@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LINK!!!
 // @author       错误
-// @version      1.0.2
+// @version      1.0.3
 // @description  连接群聊私聊，只适配了QQ。使用 .link 获取帮助。
 // @timestamp    1731573405
 // 2024-11-14 16:36:45
@@ -13,7 +13,7 @@
 // 首先检查是否已经存在
 let ext = seal.ext.find('link');
 if (!ext) {
-    ext = seal.ext.new('link', '错误', '1.0.2');
+    ext = seal.ext.new('link', '错误', '1.0.3');
     // 注册扩展
     seal.ext.register(ext);
 
@@ -60,7 +60,7 @@ if (!ext) {
 
     /** 回复私聊消息*/
     function replyPrivate(ctx, s, id = '') {
-        const mmsg = getMsg('private', id || ctx.player.userId, ctx.group.groupId);
+        const mmsg = getMsg('private', id || ctx.player.userId, ctx.group ? ctx.group.groupId : '');
         const mctx = getCtx(ctx.endPoint.userId, mmsg);
         seal.replyToSender(mctx, mmsg, s);
     }

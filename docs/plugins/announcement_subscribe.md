@@ -1,7 +1,7 @@
 # 公告订阅版
 
 - 源码：[announcement_subscribe.js](https://github.com/error2913/sealdice-js/blob/main/announcement_subscribe.js)
-- 版本：1.0.0
+- 版本：1.0.1
 - 作者：错误
 - 依赖：无
 

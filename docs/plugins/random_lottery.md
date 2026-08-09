@@ -1,7 +1,7 @@
 # 随机抽奖
 
 - 源码：[random_lottery.js](https://github.com/error2913/sealdice-js/blob/main/random_lottery.js)
-- 版本：1.0.0
+- 版本：1.0.1
 - 作者：错误
 - 依赖：骰主公告极速版（>= 1.1.0）
 

@@ -1,7 +1,7 @@
 # LINK!!!
 
 - 源码：[link.js](https://github.com/error2913/sealdice-js/blob/main/link.js)
-- 版本：1.0.2
+- 版本：1.0.3
 - 作者：错误
 - 依赖：无
 

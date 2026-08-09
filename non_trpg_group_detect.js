@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         非跑团群检测
 // @author       错误
-// @version      1.0.1
+// @version      1.0.2
 // @description  请在插件设置填写相关配置。插件原理为：进群后或使用跑团功能后，超过阈值时间，使用了娱乐功能，则会向通知列表告警\n注：私聊或bot off时不会检测
 // @timestamp    1762271196
 // 2025-11-04 23:46:36
@@ -12,7 +12,7 @@
 
 let ext = seal.ext.find('非跑团群检测');
 if (!ext) {
-    ext = seal.ext.new('非跑团群检测', '错误', '1.0.1');
+    ext = seal.ext.new('非跑团群检测', '错误', '1.0.2');
     seal.ext.register(ext);
 }
 
@@ -59,7 +59,7 @@ function handlePlayMsg(ctx, msg) {
 
     const cooldownInterval = seal.ext.getFloatConfig(ext, '告警冷却时间/h');
     if (coolDog[gid]) {
-        if (msg.time - coolDog[gid] < cooldownInterval * 60) return;
+        if (msg.time - coolDog[gid] < cooldownInterval * 60 * 60) return;
         delete coolDog[gid];
         ext.storageSet('coolDog', JSON.stringify(coolDog));
     }
@@ -67,7 +67,7 @@ function handlePlayMsg(ctx, msg) {
     const lastTime = data[gid] || ctx.group.enteredTime;
     const alertThreshold = seal.ext.getFloatConfig(ext, '告警阈值时间/h');
     if (alertThreshold <= 0) return;
-    if (msg.time - lastTime > alertThreshold * 60) {
+    if (msg.time - lastTime > alertThreshold * 60 * 60) {
         coolDog[gid] = msg.time;
         ext.storageSet('coolDog', JSON.stringify(coolDog));
         ctx.notice(`群聊(${gid})使用了娱乐功能，超过阈值时间, 请检查是否为非跑团群\n检测消息:${msg.message}`);

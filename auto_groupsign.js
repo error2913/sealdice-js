@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         自动群打卡
 // @author       错误
-// @version      1.0.1
+// @version      1.0.2
 // @description  使用 .gs help 查看帮助。目前好像只有napcat可以用？依赖于错误&白鱼:ob11网络连接依赖:>=2.1.0。
 // @timestamp    1734091336
 // 2024-12-13 20:02:16
@@ -14,7 +14,7 @@
 // 首先检查是否已经存在
 let ext = seal.ext.find('auto_groupsign');
 if (!ext) {
-    ext = seal.ext.new('auto_groupsign', '错误', '1.0.1');
+    ext = seal.ext.new('auto_groupsign', '错误', '1.0.2');
     seal.ext.register(ext);
 }
 
@@ -25,6 +25,10 @@ if (flag !== '0' && flag !== '1') {
 }
 
 async function sign() {
+    if (!globalThis.net) {
+        return 0;
+    }
+
     const f = 5;
     const interval = 500;
     let result = 0;
@@ -100,6 +104,10 @@ cmd.solve = async (ctx, msg, cmdArgs) => {
             return seal.ext.newCmdExecuteResult(true);
         }
         case 'now': {
+            if (!globalThis.net) {
+                seal.replyToSender(ctx, msg, '未找到 ob11 网络连接依赖');
+                return seal.ext.newCmdExecuteResult(true);
+            }
             const result = await sign();
             seal.replyToSender(ctx, msg, `已向${result}个群发送打卡事件`);
             return seal.ext.newCmdExecuteResult(true);

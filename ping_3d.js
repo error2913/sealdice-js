@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         三骰联合延迟测试
 // @author       错误
-// @version      1.0.1
+// @version      1.0.2
 // @description  使用 .乒 test <指令前缀a> <指令前缀b> <指令前缀c> <次数>开始测试，需要三个骰子同时安装，且指令前缀不同。指令前缀a为接收指令的那个骰子。
 // @timestamp    1734356092
 // 2024-12-16 21:34:52
@@ -13,7 +13,7 @@
 // 首先检查是否已经存在
 let ext = seal.ext.find('ping_3d');
 if (!ext) {
-    ext = seal.ext.new('ping_3d', '错误', '1.0.1');
+    ext = seal.ext.new('ping_3d', '错误', '1.0.2');
     seal.ext.register(ext);
 }
 
@@ -116,6 +116,10 @@ cmd.solve = (ctx, msg, cmdArgs) => {
         }
         case 'ba': {
             const ping = data[gid];
+            if (!ping) {
+                seal.replyToSender(ctx, msg, '请先使用【.乒 test】开始测试');
+                return seal.ext.newCmdExecuteResult(true);
+            }
             ping.AB = Date.now() - ping.AB;
 
             setTimeout(() => {
@@ -132,6 +136,10 @@ cmd.solve = (ctx, msg, cmdArgs) => {
         }
         case 'ca': {
             const ping = data[gid];
+            if (!ping) {
+                seal.replyToSender(ctx, msg, '请先使用【.乒 test】开始测试');
+                return seal.ext.newCmdExecuteResult(true);
+            }
             ping.AC = Date.now() - ping.AC;
 
             setTimeout(() => {
@@ -162,6 +170,10 @@ cmd.solve = (ctx, msg, cmdArgs) => {
         }
         case 'cb': {
             const ping = data[gid];
+            if (!ping) {
+                seal.replyToSender(ctx, msg, '请先使用【.乒 test】开始测试');
+                return seal.ext.newCmdExecuteResult(true);
+            }
             ping.BC = Date.now() - ping.BC;
 
             setTimeout(() => {
@@ -174,6 +186,10 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             const BC = parseInt(cmdArgs.getArgN(2));
 
             const ping = data[gid];
+            if (!ping) {
+                seal.replyToSender(ctx, msg, '请先使用【.乒 test】开始测试');
+                return seal.ext.newCmdExecuteResult(true);
+            }
             ping.BC = BC;
 
             const A = 0.5 * (ping.AB + ping.AC - ping.BC);

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         coc7指令中文版
 // @author       错误
-// @version      1.0.0
+// @version      1.0.1
 // @description  en 给老子升级\nsetcoc 规矩老子说了算\nti 当场发癫\nli 事后算总账\nra 过个\nrav 来干架\nsc 阿巴阿巴\ncoc 搓个新崽\nst 属性给老子改成
 // @timestamp    1749959677
 // 2025-06-15 11:54:37
@@ -12,7 +12,7 @@
 
 let ext = seal.ext.find('coc7_cn');
 if (!ext) {
-    ext = seal.ext.new('coc7_cn', '错误', '1.0.0');
+    ext = seal.ext.new('coc7_cn', '错误', '1.0.1');
     seal.ext.register(ext);
 }
 
@@ -29,6 +29,10 @@ const config = {
 }
 
 const extcoc = seal.ext.find('coc7');
+if (!extcoc) {
+    console.error('coc7指令中文版 未找到 coc7 指令');
+    return;
+}
 
 for (const cmdName in config) {
     for (const alias of config[cmdName]) {

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         COC生成属性合并消息
 // @author       错误
-// @version      1.0.2
+// @version      1.0.3
 // @description  本插件会修改内置指令 .coc ，且需要重启核心才能恢复。目前仅有napcat能使用。具体配置请查看插件设置。依赖于错误&白鱼:ob11网络连接依赖:>=2.1.0。
 // @timestamp    1737050266
 // 2025-01-17 01:57:46
@@ -13,7 +13,7 @@
 
 let ext = seal.ext.find('coc_forward_msg');
 if (!ext) {
-    ext = seal.ext.new('coc_forward_msg', '错误', '1.0.2');
+    ext = seal.ext.new('coc_forward_msg', '错误', '1.0.3');
     seal.ext.register(ext);
     seal.ext.registerIntConfig(ext, "制卡上限", 20);
     seal.ext.registerTemplateConfig(ext, "合并消息预览", ["{核心:骰子名字}: 属性已生成"]);
@@ -98,7 +98,14 @@ cmd.solve = (ctx, msg, cmdArgs) => {
         data.group_id = gid.replace(/\D+/g, '');
     }
 
-    net.callApi(epId, 'send_forward_msg', data)
+    if (!globalThis.net) {
+        seal.replyToSender(ctx, msg, '未找到 ob11 网络连接依赖');
+        return seal.ext.newCmdExecuteResult(true);
+    }
+
+    net.callApi(epId, 'send_forward_msg', data).catch(e => {
+        console.error('发送合并转发消息失败:', e);
+    });
 
     return seal.ext.newCmdExecuteResult(true);
 };

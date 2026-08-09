@@ -1,7 +1,7 @@
 # 穗好感
 
 - 源码：[sui_favorability.js](https://github.com/error2913/sealdice-js/blob/main/sui_favorability.js)
-- 版本：1.0.0
+- 版本：1.0.1
 - 作者：错误(2913949387)
 - 依赖：无
 

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         投票
 // @author       错误
-// @version      1.0.0
+// @version      1.0.1
 // @description  使用 .投票 指令进行投票操作
 // @timestamp    1774360085
 // 2026-03-24 21:48:05
@@ -11,7 +11,7 @@
 
 let ext = seal.ext.find('投票');
 if (!ext) {
-    ext = seal.ext.new('投票', '错误', '1.0.0');
+    ext = seal.ext.new('投票', '错误', '1.0.1');
     seal.ext.register(ext);
 }
 
@@ -92,7 +92,10 @@ ${options.map(op => `${op}：${res.votes[op]}`).join('\n')}`);
             case 'ls':
             case 'lst':
             case 'list': {
-                if (!data.hasOwnProperty(sid) || Object.keys(data[sid]).length === 0) seal.replyToSender(ctx, msg, '当前群没有投票');
+                if (!data.hasOwnProperty(sid) || Object.keys(data[sid]).length === 0) {
+                    seal.replyToSender(ctx, msg, '当前群没有投票');
+                    return ret;
+                }
                 seal.replyToSender(ctx, msg, `当前投票列表为：
 ${Object.keys(data[sid]).map((id, index) => `${index + 1}. ${id}`).join('\n')}`);
                 return ret;

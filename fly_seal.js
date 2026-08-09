@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         螺旋飞行海豹
 // @author       错误
-// @version      1.0.1
+// @version      1.0.2
 // @description  使用.fly让你的海豹起飞吧！使用.seal来查看信息！
 // @timestamp    1726307175
 // 2024-09-14 17:46:15
@@ -11,7 +11,7 @@
 
 let ext = seal.ext.find('flyseal');
 if (!ext) {
-    ext = seal.ext.new('flyseal', '错误', '1.0.1');
+    ext = seal.ext.new('flyseal', '错误', '1.0.2');
     // 注册扩展
     seal.ext.register(ext);
     seal.ext.registerIntConfig(ext, "初始耐力值", 20)
@@ -263,11 +263,11 @@ if (!ext) {
             case 'end': {
                 players[id].endr = 0
                 seal.replyToSender(ctx, msg, players[id].fly());
-                return
+                return seal.ext.newCmdExecuteResult(true);
             }
             case 'next': {
                 seal.replyToSender(ctx, msg, players[id].fly());
-                return
+                return seal.ext.newCmdExecuteResult(true);
             }
             default: {
                 if (Object.keys(players[id].meet).length == 0) {
@@ -276,7 +276,7 @@ if (!ext) {
                     players[id].endr = seal.ext.getIntConfig(ext, "初始耐力值")
                     let text = `豹速:${players[id].dex} | 豹力:${players[id].str}\n`
                     seal.replyToSender(ctx, msg, text + players[id].fly());
-                    return
+                    return seal.ext.newCmdExecuteResult(true);
                 }
 
                 if (!val) {
@@ -287,11 +287,11 @@ if (!ext) {
 
                 if (!Object.keys(players[id].meet).includes(val)) {
                     seal.replyToSender(ctx, msg, '没有这个选项');
-                    return
+                    return seal.ext.newCmdExecuteResult(true);
                 }
 
                 seal.replyToSender(ctx, msg, players[id][players[id].meet[val]]() + players[id].fly());
-                return
+                return seal.ext.newCmdExecuteResult(true);
             }
         }
     };
@@ -315,7 +315,7 @@ if (!ext) {
 豹速:${player.dex} | 豹力:${player.str}
 耐力值:${player.endr} | 螺旋:${player.spiral}`
                 seal.replyToSender(ctx, msg, title);
-                return;
+                return seal.ext.newCmdExecuteResult(true);
             }
             case '排行榜':
             case 'chart': {
@@ -334,14 +334,14 @@ if (!ext) {
                 title += `我的纪录：${players[id].maxSpiral} 第${index + 1}名`
 
                 seal.replyToSender(ctx, msg, title)
-                return;
+                return seal.ext.newCmdExecuteResult(true);
             }
             case 'name': {
                 players[id].name = val2
                 players[id].saveData()
 
                 seal.replyToSender(ctx, msg, `${players[id].name}豹！螺旋起飞！`);
-                return;
+                return seal.ext.newCmdExecuteResult(true);
             }
             default: {
                 const ret = seal.ext.newCmdExecuteResult(true);

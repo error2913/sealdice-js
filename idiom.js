@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         成语接龙
 // @author       错误
-// @version      1.1.0
+// @version      1.1.1
 // @description  嘻嘻，谢谢白鱼找到的api，帮助：\n【.成语接龙】随机起头\n【.成语接龙 成语】起头\n【.成语接龙 结束】结束游戏\n【.成语接龙 查询 成语】成语解释\n【.成语接龙 排行榜】\n【接成语】进行接龙\n【接不了】给出提示
 // @timestamp    1726072304
 // 2024-09-05 15:43:43
@@ -13,7 +13,7 @@
 // 首先检查是否已经存在
 let ext = seal.ext.find('idiom');
 if (!ext) {
-    ext = seal.ext.new('idiom', '错误', '1.1.0');
+    ext = seal.ext.new('idiom', '错误', '1.1.1');
     seal.ext.register(ext);
 
     seal.ext.registerIntConfig(ext, "最大提示次数", 3)
@@ -43,8 +43,6 @@ if (!ext) {
                 if (!response.ok) {
                     throw new Error('网络响应失败');
                 }
-                console.log(JSON.stringify(response))
-
                 const text = await response.text();
                 this.lst.push(text);
                 seal.replyToSender(ctx, msg, `游戏开始：${text}`);
@@ -90,8 +88,6 @@ if (!ext) {
                 if (!response.ok) {
                     throw new Error('网络响应失败');
                 }
-                console.log(JSON.stringify(response))
-
                 const text = await response.text();
                 switch (text) {
                     case 'no': {
@@ -128,11 +124,7 @@ if (!ext) {
                 if (!response.ok) {
                     throw new Error('网络响应失败');
                 }
-                console.log(JSON.stringify(response))
-
                 const text = await response.text();
-                console.log(text)
-
                 return text == 'no' ? false : true;
             } catch (error) {
                 // 处理错误
@@ -161,8 +153,6 @@ if (!ext) {
             if (!response.ok) {
                 throw new Error('网络响应失败');
             }
-            console.log(JSON.stringify(response))
-
             const text = await response.text();
             return text;
         } catch (error) {
@@ -195,45 +185,45 @@ if (!ext) {
         switch (val) {
             case 'help': {
                 seal.replyToSender(ctx, msg, `帮助\n【.成语接龙】随机起头\n【.成语接龙 成语】起头\n【.成语接龙 结束】结束游戏\n【.成语接龙 查询 成语】成语解释\n【.成语接龙 排行榜】\n【接成语】进行接龙\n【接不了】给出提示`);
-                return;
+                return seal.ext.newCmdExecuteResult(true);
             }
             case 'find':
             case '查询': {
                 if (!val2) {
                     seal.replyToSender(ctx, msg, '请输入成语！');
-                    return;
+                    return seal.ext.newCmdExecuteResult(true);
                 }
                 seal.replyToSender(ctx, msg, (await findIdiom(val2)).replace(/r/g, 'n'));
-                return;
+                return seal.ext.newCmdExecuteResult(true);
             }
             case 'end':
             case '结束': {
                 if (!data.hasOwnProperty(id)) {
                     seal.replyToSender(ctx, msg, `没有正在进行的游戏！`);
-                    return;
+                    return seal.ext.newCmdExecuteResult(true);
                 }
 
                 seal.replyToSender(ctx, msg, data[id].end(id, name));
-                return;
+                return seal.ext.newCmdExecuteResult(true);
             }
             case 'chart':
             case '排行榜': {
                 if (chart.lst.length == 0) {
                     seal.replyToSender(ctx, msg, '没有排行榜！');
-                    return;
+                    return seal.ext.newCmdExecuteResult(true);
                 }
 
                 let lst = chart.lst
                 let text = `成语接龙排行榜\n————————————\n♚`
                 for (let i = 0; i < lst.length; i++) text += `第 ${i + 1} 名: ${lst[i].name}\n${lst[i].num}接\n`
                 seal.replyToSender(ctx, msg, text);
-                return;
+                return seal.ext.newCmdExecuteResult(true);
             }
             default: {
                 if (data.hasOwnProperty(id)) {
                     let lst = data[id].lst
                     seal.replyToSender(ctx, msg, `当前有正在进行的游戏！\n当前成语：${lst[lst.length - 1]}`);
-                    return;
+                    return seal.ext.newCmdExecuteResult(true);
                 }
 
 
@@ -241,16 +231,16 @@ if (!ext) {
                     let game = new Game()
                     await game.getRandom(ctx, msg)
                     data[id] = game
-                    return;
+                    return seal.ext.newCmdExecuteResult(true);
                 } else {
                     if (await findIdiom(val) == '不存在该成语') {
                         seal.replyToSender(ctx, msg, `${val} 不是一个成语，换一个吧`);
-                        return;
+                        return seal.ext.newCmdExecuteResult(true);
                     }
                     let game = new Game()
                     await game.getNext(ctx, msg, val)
                     data[id] = game
-                    return;
+                    return seal.ext.newCmdExecuteResult(true);
                 }
             }
         }

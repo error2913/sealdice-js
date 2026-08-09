@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         穗好感
 // @author       错误(2913949387)
-// @version      1.0.0
+// @version      1.0.1
 // @description  
 // @timestamp    1718456367
 // 2024-06-15 20:59:27
@@ -11,7 +11,7 @@
 // 首先检查是否已经存在
 let ext = seal.ext.find('穗');
 if (!ext) {
-  ext = seal.ext.new('穗', '错误', '1.0.0');
+  ext = seal.ext.new('穗', '错误', '1.0.1');
   // 注册扩展
   seal.ext.register(ext);
   const data = JSON.parse(ext.storageGet("data") || '{}')
@@ -229,6 +229,7 @@ if (!ext) {
         const date = seal.format(ctx, "{$tDate}")
         let text = shop(date)
         seal.replyToSender(ctx, msg, text + `\n${data[qq]["name"]}目前有${data[qq]["money"]}文。`)
+        return seal.ext.newCmdExecuteResult(true);
       }
     }
   }
@@ -251,7 +252,7 @@ if (!ext) {
         const date = seal.format(ctx, "{$tDate}")
 
         let money = data[qq]["money"]
-        let kawaiiisuisui = shop(date)
+        shop(date)
         //没有这玩意
         if (!shopnow["goods"].hasOwnProperty(val)) {
           seal.replyToSender(ctx, msg, `没有在售。`)
@@ -409,7 +410,7 @@ if (!ext) {
         }*/
         //修改背包物品
         data[qq]["bag"][val] = parseInt(val2)
-        if (data[qq]["bag"][val] == 0) { delete attrb[qq]["goods"][val]; }
+        if (data[qq]["bag"][val] == 0) { delete data[qq]["bag"][val]; }
         ext.storageSet("data", JSON.stringify(data))
         seal.replyToSender(ctx, msg, `成功！`)
         return;

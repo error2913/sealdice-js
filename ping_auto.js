@@ -1,18 +1,19 @@
 // ==UserScript==
 // @name         多骰联合延迟测试
 // @author       错误
-// @version      1.0.2
+// @version      1.0.3
 // @description  需要先用【.乒乓 set main @要设置的骰子】设置一个主机。使用【.乒乓 @骰子】获取帮助。主机需要加载依赖：错误:team:>=4.0.0
 // @timestamp    1737173515
 // 2025-01-18 12:11:55
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
 // @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/ping_auto.js
+// @depends 错误:team:>=4.0.0
 // ==/UserScript==
 
 let ext = seal.ext.find('ping_auto');
 if (!ext) {
-    ext = seal.ext.new('ping_auto', '错误', '1.0.2');
+    ext = seal.ext.new('ping_auto', '错误', '1.0.3');
     seal.ext.register(ext);
     seal.ext.registerStringConfig(ext, '定时任务cron表达式', '0 */4 * * *', '修改后保存并重载js');
     seal.ext.registerIntConfig(ext, '超时时间/s', 60, '修改后保存并重载js');
@@ -63,6 +64,11 @@ function getCtx(epId, msg) {
 
 
 function start(ctx, msg, gid, ping) {
+    if (!globalThis.teamManager) {
+        seal.replyToSender(ctx, msg, '未找到team插件');
+        return seal.ext.newCmdExecuteResult(true);
+    }
+
     const team = teamManager.getTeamList(gid)[0];
     if (team.members.length < 2) {
         seal.replyToSender(ctx, msg, '骰数不足，无法进行测试');

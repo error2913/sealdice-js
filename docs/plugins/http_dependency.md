@@ -1,7 +1,7 @@
 # HTTP依赖
 
 - 源码：[http_dependency.js](https://github.com/error2913/sealdice-js/blob/main/http_dependency.js)
-- 版本：1.2.0
+- 版本：1.2.1
 - 作者：错误
 - 依赖：无（作为其他插件的依赖使用）
 

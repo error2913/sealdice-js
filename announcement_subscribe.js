@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         公告订阅版
 // @author       错误
-// @version      1.0.0
+// @version      1.0.1
 // @description  使用指令 .订阅公告 查看帮助
 // @timestamp    1776872823
 // 2026-04-22 23:47:03
@@ -11,7 +11,7 @@
 
 let ext = seal.ext.find('公告订阅版');
 if (!ext) {
-    ext = seal.ext.new('公告订阅版', '错误', '1.0.0');
+    ext = seal.ext.new('公告订阅版', '错误', '1.0.1');
     seal.ext.register(ext);
 }
 
@@ -109,7 +109,7 @@ cmd.solve = (ctx, msg, cmdArgs) => {
     try {
         const epId = ctx.endPoint.userId;
         const userId = ctx.player.userId;
-        const groupId = ctx.group.groupId;
+        const groupId = ctx.group ? ctx.group.groupId : '';
         const a = cmdArgs.getArgN(1);
         switch (a) {
             case '添加':
@@ -154,7 +154,7 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             case '发布':
             case 'post': {
                 const channelId = cmdArgs.getArgN(2);
-                const content = cmdArgs.rawArgs.replace(new RegExp(`^post\\s+${channelId}\\s+`), '');
+                const content = cmdArgs.getRestArgsFrom(3);
                 if (channelId === '' || content === '') throw new Error('参数不能为空');
                 if (!data.channels[channelId]) throw new Error('订阅公告不存在');
                 const regex = new RegExp(data.channels[channelId].regex);
