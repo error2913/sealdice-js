@@ -1,7 +1,7 @@
 # 加群验证
 
 - 源码：[join_group_verify.js](https://github.com/error2913/sealdice-js/blob/main/join_group_verify.js)
-- 版本：1.0.4
+- 版本：1.0.5
 - 作者：错误
 - 依赖：ob11 网络连接依赖（>= 2.1.0）
 

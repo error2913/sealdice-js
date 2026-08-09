@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         UNO
 // @author       错误
-// @version      1.0.0
+// @version      1.0.1
 // @description  使用.uno获取帮助。依赖于错误:team:>=4.0.0
 // @timestamp    1730448043
 // 2024-11-01 16:00:43
@@ -513,7 +513,15 @@ ${this.players[index].hand.cards.join("\n")}`);
         seal.replyToSender(ctx, msg, "游戏已开始");
         return;
       }
+      if (!globalThis.teamManager) {
+        seal.replyToSender(ctx, msg, "未找到team插件");
+        return;
+      }
       const teamList = globalThis.teamManager.getTeamList(this.id);
+      if (!teamList || teamList.length === 0) {
+        seal.replyToSender(ctx, msg, "请先使用 .team bind 绑定队伍");
+        return;
+      }
       this.players = teamList[0].members.map((id) => new Player(id));
       if (this.players.length < 2 || this.players.length > 10) {
         seal.replyToSender(ctx, msg, `当前队伍成员数量${this.players.length}，玩家数量错误`);
@@ -653,7 +661,7 @@ ${player.hand.cards.join("\n")}`, player.id);
   function main() {
     let ext = seal.ext.find("UNO");
     if (!ext) {
-      ext = seal.ext.new("UNO", "错误", "1.0.0");
+      ext = seal.ext.new("UNO", "错误", "1.0.1");
       seal.ext.register(ext);
     }
     const cmdGame = seal.ext.newCmdItemInfo();

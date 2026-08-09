@@ -2,7 +2,7 @@
 
 - 目录：[animal_world/](https://github.com/error2913/sealdice-js/tree/main/animal_world/)
 - 扩展名：animalWorld
-- 版本：1.0.0
+- 版本：1.0.1
 - 作者：错误
 - 依赖：无
 
@@ -21,7 +21,7 @@ TypeScript 编写的动物养成插件。玩家拥有动物，可进行复活、
 .evolve     进化
 ```
 
-> 提示：各子指令的帮助文案在源码中仍为占位符（TODO/没有帮助），以实际行为为准。
+> 提示：各子指令均有对应中文帮助文案。
 
 ## 构建
 

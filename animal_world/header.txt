@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         动物世界
 // @author       错误
-// @version      1.0.0
+// @version      1.0.1
 // @description  待完善
 // @timestamp    1730390918
 // 2024-11-01 00:08:38

@@ -6,7 +6,7 @@ function main() {
   // 注册扩展
   let ext = seal.ext.find('FightWithLandlord2');
   if (!ext) {
-    ext = seal.ext.new('FightWithLandlord2', '错误', '2.0.0');
+    ext = seal.ext.new('FightWithLandlord2', '错误', '2.0.1');
     seal.ext.register(ext);
   }
 

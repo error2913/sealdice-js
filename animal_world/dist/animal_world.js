@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         动物世界
 // @author       错误
-// @version      1.0.0
+// @version      1.0.1
 // @description  待完善
 // @timestamp    1730390918
 // 2024-11-01 00:08:38
@@ -10,6 +10,7 @@
 // @updateUrl    https://raw.gitmirror.com/error2913/sealdice-js/main/animal_world/dist/animal_world.js
 // @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/animal_world/dist/animal_world.js
 // ==/UserScript==
+
 (() => {
   // src/animal.ts
   function getAnimal(species = "") {
@@ -777,13 +778,16 @@ ${this.animal.species}<${this.name}>吃掉了${foodPlayer.animal.species}<${food
   function main() {
     let ext = seal.ext.find("animalWorld");
     if (!ext) {
-      ext = seal.ext.new("animalWorld", "错误", "1.0.0");
+      ext = seal.ext.new("animalWorld", "错误", "1.0.1");
       seal.ext.register(ext);
     }
     initPlayers(ext);
     const cmdAW = seal.ext.newCmdItemInfo();
     cmdAW.name = "aw";
-    cmdAW.help = "TODO";
+    cmdAW.help = `指令：
+.aw info 查看我的动物信息
+.aw 排行榜 查看积分排行榜
+.aw 查询 <词条/动物/环境/事件> 查询信息`;
     cmdAW.solve = (ctx, msg, cmdArgs) => {
       let val = cmdArgs.getArgN(1);
       switch (val) {
@@ -859,7 +863,7 @@ ${entries2.join("\n")}`;
     ext.cmdMap["阿瓦"] = cmdAW;
     const cmdRevive = seal.ext.newCmdItemInfo();
     cmdRevive.name = "revive";
-    cmdRevive.help = "没有帮助";
+    cmdRevive.help = "指令：.revive 转生，随机生成一只新的动物";
     cmdRevive.solve = (ctx, msg, _) => {
       const player = Player.getPlayer(ext, ctx.player.userId, ctx);
       player.revive();
@@ -871,7 +875,7 @@ ${entries2.join("\n")}`;
     ext.cmdMap["转生"] = cmdRevive;
     const cmdSurvive = seal.ext.newCmdItemInfo();
     cmdSurvive.name = "survive";
-    cmdSurvive.help = "没有帮助";
+    cmdSurvive.help = "指令：.survive <事件> 应对生存事件";
     cmdSurvive.solve = (ctx, msg, cmdArgs) => {
       const event = cmdArgs.getArgN(1);
       const player = Player.getPlayer(ext, ctx.player.userId, ctx);
@@ -883,7 +887,7 @@ ${entries2.join("\n")}`;
     ext.cmdMap["生存"] = cmdSurvive;
     const cmdExplore = seal.ext.newCmdItemInfo();
     cmdExplore.name = "explore";
-    cmdExplore.help = "";
+    cmdExplore.help = "指令：.explore 探索，获取词条";
     cmdExplore.solve = (ctx, msg, _) => {
       const player = Player.getPlayer(ext, ctx.player.userId, ctx);
       player.explore(ctx, msg);
@@ -894,7 +898,7 @@ ${entries2.join("\n")}`;
     ext.cmdMap["探索"] = cmdExplore;
     const cmdMultiply = seal.ext.newCmdItemInfo();
     cmdMultiply.name = "multiply";
-    cmdMultiply.help = "没有帮助";
+    cmdMultiply.help = "指令：.multiply 繁衍";
     cmdMultiply.solve = (ctx, msg, _) => {
       const player = Player.getPlayer(ext, ctx.player.userId, ctx);
       player.multiply(ctx, msg);
@@ -905,7 +909,7 @@ ${entries2.join("\n")}`;
     ext.cmdMap["繁衍"] = cmdMultiply;
     const cmdEvolve = seal.ext.newCmdItemInfo();
     cmdEvolve.name = "evolve";
-    cmdEvolve.help = "";
+    cmdEvolve.help = "指令：.evolve 进化";
     cmdEvolve.solve = (ctx, msg, _) => {
       const player = Player.getPlayer(ext, ctx.player.userId, ctx);
       player.evolve(ctx, msg);

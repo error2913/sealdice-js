@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         加群验证
 // @author       错误
-// @version      1.0.4
+// @version      1.0.5
 // @description  使用 .agv 查看帮助，需要有管理员权限才可运行
 // @timestamp    1760422268
 // 2025-10-14 14:11:08
@@ -13,7 +13,7 @@
 
 let ext = seal.ext.find('加群验证');
 if (!ext) {
-    ext = seal.ext.new('加群验证', '错误', '1.0.4');
+    ext = seal.ext.new('加群验证', '错误', '1.0.5');
     seal.ext.register(ext);
 }
 
@@ -62,7 +62,7 @@ function transformTextToArray(text) {
                     data: params
                 });
             } else {
-                logger.error(`无法解析CQ码：${segment}`);
+                console.error(`无法解析CQ码：${segment}`);
             }
         } else {
             messageArray.push({ type: 'text', data: { text: segment } });
@@ -94,7 +94,7 @@ async function getQQLevelAndNickname(epId, user_id) {
         return { qqLevel: data.qqLevel, nickname: data.nickname };
     } catch (e) {
         console.error(`获取用户 ${user_id} 信息失败：${e}`);
-        return 0;
+        return { qqLevel: 0, nickname: '未知' };
     }
 }
 
@@ -279,7 +279,7 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             return ret;
         }
         case 'cc': {
-            const val2 = cmdArgs.getArgN(2); console.log(JSON.stringify(setting.vrfMap));
+            const val2 = cmdArgs.getArgN(2);
             const user_id = parseInt(val2);
             if (isNaN(user_id)) {
                 seal.replyToSender(ctx, msg, '取消加群验证参数错误，必须为用户ID');
@@ -482,7 +482,17 @@ QQ等级: ${qqLevel}
                                 delete setting.vrfMap[user_id];
                             }, setting.vrfInterval * 1000);
 
-                            const qIndex = Math.floor(Math.random() * setting.vrfInfoArr.length);
+                        if (setting.vrfInfoArr.length === 0) {
+                            console.warn(`群 ${group_id} 未配置验证码题库，使用自动生成验证码`);
+                            const code = generateCode();
+                            const msgId = await replyToGroup(epId, `QQ-Group:${group_id}`, `[CQ:at,qq=${user_id}]
+用户 ${user_id}
+QQ等级: ${qqLevel}
+请在 ${setting.vrfInterval} 秒内输入验证码：${code}`);
+                            setting.vrfMap[user_id] = { timer, code: [code], msgId };
+                            break;
+                        }
+                        const qIndex = Math.floor(Math.random() * setting.vrfInfoArr.length);
                             const q = setting.vrfInfoArr[qIndex].q;
                             const a = setting.vrfInfoArr[qIndex].a;
                             const msgId = await replyToGroup(epId, `QQ-Group:${group_id}`, `[CQ:at,qq=${user_id}]
@@ -529,7 +539,17 @@ QQ等级: ${qqLevel}
                                 delete setting.vrfMap[user_id];
                             }, setting.vrfInterval * 1000);
 
-                            const qIndex = Math.floor(Math.random() * setting.vrfInfoArr.length);
+                        if (setting.vrfInfoArr.length === 0) {
+                            console.warn(`群 ${group_id} 未配置验证码题库，使用自动生成验证码`);
+                            const code = generateCode();
+                            const msgId = await replyToGroup(epId, `QQ-Group:${group_id}`, `[CQ:at,qq=${user_id}]
+用户 ${user_id}
+QQ等级: ${qqLevel}
+请在 ${setting.vrfInterval} 秒内输入验证码：${code}`);
+                            setting.vrfMap[user_id] = { timer, code: [code], msgId };
+                            break;
+                        }
+                        const qIndex = Math.floor(Math.random() * setting.vrfInfoArr.length);
                             const q = setting.vrfInfoArr[qIndex].q;
                             const a = setting.vrfInfoArr[qIndex].a;
                             const msgId = await replyToGroup(epId, `QQ-Group:${group_id}`, `[CQ:at,qq=${user_id}]
