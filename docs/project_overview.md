@@ -9,6 +9,7 @@ sealdice-js/
 ├── *.js                  # 纯 JS 插件，可直接放入海豹 js 插件目录使用
 ├── animal_world/         # TS 插件：动物世界（养成玩法）
 ├── card_game_template/   # TS 插件：卡牌游戏模板（deck/game/player 结构示例）
+├── chart/                # TS 插件：排行榜图表（chart后端 在 error-backends）
 ├── deck/                 # 牌堆资源（.deck / .json）
 ├── fight_with_landlord/  # TS 插件：斗地主
 ├── game/                 # TS 插件：综合游戏框架（背包/商店/市场/队伍等）
@@ -56,6 +57,7 @@ sealdice-js/
 | --- | --- |
 | animal_world | [动物世界](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/animal_world.md)，包含动物养成、玩家管理与排行榜 |
 | card_game_template | [卡牌游戏模板](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/card_game_template.md)，展示 deck/game/player 的标准结构 |
+| chart | [排行榜图表](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/chart.md)，可同步变量并生成图表 |
 | fight_with_landlord | [斗地主](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/fight_with_landlord.md) |
 | game | [综合游戏框架](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/game.md)，含背包、商店、市场、队伍、道具等模块 |
 | team | [队伍系统](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/team.md)，`.team` 创建/管理队伍，供其他插件依赖 |
@@ -71,7 +73,7 @@ sealdice-js/
 
 ## 后端服务
 
-带 Python 后端的项目（chart、redbag、run_shell）已移出本仓库，统一存放在 [error-backends](https://github.com/error2913/error-backends) 仓库。
+chart 前端插件保留在本仓库，`chart后端` 与 redbag、run_shell 统一存放在 [error-backends](https://github.com/error2913/error-backends) 仓库。
 
 ## 安装与使用
 

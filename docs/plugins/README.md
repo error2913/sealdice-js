@@ -41,6 +41,7 @@
 ## TypeScript 插件项目
 
 - [game（综合游戏框架）](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/game.md)
+- [排行榜](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/chart.md)（`chart/`）
 - [team（队伍系统）](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/team.md)
 - [animal_world（动物世界）](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/animal_world.md)
 - [card_game_template（卡牌游戏模板）](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/card_game_template.md)
