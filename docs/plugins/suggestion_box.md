@@ -1,6 +1,6 @@
 # 意见箱
 
-- 源码：[suggestion_box.js](https://github.com/error2913/sealdice-js/blob/main/suggestion_box.js)
+- 源码：[suggestion_box.js](https://github.com/error2913/sealdice-js/blob/main/group_manage/suggestion_box.js)
 - 版本：1.0.2
 - 作者：错误
 - 依赖：无

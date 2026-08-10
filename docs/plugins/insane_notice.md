@@ -1,6 +1,6 @@
 # 不定性疯狂提醒
 
-- 源码：[insane_notice.js](https://github.com/error2913/sealdice-js/blob/main/insane_notice.js)
+- 源码：[insane_notice.js](https://github.com/error2913/sealdice-js/blob/main/trpg/insane_notice.js)
 - 版本：1.2.1
 - 作者：错误
 - 依赖：无

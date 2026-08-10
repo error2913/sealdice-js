@@ -7,11 +7,13 @@ function main() {
   if (!ext) {
     ext = seal.ext.new('team', '错误', '4.0.2');
     seal.ext.register(ext);
+
+    const configManager = new ConfigManager(ext);
+    configManager.registerConfig();
   }
 
   const teamManager = new TeamManager(ext);
   const configManager = new ConfigManager(ext);
-  configManager.registerConfig();
 
   const cmdteam = seal.ext.newCmdItemInfo();
   cmdteam.name = 'team';

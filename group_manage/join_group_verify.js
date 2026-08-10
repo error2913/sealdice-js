@@ -7,7 +7,7 @@
 // 2025-10-14 14:11:08
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
-// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/join_group_verify.js
+// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/group_manage/join_group_verify.js
 // @depends 错误&白鱼:ob11网络连接依赖:>=2.1.0
 // ==/UserScript==
 
@@ -679,7 +679,8 @@ ext.onNotCommandReceived = (ctx, msg) => {
 
     // 加群验证码
     const user_id = ctx.player.userId.replace(/\D/g, '');
-    if (setting.vrfMap.hasOwnProperty(user_id) && setting.vrfMap[user_id].code.includes(message)) {
+    const cleanMessage = message.replace(/\[CQ:[^\]]+\]/g, '').trim();
+    if (setting.vrfMap.hasOwnProperty(user_id) && setting.vrfMap[user_id].code.includes(cleanMessage)) {
         clearTimeout(setting.vrfMap[user_id].timer);
         delete setting.vrfMap[user_id];
         seal.replyToSender(ctx, msg, `加群验证:

@@ -7,22 +7,22 @@
 // 2025-11-04 23:46:36
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
-// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/non_trpg_group_detect.js
+// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/group_manage/non_trpg_group_detect.js
 // ==/UserScript==
 
 let ext = seal.ext.find('非跑团群检测');
 if (!ext) {
     ext = seal.ext.new('非跑团群检测', '错误', '1.0.2');
     seal.ext.register(ext);
-}
 
-seal.ext.registerTemplateConfig(ext, '白名单群号', [''], '');
-seal.ext.registerTemplateConfig(ext, '跑团指令', ['r', 'ra', 'rc', 'rh', 'sc', 'ri', 'log', 'setcoc', 'coc', 'dnd'], '');
-seal.ext.registerTemplateConfig(ext, '跑团非指令正则表达式', [''], '');
-seal.ext.registerTemplateConfig(ext, '娱乐指令', ['jrrp'], '');
-seal.ext.registerTemplateConfig(ext, '娱乐非指令正则表达式', [''], '');
-seal.ext.registerFloatConfig(ext, '告警阈值时间/h', 12, '');
-seal.ext.registerFloatConfig(ext, '告警冷却时间/h', 4, '');
+    seal.ext.registerTemplateConfig(ext, '白名单群号', [''], '');
+    seal.ext.registerTemplateConfig(ext, '跑团指令', ['r', 'ra', 'rc', 'rh', 'sc', 'ri', 'log', 'setcoc', 'coc', 'dnd'], '');
+    seal.ext.registerTemplateConfig(ext, '跑团非指令正则表达式', [''], '');
+    seal.ext.registerTemplateConfig(ext, '娱乐指令', ['jrrp'], '');
+    seal.ext.registerTemplateConfig(ext, '娱乐非指令正则表达式', [''], '');
+    seal.ext.registerFloatConfig(ext, '告警阈值时间/h', 12, '');
+    seal.ext.registerFloatConfig(ext, '告警冷却时间/h', 4, '');
+}
 
 const data = JSON.parse(ext.storageGet('data') || '{}');
 const coolDog = JSON.parse(ext.storageGet('coolDog') || '{}');

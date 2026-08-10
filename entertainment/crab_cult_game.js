@@ -7,7 +7,7 @@
 // 2024-05-30 18:44:01
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
-// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/crab_cult_game.js
+// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/entertainment/crab_cult_game.js
 // ==/UserScript==
 // 首先检查是否已经存在
 //部分指令参考了星界佬佬的诡秘游戏，虽然已经看不清形状了
@@ -32,8 +32,33 @@ if (!ext) {
   seal.ext.registerIntConfig(ext, "罚款率%", 20)
   seal.ext.registerIntConfig(ext, "价格调整幅度因子", 100)
   seal.ext.registerTemplateConfig(ext, "地点列表", ["阿卡姆", "金斯波特", "印斯茅斯", "南极营地", "拉莱耶", "乌撒", "无名之城"], '修改后请重载')
+  seal.ext.registerIntConfig(ext, "初始货币", 100)
+  seal.ext.registerIntConfig(ext, "初始san最小值", 40)
+  seal.ext.registerIntConfig(ext, "初始san最大值", 80)
+  seal.ext.registerIntConfig(ext, "落魄值系数", 10)
+  seal.ext.registerIntConfig(ext, "抢劫货物阈值", 20)
+  seal.ext.registerFloatConfig(ext, "精神崩溃罚款率%", 80)
+  seal.ext.registerIntConfig(ext, "精神病院最低罚款", 500)
+  seal.ext.registerIntConfig(ext, "san值上限", 100)
+  seal.ext.registerIntConfig(ext, "san值警告阈值", 20)
+  seal.ext.registerIntConfig(ext, "等级经验基准", 10)
+  seal.ext.registerIntConfig(ext, "升级经验系数", 10)
+  seal.ext.registerIntConfig(ext, "信众基础人数最小值", 100)
+  seal.ext.registerIntConfig(ext, "信众基础人数最大值", 150)
+  seal.ext.registerIntConfig(ext, "信众货币收益最小%", 5)
+  seal.ext.registerIntConfig(ext, "信众货币收益最大%", 15)
+  seal.ext.registerIntConfig(ext, "职位加成系数", 10)
+  seal.ext.registerIntConfig(ext, "圣水san回复", 10)
+  seal.ext.registerIntConfig(ext, "神话生物san损失上限", 6)
+  seal.ext.registerIntConfig(ext, "观光san回复上限", 6)
+  seal.ext.registerIntConfig(ext, "翻垃圾消耗落魄值", 6)
+  seal.ext.registerIntConfig(ext, "警察落魄值", 10)
+  seal.ext.registerIntConfig(ext, "献祭san消耗", 10)
+  seal.ext.registerIntConfig(ext, "献祭成功经验", 5)
+  seal.ext.registerIntConfig(ext, "越狱成功经验", 5)
+}
 
-  const lead = `游戏指引:
+const lead = `游戏指引:
 今日商店、查看背包、个人信息、
 武器商店、发展信众、教团信息、
 买武器、翻垃圾、排行榜、前往、
@@ -174,9 +199,11 @@ if (!ext) {
       this.car = '二手别克';
       this.weapon = '催泪瓦斯';
       this.goods = { "土豆": 20 };
-      this.san = Math.floor(Math.random() * (80 - 40 + 1)) + 40;
+      const sanMin = seal.ext.getIntConfig(ext, "初始san最小值")
+      const sanMax = seal.ext.getIntConfig(ext, "初始san最大值")
+      this.san = Math.floor(Math.random() * (sanMax - sanMin + 1)) + sanMin;
       this.down = 0;
-      this.money = 100;
+      this.money = seal.ext.getIntConfig(ext, "初始货币");
       this.contr = 0;
       this.color = '无'
       this.exp = 0;
@@ -274,7 +301,7 @@ if (!ext) {
       if (outnum > 0) {
         num -= outnum
         //增加落魄值作为补偿
-        this.down += outnum / 10
+        this.down += outnum / seal.ext.getIntConfig(ext, "落魄值系数")
         this.down = parseFloat(this.down.toFixed(1));
       } else outnum = 0
 
@@ -371,7 +398,7 @@ ${weapon1}(${val1 * 5}) vs ${weapon2}(${val2 * 5})\n`
         if (players[altid].money <= 0) text += `对方钱包空空\n`
         else text += `抢走了$ ${players[altid].robMoneyTo(this.id)}\n`
         //抢货
-        if (goodsnum > 20) text += players[altid].robGoodsTo(this.id)
+        if (goodsnum > seal.ext.getIntConfig(ext, "抢劫货物阈值")) text += players[altid].robGoodsTo(this.id)
       }
       //输
       else {
@@ -386,7 +413,7 @@ ${weapon1}(${val1 * 5}) vs ${weapon2}(${val2 * 5})\n`
         if (this.money <= 0) text += `你钱包空空\n`
         else text += `被抢走了$ ${this.robMoneyTo(altid)}\n`
         //抢货
-        if (goodsnum > 20) text += this.robGoodsTo(altid)
+        if (goodsnum > seal.ext.getIntConfig(ext, "抢劫货物阈值")) text += this.robGoodsTo(altid)
       }
       this.saveData()
       return text;
@@ -397,7 +424,7 @@ ${weapon1}(${val1 * 5}) vs ${weapon2}(${val2 * 5})\n`
       //修改san值
       this.san += num
 
-      let maxheal = 0.8
+      let maxheal = seal.ext.getFloatConfig(ext, "精神崩溃罚款率%") / 100
 
       let text = ``
       if (num >= 0) text = `san+${num}=>${this.san}`
@@ -405,21 +432,24 @@ ${weapon1}(${val1 * 5}) vs ${weapon2}(${val2 * 5})\n`
 
       if (this.san <= 0) {
         let lostmoney = Math.ceil(Math.random() * this.money * maxheal)
-        lostmoney = lostmoney < 500 ? 500 : lostmoney
+        let minfine = seal.ext.getIntConfig(ext, "精神病院最低罚款")
+        lostmoney = lostmoney < minfine ? minfine : lostmoney
 
         let healInterval = seal.ext.getIntConfig(ext, "精神病院时间/s")
         this.time.healTime = now
-        this.san += Math.floor(Math.random() * (80 - 40 + 1)) + 40;
+        const sanMin = seal.ext.getIntConfig(ext, "初始san最小值")
+        const sanMax = seal.ext.getIntConfig(ext, "初始san最大值")
+        this.san += Math.floor(Math.random() * (sanMax - sanMin + 1)) + sanMin;
         this.money -= lostmoney
 
         text += `\nsan值小于零！精神崩溃！被抓进${this.place}精神病院${healInterval}秒，扣除医疗费用$ ${lostmoney}。\nsan值=>${this.san}\n货币=>$ ${this.money}`
       }
-      else if (this.san <= 20) {
+      else if (this.san <= seal.ext.getIntConfig(ext, "san值警告阈值")) {
         text += `\n警告！精神不稳定！`
       }
-      else if (this.san > 100) {
+      else if (this.san > seal.ext.getIntConfig(ext, "san值上限")) {
         text += "\n哟哈！精神满溢！"
-        this.san = 100
+        this.san = seal.ext.getIntConfig(ext, "san值上限")
       }
       this.saveData()
       return text;
@@ -451,7 +481,7 @@ ${weapon1}(${val1 * 5}) vs ${weapon2}(${val2 * 5})\n`
 
     //翻垃圾时间~翻一次、返回一段文本
     rubbish() {
-      this.down -= 6
+      this.down -= seal.ext.getIntConfig(ext, "翻垃圾消耗落魄值")
       this.down = parseFloat(this.down.toFixed(1));
       this.exp += 1
       let ran = Math.random()
@@ -522,7 +552,7 @@ ${weapon1}(${val1 * 5}) vs ${weapon2}(${val2 * 5})\n`
     }
 
     meetMyth(now) {
-      let lostsan = Math.ceil(Math.random() * 6)
+      let lostsan = Math.ceil(Math.random() * seal.ext.getIntConfig(ext, "神话生物san损失上限"))
       let view = views[Math.floor(Math.random() * views.length)]
       let viewword = viewwords[Math.floor(Math.random() * viewwords.length)]
       let myth = myths[Math.floor(Math.random() * myths.length)]
@@ -554,7 +584,7 @@ ${weapon1}(${val1 * 5}) vs ${weapon2}(${val2 * 5})\n`
 
       this.exp += 1
       this.money -= Math.max(fine, 0)
-      this.down += 10
+      this.down += seal.ext.getIntConfig(ext, "警察落魄值")
       this.time.arrestTime = now
       this.takeGood(good, num)
 
@@ -569,7 +599,7 @@ ${fineText}`
     }
 
     meetView(now) {
-      let addsan = Math.ceil(Math.random() * 6)
+      let addsan = Math.ceil(Math.random() * seal.ext.getIntConfig(ext, "观光san回复上限"))
       let view = views[Math.floor(Math.random() * views.length)]
       let viewword = viewwords[Math.floor(Math.random() * viewwords.length)]
       let viewfound = viewfounds[Math.floor(Math.random() * viewfounds.length)]
@@ -589,11 +619,11 @@ ${fineText}`
     }
 
     getLv() {
-      let expLimit = 10
+      let expLimit = seal.ext.getIntConfig(ext, "等级经验基准")
       let lv = 1
       while (this.exp >= expLimit) {
         lv += 1
-        expLimit += lv * 10
+        expLimit += lv * seal.ext.getIntConfig(ext, "升级经验系数")
       }
       return [lv, expLimit]
     }
@@ -617,7 +647,7 @@ ${fineText}`
     useGood(good, num, now) {
       if (good == "圣水") {
         if (!this.takeGood('圣水', num)) return `没有此物品或物品数量不足`
-        return `<${this.name}>使用了${good}×${num}\n${this.stSan(now, 10 * num)}`
+        return `<${this.name}>使用了${good}×${num}\n${this.stSan(now, seal.ext.getIntConfig(ext, "圣水san回复") * num)}`
       }
       if (Object.keys(weaponlst).includes(good)) {
         let formerweapon = this.weapon
@@ -637,10 +667,14 @@ ${fineText}`
     mission(date) {
       if (this.missionDate == date) return `<${this.name}>今天的传单已经派完了`
 
-      let increase = Math.floor(Math.random() * (150 - 100 + 1)) + 100
-      increase *= Object.keys(level).indexOf(this.color) / 10 + 1
+      let missionMin = seal.ext.getIntConfig(ext, "信众基础人数最小值")
+      let missionMax = seal.ext.getIntConfig(ext, "信众基础人数最大值")
+      let increase = Math.floor(Math.random() * (missionMax - missionMin + 1)) + missionMin
+      increase *= Object.keys(level).indexOf(this.color) / seal.ext.getIntConfig(ext, "职位加成系数") + 1
       increase = Math.floor(increase)
-      let moneyincrease = this.contr * (Math.floor(Math.random() * (15 - 5 + 1)) + 5)
+      let contrMin = seal.ext.getIntConfig(ext, "信众货币收益最小%")
+      let contrMax = seal.ext.getIntConfig(ext, "信众货币收益最大%")
+      let moneyincrease = this.contr * (Math.floor(Math.random() * (contrMax - contrMin + 1)) + contrMin)
 
       this.missionDate = date
       this.contr += increase
@@ -702,7 +736,7 @@ ${fineText}`
 
         let increase = Math.ceil(Math.random() * 10) + 10
         cults[cult].ones[god] += increase
-        this.exp += 5
+        this.exp += seal.ext.getIntConfig(ext, "献祭成功经验")
 
         text += `${god}的注视值+${increase}=>${cults[cult].ones[god]}\n`
         if (cults[cult].ones[god] >= 100) {
@@ -718,7 +752,7 @@ ${fineText}`
         cults[cult].saveData()
       }
       else text += `献祭失败！\n`
-      return `${text}${this.stSan(now, -10)}`
+      return `${text}${this.stSan(now, -seal.ext.getIntConfig(ext, "献祭san消耗"))}`
     }
   }
 
@@ -2199,7 +2233,7 @@ san值:${player.san} | 贡献度:${player.contr}/${level[player.color]}
           players[id].time.arrestTime -= arrestInterval
 
           if (now - players[id].time.arrestTime >= arrestInterval) {
-            players[id].exp += 5
+            players[id].exp += seal.ext.getIntConfig(ext, "越狱成功经验")
             seal.replyToSender(ctx, msg, `<${players[id].name}>用${players[id].weapon}强行放倒了几名狱警然后扬长而去。`)
             return;
           }
@@ -2360,7 +2394,7 @@ $ ${placeprices[i].mingood.price}——>$ ${placeprices[i].maxgood.price} ${plac
         return ret;
       }
       case 'all': {
-        for (let good in players[id].goods) players[id].down += players[id].goods[good] / 10
+        for (let good in players[id].goods) players[id].down += players[id].goods[good] / seal.ext.getIntConfig(ext, "落魄值系数")
         players[id].down = parseFloat(players[id].down.toFixed(1));
         players[id].goods = {}
         players[id].saveData()
@@ -2378,12 +2412,12 @@ $ ${placeprices[i].mingood.price}——>$ ${placeprices[i].maxgood.price} ${plac
           seal.replyToSender(ctx, msg, '请输入正确的数字！');
           return;
         }
-        if (players[id].takeGood(val, val2)) {
+        if (!players[id].takeGood(val, val2)) {
           seal.replyToSender(ctx, msg, `没有此物品或物品数量不足`);
           return;
         }
 
-        players[id].down += val2 / 10
+        players[id].down += val2 / seal.ext.getIntConfig(ext, "落魄值系数")
         players[id].down = parseFloat(players[id].down.toFixed(1));
         players[id].saveData()
         seal.replyToSender(ctx, msg, `${val}-${val2}`)
@@ -2637,6 +2671,5 @@ $ ${placeprices[i].mingood.price}——>$ ${placeprices[i].maxgood.price} ${plac
   ext.cmdMap['改名'] = cmdname;
   ext.cmdMap['献祭'] = cmdscrf;
   ext.cmdMap['送'] = cmdgft;
-  ext.cmdMap['使用'] = cmduse;
-  ext.cmdMap['转账'] = cmdtransfer;
-}
+ext.cmdMap['使用'] = cmduse;
+ext.cmdMap['转账'] = cmdtransfer;

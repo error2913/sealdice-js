@@ -7,6 +7,7 @@
 // 2024-10-28 21:10:13
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
+// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/utils/message_merge.js
 // ==/UserScript==
 // 首先检查是否已经存在
 let ext = seal.ext.find('消息合并');
@@ -14,8 +15,9 @@ if (!ext) {
     ext = seal.ext.new('消息合并', '错误', '1.0.2');
     // 注册扩展
     seal.ext.register(ext);
+}
 
-    const data = {};
+const data = {};
 
     const cmd = seal.ext.newCmdItemInfo();
     cmd.name = '合'; // 指令名字，可用中文
@@ -82,4 +84,3 @@ if (!ext) {
 
         return;
     }
-}

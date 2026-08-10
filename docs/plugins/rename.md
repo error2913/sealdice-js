@@ -1,6 +1,6 @@
 # 群名片集体修改器
 
-- 源码：[rename.js](https://github.com/error2913/sealdice-js/blob/main/rename.js)
+- 源码：[rename.js](https://github.com/error2913/sealdice-js/blob/main/group_manage/rename.js)
 - 版本：1.1.1
 - 作者：错误
 - 依赖：可选 ob11 网络连接依赖（>= 2.1.0，HTTP 模式）；普通模式需要骰主公告极速版（>= 1.1.0）；`.rn draw` 需要 deck 牌堆扩展

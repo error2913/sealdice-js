@@ -6,7 +6,7 @@
 // @timestamp    1726307175
 // 2024-09-14 17:46:15
 // @homepageURL  https://github.com/error2913/sealdice-js/
-// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/fly_seal.js
+// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/entertainment/fly_seal.js
 // ==/UserScript==
 
 let ext = seal.ext.find('flyseal');
@@ -15,8 +15,17 @@ if (!ext) {
     // 注册扩展
     seal.ext.register(ext);
     seal.ext.registerIntConfig(ext, "初始耐力值", 20)
-    const players = {}
-    const playerlist = JSON.parse(ext.storageGet("playerlist") || '{}')
+    seal.ext.registerIntConfig(ext, "初始属性上限", 6)
+    seal.ext.registerIntConfig(ext, "飞行消耗耐力值", 2)
+    seal.ext.registerIntConfig(ext, "对抗成功消耗耐力值", 3)
+    seal.ext.registerIntConfig(ext, "对抗失败消耗耐力值", 4)
+    seal.ext.registerIntConfig(ext, "漩涡消耗耐力值", 8)
+    seal.ext.registerIntConfig(ext, "海市蜃楼消耗耐力值", 2)
+    seal.ext.registerIntConfig(ext, "事件回复耐力值", 3)
+}
+
+const players = {}
+const playerlist = JSON.parse(ext.storageGet("playerlist") || '{}')
 
     const textMap = {
         "海面上一大片雾气": "meetFog",
@@ -31,8 +40,8 @@ if (!ext) {
             this.name = name;
             this.spiral = 0
             this.maxSpiral = 0
-            this.dex = Math.ceil(Math.random() * 6)
-            this.str = Math.ceil(Math.random() * 6)
+            this.dex = Math.ceil(Math.random() * seal.ext.getIntConfig(ext, "初始属性上限"))
+            this.str = Math.ceil(Math.random() * seal.ext.getIntConfig(ext, "初始属性上限"))
             this.endr = seal.ext.getIntConfig(ext, "初始耐力值")
 
             this.state = '无'
@@ -47,8 +56,8 @@ if (!ext) {
                 let player = new FlySeal(id, idData.name)
                 player.spiral = idData.spiral || 0
                 player.maxSpiral = idData.maxSpiral || 0
-                player.dex = idData.dex || Math.ceil(Math.random() * 6)
-                player.str = idData.str || Math.ceil(Math.random() * 6)
+                player.dex = idData.dex || Math.ceil(Math.random() * seal.ext.getIntConfig(ext, "初始属性上限"))
+                player.str = idData.str || Math.ceil(Math.random() * seal.ext.getIntConfig(ext, "初始属性上限"))
                 player.endr = idData.endr || seal.ext.getIntConfig(ext, "初始耐力值")
                 player.state = idData.state || '无'
                 player.package = idData.package || {}
@@ -66,9 +75,9 @@ if (!ext) {
         }
 
         fly() {
-            this.endr -= 2
+            this.endr -= seal.ext.getIntConfig(ext, "飞行消耗耐力值")
             this.meet = {}
-            let text = `<${this.name}豹>起飞！消耗2点耐力值(${this.endr})，遇到了`
+            let text = `<${this.name}豹>起飞！消耗${seal.ext.getIntConfig(ext, "飞行消耗耐力值")}点耐力值(${this.endr})，遇到了`
 
             //若耐力归零
             if (this.endr <= 0) {
@@ -123,19 +132,19 @@ if (!ext) {
             }
             //风暴
             else if (ran <= 0.9) {
-                let ran = Math.random() * 6
+                let ran = Math.random() * seal.ext.getIntConfig(ext, "初始属性上限")
                 if (ran <= this.dex) {
-                    this.endr -= 3
+                    this.endr -= seal.ext.getIntConfig(ext, "对抗成功消耗耐力值")
                     let increase = Math.ceil(Math.random() * this.dex)
                     this.spiral += increase
-                    return `遇到了风暴，赶紧螺旋加速绕开了，消耗了2点耐力(${this.endr})，螺旋+${increase}(${this.spiral})！\n` + this.ckState()
+                    return `遇到了风暴，赶紧螺旋加速绕开了，消耗了${seal.ext.getIntConfig(ext, "对抗成功消耗耐力值")}点耐力(${this.endr})，螺旋+${increase}(${this.spiral})！\n` + this.ckState()
                 } else {
-                    this.endr -= 4
-                    return `遇到了风暴，不幸的是被卷进去了，消耗了4点耐力(${this.endr})\n` + this.ckState()
+                    this.endr -= seal.ext.getIntConfig(ext, "对抗失败消耗耐力值")
+                    return `遇到了风暴，不幸的是被卷进去了，消耗了${seal.ext.getIntConfig(ext, "对抗失败消耗耐力值")}点耐力(${this.endr})\n` + this.ckState()
                 }
             } else {
-                this.endr += 3
-                return `遇到了飞鱼群，饱餐一顿！回复了3点耐力(${this.endr})\n` + this.ckState()
+                this.endr += seal.ext.getIntConfig(ext, "事件回复耐力值")
+                return `遇到了飞鱼群，饱餐一顿！回复了${seal.ext.getIntConfig(ext, "事件回复耐力值")}点耐力(${this.endr})\n` + this.ckState()
             }
         }
 
@@ -149,21 +158,21 @@ if (!ext) {
             }
             //鲨鱼
             else if (ran <= 0.9) {
-                let ran = Math.random() * 6
+                let ran = Math.random() * seal.ext.getIntConfig(ext, "初始属性上限")
                 if (ran <= this.str) {
-                    this.endr -= 3
+                    this.endr -= seal.ext.getIntConfig(ext, "对抗成功消耗耐力值")
                     let increase = Math.ceil(Math.random() * this.str)
                     this.spiral += increase
-                    return `遇到了鲨鱼！消耗了3点耐力(${this.endr})，战胜了鲨鱼！螺旋+${increase}(${this.spiral})！\n` + this.ckState()
+                    return `遇到了鲨鱼！消耗了${seal.ext.getIntConfig(ext, "对抗成功消耗耐力值")}点耐力(${this.endr})，战胜了鲨鱼！螺旋+${increase}(${this.spiral})！\n` + this.ckState()
                 } else {
-                    this.endr -= 4
-                    return `遇到了鲨鱼！消耗了4点耐力(${this.endr})，逃脱了鲨鱼的追咬\n` + this.ckState()
+                    this.endr -= seal.ext.getIntConfig(ext, "对抗失败消耗耐力值")
+                    return `遇到了鲨鱼！消耗了${seal.ext.getIntConfig(ext, "对抗失败消耗耐力值")}点耐力(${this.endr})，逃脱了鲨鱼的追咬\n` + this.ckState()
                 }
             }
             //鱼群
             else {
-                this.endr += 3
-                return `遇到了鱼群，饱餐一顿！回复了3点耐力(${this.endr})\n` + this.ckState()
+                this.endr += seal.ext.getIntConfig(ext, "事件回复耐力值")
+                return `遇到了鱼群，饱餐一顿！回复了${seal.ext.getIntConfig(ext, "事件回复耐力值")}点耐力(${this.endr})\n` + this.ckState()
             }
         }
 
@@ -177,8 +186,8 @@ if (!ext) {
                 return `在漩涡疯狂螺旋！豹速+1(${this.dex})！豹力+1(${this.str})！螺旋+${increase}(${this.spiral})！\n` + this.ckState()
             }
             else {
-                this.endr -= 8
-                return `被卷进了漩涡！消耗了8点耐力值(${this.endr})，堪堪逃了出来\n` + this.ckState()
+                this.endr -= seal.ext.getIntConfig(ext, "漩涡消耗耐力值")
+                return `被卷进了漩涡！消耗了${seal.ext.getIntConfig(ext, "漩涡消耗耐力值")}点耐力值(${this.endr})，堪堪逃了出来\n` + this.ckState()
             }
         }
 
@@ -187,8 +196,8 @@ if (!ext) {
             let ran = Math.random()
             //海市蜃楼
             if (ran <= 0.35) {
-                this.endr -= 2
-                return `<${this.name}豹>靠近后发现根本没有什么小岛，消耗了2点耐力(${this.endr})\n`
+                this.endr -= seal.ext.getIntConfig(ext, "海市蜃楼消耗耐力值")
+                return `<${this.name}豹>靠近后发现根本没有什么小岛，消耗了${seal.ext.getIntConfig(ext, "海市蜃楼消耗耐力值")}点耐力(${this.endr})\n`
             }
             //小岛
             else if (ran <= 0.9) {
@@ -204,8 +213,8 @@ if (!ext) {
                     return text + `登陆小岛，遇到了可恶的企鹅！获得状态【豹怒】，豹力+1(${this.str})持续一回合\n`
                 }
             } else {
-                this.endr += 3
-                return `登陆小岛，遇到了好心人，饱餐一顿！回复了3点耐力(${this.endr})\n` + this.ckState()
+                this.endr += seal.ext.getIntConfig(ext, "事件回复耐力值")
+                return `登陆小岛，遇到了好心人，饱餐一顿！回复了${seal.ext.getIntConfig(ext, "事件回复耐力值")}点耐力(${this.endr})\n` + this.ckState()
             }
         }
     }
@@ -271,8 +280,8 @@ if (!ext) {
             }
             default: {
                 if (Object.keys(players[id].meet).length == 0) {
-                    players[id].dex = Math.ceil(Math.random() * 6)
-                    players[id].str = Math.ceil(Math.random() * 6)
+                    players[id].dex = Math.ceil(Math.random() * seal.ext.getIntConfig(ext, "初始属性上限"))
+                    players[id].str = Math.ceil(Math.random() * seal.ext.getIntConfig(ext, "初始属性上限"))
                     players[id].endr = seal.ext.getIntConfig(ext, "初始耐力值")
                     let text = `豹速:${players[id].dex} | 豹力:${players[id].str}\n`
                     seal.replyToSender(ctx, msg, text + players[id].fly());
@@ -350,7 +359,6 @@ if (!ext) {
             }
         }
     };
-    // 将命令注册到扩展中
-    ext.cmdMap['seal'] = cmdseal;
-    ext.cmdMap['fly'] = cmdfly;
-}
+// 将命令注册到扩展中
+ext.cmdMap['seal'] = cmdseal;
+ext.cmdMap['fly'] = cmdfly;

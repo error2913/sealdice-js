@@ -1,6 +1,6 @@
 # 骰主公告极速版
 
-- 源码：[postnow.js](https://github.com/error2913/sealdice-js/blob/main/postnow.js)
+- 源码：[postnow.js](https://github.com/error2913/sealdice-js/blob/main/group_manage/postnow.js)
 - 版本：1.2.1
 - 作者：错误
 - 依赖：可选 ob11 网络连接依赖（>= 2.1.0，HTTP 模式）

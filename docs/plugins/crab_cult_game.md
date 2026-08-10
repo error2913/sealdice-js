@@ -1,6 +1,6 @@
 # 蟹脚小游戏
 
-- 源码：[crab_cult_game.js](https://github.com/error2913/sealdice-js/blob/main/crab_cult_game.js)
+- 源码：[crab_cult_game.js](https://github.com/error2913/sealdice-js/blob/main/entertainment/crab_cult_game.js)
 - 版本：2.2.1
 - 作者：错误
 - 依赖：无

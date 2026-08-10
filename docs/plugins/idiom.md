@@ -1,6 +1,6 @@
 # 成语接龙
 
-- 源码：[idiom.js](https://github.com/error2913/sealdice-js/blob/main/idiom.js)
+- 源码：[idiom.js](https://github.com/error2913/sealdice-js/blob/main/entertainment/idiom.js)
 - 版本：1.1.1
 - 作者：错误
 - 依赖：无

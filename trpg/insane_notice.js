@@ -7,7 +7,7 @@
 // 2024-08-30 21:25:41
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
-// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/insane_notice.js
+// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/trpg/insane_notice.js
 // ==/UserScript==
 let ext = seal.ext.find('insaneNotice');
 if (!ext) {
@@ -16,10 +16,11 @@ if (!ext) {
     seal.ext.register(ext);
     seal.ext.registerStringConfig(ext, '不定性疯狂提醒词', '{$t玩家}已不定性疯狂。当新的“一天”开始时，可使用 .rest 重置用于检测不定性疯狂的san值上限。', '');
     seal.ext.registerTemplateConfig(ext, '进行检测的指令', ['sc', 'st'], '');
+}
 
-    function getVar(ctx, s) {
-        return parseInt(seal.format(ctx, `{${s}}`));
-    }
+function getVar(ctx, s) {
+    return parseInt(seal.format(ctx, `{${s}}`));
+}
 
     // 为什么数值变动时不能用intGet读取数值？害我试了半天最后改成用format读取
     function checkSan(ctx, msg) {
@@ -98,5 +99,4 @@ if (!ext) {
             }
         }
     };
-    ext.cmdMap['rest'] = cmd;
-}
+ext.cmdMap['rest'] = cmd;

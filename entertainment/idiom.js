@@ -7,7 +7,7 @@
 // 2024-09-05 15:43:43
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
-// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/idiom.js
+// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/entertainment/idiom.js
 // ==/UserScript==
 
 // 首先检查是否已经存在
@@ -19,12 +19,13 @@ if (!ext) {
     seal.ext.registerIntConfig(ext, "最大提示次数", 3)
     seal.ext.registerBoolConfig(ext, "能否重复", false)
     //seal.ext.registerBoolConfig(ext, "是否开启计时器", true)
+}
 
-    const chart = JSON.parse(ext.storageGet("chart") || '{}')
-    if (!chart.hasOwnProperty('lst')) chart.lst = []
+const chart = JSON.parse(ext.storageGet("chart") || '{}')
+if (!chart.hasOwnProperty('lst')) chart.lst = []
 
-    const data = {}
-    const apiUrl = 'https://api.tangdouz.com/cy.php';
+const data = {}
+const apiUrl = 'https://api.tangdouz.com/cy.php';
 
     class Game {
         constructor() {
@@ -245,19 +246,18 @@ if (!ext) {
             }
         }
     };
-    // 将命令注册到扩展中
-    ext.cmdMap['成语接龙'] = cmdIdiom;
-    ext.cmdMap['cyjl'] = cmdIdiom;
+// 将命令注册到扩展中
+ext.cmdMap['成语接龙'] = cmdIdiom;
+ext.cmdMap['cyjl'] = cmdIdiom;
 
-    ext.onNotCommandReceived = async (ctx, msg) => {
-        if (msg.message.includes('接')) {
-            let id = ctx.isPrivate ? ctx.player.userId : ctx.group.groupId;
-            if (data.hasOwnProperty(id)) {
-                let match = msg.message.match(/^接(.*)/);
-                if (!match || !match[1]) return;
-                data[id].getNext(ctx, msg, match[1]);
-                return;
-            }
+ext.onNotCommandReceived = async (ctx, msg) => {
+    if (msg.message.includes('接')) {
+        let id = ctx.isPrivate ? ctx.player.userId : ctx.group.groupId;
+        if (data.hasOwnProperty(id)) {
+            let match = msg.message.match(/^接(.*)/);
+            if (!match || !match[1]) return;
+            data[id].getNext(ctx, msg, match[1]);
+            return;
         }
     }
 }

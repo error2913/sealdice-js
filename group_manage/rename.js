@@ -7,7 +7,7 @@
 // 2024-12-04 12:34:34
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
-// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/rename.js
+// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/group_manage/rename.js
 // ==/UserScript==
 
 let ext = seal.ext.find('rename');
@@ -259,10 +259,14 @@ cmd.solve = async (ctx, msg, cmdArgs) => {
             }
             if (name === 'keys') {
                 cmdArgs.args = cmdArgs.args.slice(1);
-                cmdArgs.rawArgs = cmdArgs.rawArgs.replace('draw', '');
+                cmdArgs.rawArgs = cmdArgs.args.join(' ');
                 cmdArgs.cleanArgs = cmdArgs.args.join(' ');
 
                 const extDeck = seal.ext.find('deck');
+                if (!extDeck || !extDeck.cmdMap['draw']) {
+                    seal.replyToSender(ctx, msg, '未找到内置牌堆指令');
+                    return seal.ext.newCmdExecuteResult(false);
+                }
                 return extDeck.cmdMap['draw'].solve(ctx, msg, cmdArgs);
             }
 

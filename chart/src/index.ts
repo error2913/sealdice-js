@@ -102,6 +102,8 @@ function main() {
 
     update(ext, cm).then(() => {
       console.log('排行榜数据更新完成');
+    }).catch(err => {
+      console.error('排行榜数据更新失败:', err);
     });
   });
 }

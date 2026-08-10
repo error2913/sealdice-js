@@ -22,8 +22,8 @@ export class ChartManager {
             return;
         }
 
-        if (Chart.parse(null, func) === undefined) {
-            console.error(`注册排行榜${name}时出现错误:计算函数错误`);
+        if (typeof func !== 'function') {
+            console.error(`注册排行榜${name}时出现错误:计算函数不是函数`);
             return;
         }
 

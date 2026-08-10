@@ -1,19 +1,19 @@
 // ==UserScript==
 // @name         COC生成属性合并消息
 // @author       错误
-// @version      1.0.3
-// @description  本插件会修改内置指令 .coc ，且需要重启核心才能恢复。目前仅有napcat能使用。具体配置请查看插件设置。依赖于错误&白鱼:ob11网络连接依赖:>=2.1.0。
-// @timestamp    1737050266
-// 2025-01-17 01:57:46
+// @version      1.1.0
+// @description  注册新指令 .coc合并 ，批量生成属性并以合并转发消息发送，不再修改内置 .coc 指令。目前仅有napcat能使用。具体配置请查看插件设置。依赖于错误&白鱼:ob11网络连接依赖:>=2.1.0。
+// @timestamp    1786320000
+// 2026-08-10 00:00:00
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
-// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/coc_forward_msg.js
+// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/trpg/coc_forward_msg.js
 // @depends 错误&白鱼:ob11网络连接依赖:>=2.1.0
 // ==/UserScript==
 
 let ext = seal.ext.find('coc_forward_msg');
 if (!ext) {
-    ext = seal.ext.new('coc_forward_msg', '错误', '1.0.3');
+    ext = seal.ext.new('coc_forward_msg', '错误', '1.1.0');
     seal.ext.register(ext);
     seal.ext.registerIntConfig(ext, "制卡上限", 20);
     seal.ext.registerTemplateConfig(ext, "合并消息预览", ["{核心:骰子名字}: 属性已生成"]);
@@ -21,8 +21,9 @@ if (!ext) {
     seal.ext.registerTemplateConfig(ext, "聊天记录来源", ["{核心:骰子名字}与{$t玩家_RAW}的聊天记录"]);
 }
 
-const extcoc = seal.ext.find('coc7');
-const cmd = extcoc.cmdMap['coc'];
+const cmd = seal.ext.newCmdItemInfo();
+cmd.name = 'coc合并';
+cmd.help = '使用：.coc合并 [数量]\n批量生成属性，并以合并转发消息发送。';
 cmd.solve = (ctx, msg, cmdArgs) => {
     const n = cmdArgs.getArgN(1);
     let val = parseInt(n, 10);
@@ -49,8 +50,13 @@ cmd.solve = (ctx, msg, cmdArgs) => {
     seal.vars.strSet(ctx, "$t制卡结果文本", '**sep**');
     const text = seal.formatTmpl(ctx, "COC:制卡");
     const arr = text.split('**sep**');
-    ss[0] = arr[0] + ss[0];
-    ss[ss.length - 1] += arr[1];
+    if (arr.length >= 2) {
+        ss[0] = arr[0] + ss[0];
+        ss[ss.length - 1] += arr[1];
+    } else {
+        // 模板中未找到分隔符时，整个模板作为前缀，避免拼接出 "undefined"
+        ss[0] = text + ss[0];
+    }
 
     // 发送消息
     const epId = ctx.endPoint.userId;
@@ -109,3 +115,6 @@ cmd.solve = (ctx, msg, cmdArgs) => {
 
     return seal.ext.newCmdExecuteResult(true);
 };
+
+ext.cmdMap['coc合并'] = cmd;
+ext.cmdMap['cocforward'] = cmd;

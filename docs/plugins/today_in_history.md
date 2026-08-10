@@ -1,6 +1,6 @@
 # 历史上的今天
 
-- 源码：[today_in_history.js](https://github.com/error2913/sealdice-js/blob/main/today_in_history.js)
+- 源码：[today_in_history.js](https://github.com/error2913/sealdice-js/blob/main/entertainment/today_in_history.js)
 - 版本：1.0.0
 - 作者：错误
 - 依赖：无

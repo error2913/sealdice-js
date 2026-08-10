@@ -88,8 +88,8 @@
         console.error(`注册排行榜${name}时出现错误:该名字已注册`);
         return;
       }
-      if (Chart.parse(null, func) === void 0) {
-        console.error(`注册排行榜${name}时出现错误:计算函数错误`);
+      if (typeof func !== "function") {
+        console.error(`注册排行榜${name}时出现错误:计算函数不是函数`);
         return;
       }
       this.map[name] = func;
@@ -613,6 +613,180 @@
     }
   };
 
+  // src/room/room.ts
+  var Room = class _Room {
+    constructor(rid, maxPlayers = 0) {
+      this.rid = rid;
+      this.status = "waiting";
+      this.players = [];
+      this.data = {};
+      this.createTime = Math.floor(Date.now() / 1e3);
+      this.maxPlayers = maxPlayers;
+      this.onStart = null;
+      this.onEnd = null;
+    }
+    static parse(data, rid, maxPlayers = 0) {
+      if (data === null || typeof data !== "object" || Array.isArray(data)) {
+        data = {};
+      }
+      const room = new _Room(rid, maxPlayers);
+      if (data.hasOwnProperty("status") && ["waiting", "playing", "ended"].includes(data.status)) {
+        room.status = data.status;
+      }
+      if (data.hasOwnProperty("players") && Array.isArray(data.players)) {
+        room.players = data.players;
+      }
+      if (data.hasOwnProperty("data") && data.data !== null && typeof data.data === "object" && !Array.isArray(data.data)) {
+        room.data = data.data;
+      }
+      if (data.hasOwnProperty("createTime") && typeof data.createTime === "number") {
+        room.createTime = data.createTime;
+      }
+      return room;
+    }
+    // 状态机
+    isWaiting() {
+      return this.status === "waiting";
+    }
+    isPlaying() {
+      return this.status === "playing";
+    }
+    isEnded() {
+      return this.status === "ended";
+    }
+    // 未开始 -> 游戏中，成功后执行start钩子
+    start(ctx, msg) {
+      if (this.status !== "waiting") {
+        return false;
+      }
+      this.status = "playing";
+      if (this.onStart) {
+        try {
+          this.onStart(ctx, msg, this);
+        } catch (error) {
+          console.error(`执行房间${this.rid}的start钩子时出现错误:`, error);
+        }
+      }
+      return true;
+    }
+    // 游戏中 -> 已结束，成功后执行end钩子
+    end(ctx, msg) {
+      if (this.status !== "playing") {
+        return false;
+      }
+      this.status = "ended";
+      if (this.onEnd) {
+        try {
+          this.onEnd(ctx, msg, this);
+        } catch (error) {
+          console.error(`执行房间${this.rid}的end钩子时出现错误:`, error);
+        }
+      }
+      return true;
+    }
+    // 重置为未开始状态，清空参与者和自定义数据
+    reset() {
+      this.status = "waiting";
+      this.players = [];
+      this.data = {};
+      this.createTime = Math.floor(Date.now() / 1e3);
+    }
+    // 参与者管理
+    addPlayer(uid) {
+      if (this.players.includes(uid)) {
+        return false;
+      }
+      if (this.maxPlayers > 0 && this.players.length >= this.maxPlayers) {
+        return false;
+      }
+      this.players.push(uid);
+      return true;
+    }
+    removePlayer(uid) {
+      const index = this.players.indexOf(uid);
+      if (index === -1) {
+        return false;
+      }
+      this.players.splice(index, 1);
+      return true;
+    }
+    hasPlayer(uid) {
+      return this.players.includes(uid);
+    }
+    playerCount() {
+      return this.players.length;
+    }
+    isFull() {
+      return this.maxPlayers > 0 && this.players.length >= this.maxPlayers;
+    }
+    clearPlayers() {
+      this.players = [];
+    }
+    // 快照：导出为字符串
+    snapshot() {
+      return JSON.stringify(this);
+    }
+    // 快照：从字符串恢复，返回是否成功
+    restore(json) {
+      try {
+        const data = JSON.parse(json);
+        const room = _Room.parse(data, this.rid, this.maxPlayers);
+        this.status = room.status;
+        this.players = room.players;
+        this.data = room.data;
+        this.createTime = room.createTime;
+        return true;
+      } catch (error) {
+        console.error(`恢复房间${this.rid}快照失败:`, error);
+        return false;
+      }
+    }
+  };
+
+  // src/room/roomManager.ts
+  var RoomManager = class {
+    constructor(ext) {
+      this.ext = ext;
+      this.cache = {};
+    }
+    clearCache() {
+      this.cache = {};
+    }
+    // 获取房间对象，不存在时从storage加载，加载不到则新建
+    getRoom(rid) {
+      if (!this.cache.hasOwnProperty(rid)) {
+        let data = {};
+        try {
+          data = JSON.parse(this.ext.storageGet(`room_${rid}`) || "{}");
+        } catch (error) {
+          console.error(`从数据库中获取room_${rid}失败:`, error);
+        }
+        this.cache[rid] = Room.parse(data, rid);
+      }
+      return this.cache[rid];
+    }
+    // 保存房间快照到storage
+    saveRoom(rid) {
+      if (this.cache.hasOwnProperty(rid)) {
+        this.ext.storageSet(`room_${rid}`, JSON.stringify(this.cache[rid]));
+      }
+    }
+    // 导出缓存中房间的快照字符串，房间不在缓存中时返回null
+    snapshotRoom(rid) {
+      if (this.cache.hasOwnProperty(rid)) {
+        return this.cache[rid].snapshot();
+      }
+      return null;
+    }
+    // 用快照字符串恢复房间，房间不在缓存中时返回false
+    restoreRoom(rid, json) {
+      if (this.cache.hasOwnProperty(rid)) {
+        return this.cache[rid].restore(json);
+      }
+      return false;
+    }
+  };
+
   // src/shop/shop.ts
   var Shop = class _Shop {
     constructor(gc) {
@@ -753,7 +927,7 @@
       const now = Math.floor(Date.now() / 1e3);
       const updateTime = this.cache[name].updateTime;
       const interval = this.map[name].interval;
-      const dateDiff = Math.ceil((now - updateTime) / 24 * 60 * 60);
+      const dateDiff = Math.ceil((now - updateTime) / (24 * 60 * 60));
       if (interval !== 0 && dateDiff >= interval) {
         this.cache[name].updateShop();
         this.saveShop(name);
@@ -836,6 +1010,7 @@
       this.chart = new ChartManager(ext);
       this.shop = new ShopManager(ext);
       this.market = new MarketManager(ext);
+      this.room = new RoomManager(ext);
       this.cache = {};
     }
     clearCache() {

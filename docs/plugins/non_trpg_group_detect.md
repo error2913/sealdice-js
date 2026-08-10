@@ -1,6 +1,6 @@
 # 非跑团群检测
 
-- 源码：[non_trpg_group_detect.js](https://github.com/error2913/sealdice-js/blob/main/non_trpg_group_detect.js)
+- 源码：[non_trpg_group_detect.js](https://github.com/error2913/sealdice-js/blob/main/group_manage/non_trpg_group_detect.js)
 - 版本：1.0.2
 - 作者：错误
 - 依赖：无

@@ -1,6 +1,6 @@
 # 螺旋飞行海豹
 
-- 源码：[fly_seal.js](https://github.com/error2913/sealdice-js/blob/main/fly_seal.js)
+- 源码：[fly_seal.js](https://github.com/error2913/sealdice-js/blob/main/entertainment/fly_seal.js)
 - 版本：1.0.2
 - 作者：错误
 - 依赖：无

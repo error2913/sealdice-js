@@ -564,7 +564,7 @@ ${player.animal.species}<${player.name}>打爆了<${turtle.name}>，新的词条
         if (data && Object.keys(data).length > 0) {
           cache[id] = _Player.parse(data);
         } else {
-          cache[id] = _Player.createPlayer(id, ctx.player.name || "未知玩家");
+          cache[id] = _Player.createPlayer(id, ctx ? ctx.player.name || "未知玩家" : "未知玩家");
           playerList.push(id);
           savePlayerList(ext);
         }
@@ -599,7 +599,7 @@ ${player.animal.species}<${player.name}>打爆了<${turtle.name}>，新的词条
     }
     //TODO:随机ID，随机名字
     static createRobot(species) {
-      const player = new _Player(`Robot`, `奇怪的${species}`);
+      const player = new _Player(`Robot-${Date.now()}-${Math.floor(Math.random() * 1e4)}`, `奇怪的${species}`);
       player.animal = getAnimal(species);
       const entries = getEntries(3);
       addEntries(player, entries);

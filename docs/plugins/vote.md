@@ -1,6 +1,6 @@
 # 投票
 
-- 源码：[vote.js](https://github.com/error2913/sealdice-js/blob/main/vote.js)
+- 源码：[vote.js](https://github.com/error2913/sealdice-js/blob/main/entertainment/vote.js)
 - 版本：1.0.1
 - 作者：错误
 - 依赖：无

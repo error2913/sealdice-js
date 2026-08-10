@@ -7,7 +7,7 @@
 // 2024-11-14 16:36:45
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
-// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/link.js
+// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/utils/link.js
 // ==/UserScript==
 
 // 首先检查是否已经存在
@@ -16,22 +16,23 @@ if (!ext) {
     ext = seal.ext.new('link', '错误', '1.0.3');
     // 注册扩展
     seal.ext.register(ext);
+}
 
-    let data1 = {}, data2 = {};
-    try {
-        data1 = JSON.parse(ext.storageGet('mainData') || '{}');
-        data2 = JSON.parse(ext.storageGet('linkData') || '{}');
-    } catch (err) {
-        console.error(`在获取data时出错:${err}`);
-    }
+let data1 = {}, data2 = {};
+try {
+    data1 = JSON.parse(ext.storageGet('mainData') || '{}');
+    data2 = JSON.parse(ext.storageGet('linkData') || '{}');
+} catch (err) {
+    console.error(`在获取data时出错:${err}`);
+}
 
-    const mainData = data1;
-    const linkData = data2;
+const mainData = data1;
+const linkData = data2;
 
-    function saveData() {
-        ext.storageSet('mainData', JSON.stringify(mainData));
-        ext.storageSet('linkData', JSON.stringify(linkData));
-    }
+function saveData() {
+    ext.storageSet('mainData', JSON.stringify(mainData));
+    ext.storageSet('linkData', JSON.stringify(linkData));
+}
 
     function getMsg(messageType, senderId, groupId = '') {
         let msg = seal.newMessage();
@@ -330,7 +331,6 @@ if (!ext) {
         }
     }
     */
-}
 
 /* TODO:
 - 在主窗口发送指令到其他窗口。想不到什么好的解决方案，搁置。

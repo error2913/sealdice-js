@@ -1,6 +1,6 @@
 # 消息合并
 
-- 源码：[message_merge.js](https://github.com/error2913/sealdice-js/blob/main/message_merge.js)
+- 源码：[message_merge.js](https://github.com/error2913/sealdice-js/blob/main/utils/message_merge.js)
 - 版本：1.0.2
 - 作者：错误
 - 依赖：无

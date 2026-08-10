@@ -7,7 +7,7 @@
 // 2024-12-16 21:34:52
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
-// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/ping_3d.js
+// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/utils/ping_3d.js
 // ==/UserScript==
 
 // 首先检查是否已经存在
@@ -149,12 +149,11 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             return seal.ext.newCmdExecuteResult(true);
         }
         case 'abc': {
-            const prefix_a = cmdArgs.getArgN(2);
-            const prefix_b = cmdArgs.getArgN(3);
-            const prefix_c = cmdArgs.getArgN(4);
-
-            const ping = new Ping(prefix_a, prefix_b, prefix_c);
-            data[gid] = ping;
+            const ping = data[gid];
+            if (!ping) {
+                seal.replyToSender(ctx, msg, '请先使用【.乒 test】开始测试');
+                return seal.ext.newCmdExecuteResult(true);
+            }
 
             setTimeout(() => {
                 ping.BC = Date.now();
@@ -183,7 +182,7 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             return seal.ext.newCmdExecuteResult(true);
         }
         case 'bca': {
-            const BC = parseInt(cmdArgs.getArgN(2));
+            const BC = parseFloat(cmdArgs.getArgN(2));
 
             const ping = data[gid];
             if (!ping) {

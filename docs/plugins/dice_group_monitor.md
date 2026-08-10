@@ -1,6 +1,6 @@
 # 集骰监听
 
-- 源码：[dice_group_monitor.js](https://github.com/error2913/sealdice-js/blob/main/dice_group_monitor.js)
+- 源码：[dice_group_monitor.js](https://github.com/error2913/sealdice-js/blob/main/group_manage/dice_group_monitor.js)
 - 版本：1.0.2
 - 作者：错误
 - 依赖：无

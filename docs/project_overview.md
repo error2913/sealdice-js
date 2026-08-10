@@ -6,7 +6,10 @@
 
 ```text
 sealdice-js/
-├── *.js                  # 纯 JS 插件，可直接放入海豹 js 插件目录使用
+├── group_manage/         # 纯 JS 插件：群管理与通知
+├── trpg/                 # 纯 JS 插件：跑团 / COC
+├── entertainment/        # 纯 JS 插件：游戏与娱乐
+├── utils/                # 纯 JS 插件：工具与依赖
 ├── animal_world/         # TS 插件：动物世界（养成玩法）
 ├── card_game_template/   # TS 插件：卡牌游戏模板（deck/game/player 结构示例）
 ├── chart/                # TS 插件：排行榜图表（chart后端 在 error-backends）
@@ -20,33 +23,33 @@ sealdice-js/
 
 ## JS 插件列表
 
-以下为根目录下的纯 JS 插件，均为海豹扩展，通过指令调用。
+以下为纯 JS 插件，按功能分类存放于 `group_manage/`、`trpg/`、`entertainment/`、`utils/` 目录，均为海豹扩展，通过指令调用。
 
 | 文件 | 插件名 | 说明 |
 | --- | --- | --- |
-| insane_notice.js | [不定性疯狂提醒](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/insane_notice.md) | 特定指令后对 san 值进行不定性疯狂检测，需用 `.st sanmax` 或 `.rest` 设置上限 |
-| idiom.js | [成语接龙](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/idiom.md) | 成语接龙小游戏，支持查询解释与排行榜 |
-| non_trpg_group_detect.js | [非跑团群检测](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/non_trpg_group_detect.md) | 群内超过阈值时间使用娱乐功能时向通知列表告警 |
-| announcement_subscribe.js | [公告订阅版](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/announcement_subscribe.md) | 订阅公告，使用 `.订阅公告` 查看帮助 |
-| nuclear_button.js | [核弹发射按钮](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/nuclear_button.md) | 发展科技、积累资源、制造核弹的对抗玩法 |
-| dice_group_monitor.js | [集骰监听](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/dice_group_monitor.md) | 检测疑似集骰的群并通知，可自定义白名单 |
-| join_group_verify.js | [加群验证](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/join_group_verify.md) | 加群申请与验证码验证，支持预设答案、错误答案、退群消息开关，使用 `.agv` 查看帮助 |
-| today_in_history.js | [历史上的今天](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/today_in_history.md) | 发送「历史上的今天」获取当天历史事件 |
-| fly_seal.js | [螺旋飞行海豹](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/fly_seal.md) | 娱乐插件，`.fly` 起飞、`.seal` 查看信息 |
-| random_lottery.js | [随机抽奖](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/random_lottery.md) | 七天内有发言的用户可参与抽奖，中奖者不重复 |
-| sui_favorability.js | [穗好感](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/sui_favorability.md) | 角色好感度插件 |
-| vote.js | [投票](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/vote.md) | 创建/参与/查看投票，使用 `.投票` 查看帮助 |
-| message_merge.js | [消息合并](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/message_merge.md) | 将多段消息合并为图文混排消息发送 |
-| crab_cult_game.js | [蟹脚小游戏](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/crab_cult_game.md) | 克苏鲁题材养成小游戏，`.cult` 查看指引、`.cult master` 查看骰主指令 |
-| suggestion_box.js | [意见箱](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/suggestion_box.md) | 收集和管理用户意见，使用 `.意见` 查看帮助 |
-| auto_groupsign.js | [自动群打卡](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/auto_group_sign.md) | 自动群签到，需 ob11 网络连接依赖，使用 `.gs help` 查看帮助 |
-| coc7_cn.js | [coc7指令中文版](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/coc7_cn.md) | 将内置 COC7 指令改写为中文别名 |
-| coc_forward_msg.js | [COC生成属性合并消息](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/coc_forward_msg.md) | 修改内置 `.coc`，将生成结果合并为一条消息，需 ob11 网络连接依赖 |
-| link.js | [LINK!!!](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/LINK.md) | 连接群聊与私聊消息，使用 `.link` 查看帮助 |
-| ping_3d.js | [三骰联合延迟测试](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/ping_3d.md) | 三个骰子同时安装时测试指令延迟，使用 `.乒` 开始测试 |
-| ping_auto.js | [多骰联合延迟测试](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/ping_auto.md) | 自动化的多骰延迟测试，依赖 team 插件，使用 `.乒乓` 查看帮助 |
-| postnow.js | [骰主公告极速版](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/postnow.md) | 发送公告/广告，安装 ob11 依赖后自动启用 HTTP 模式，使用 `.pn` 查看帮助 |
-| rename.js | [群名片集体修改器](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/rename.md) | 批量修改群名片，安装 ob11 依赖后自动启用 HTTP 模式，使用 `.rn` 查看帮助 |
+| trpg/insane_notice.js | [不定性疯狂提醒](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/insane_notice.md) | 特定指令后对 san 值进行不定性疯狂检测，需用 `.st sanmax` 或 `.rest` 设置上限 |
+| entertainment/idiom.js | [成语接龙](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/idiom.md) | 成语接龙小游戏，支持查询解释与排行榜 |
+| group_manage/non_trpg_group_detect.js | [非跑团群检测](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/non_trpg_group_detect.md) | 群内超过阈值时间使用娱乐功能时向通知列表告警 |
+| group_manage/announcement_subscribe.js | [公告订阅版](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/announcement_subscribe.md) | 订阅公告，使用 `.订阅公告` 查看帮助 |
+| entertainment/nuclear_button.js | [核弹发射按钮](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/nuclear_button.md) | 发展科技、积累资源、制造核弹的对抗玩法 |
+| group_manage/dice_group_monitor.js | [集骰监听](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/dice_group_monitor.md) | 检测疑似集骰的群并通知，可自定义白名单 |
+| group_manage/join_group_verify.js | [加群验证](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/join_group_verify.md) | 加群申请与验证码验证，支持预设答案、错误答案、退群消息开关，使用 `.agv` 查看帮助 |
+| entertainment/today_in_history.js | [历史上的今天](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/today_in_history.md) | 发送「历史上的今天」获取当天历史事件 |
+| entertainment/fly_seal.js | [螺旋飞行海豹](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/fly_seal.md) | 娱乐插件，`.fly` 起飞、`.seal` 查看信息 |
+| entertainment/random_lottery.js | [随机抽奖](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/random_lottery.md) | 七天内有发言的用户可参与抽奖，中奖者不重复 |
+| trpg/sui_favorability.js | [穗好感](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/sui_favorability.md) | 角色好感度插件 |
+| entertainment/vote.js | [投票](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/vote.md) | 创建/参与/查看投票，使用 `.投票` 查看帮助 |
+| utils/message_merge.js | [消息合并](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/message_merge.md) | 将多段消息合并为图文混排消息发送 |
+| entertainment/crab_cult_game.js | [蟹脚小游戏](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/crab_cult_game.md) | 克苏鲁题材养成小游戏，`.cult` 查看指引、`.cult master` 查看骰主指令 |
+| group_manage/suggestion_box.js | [意见箱](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/suggestion_box.md) | 收集和管理用户意见，使用 `.意见` 查看帮助 |
+| group_manage/auto_groupsign.js | [自动群打卡](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/auto_group_sign.md) | 自动群签到，需 ob11 网络连接依赖，使用 `.gs help` 查看帮助 |
+| trpg/coc7_cn.js | [coc7指令中文版](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/coc7_cn.md) | 将内置 COC7 指令改写为中文别名 |
+| trpg/coc_forward_msg.js | [COC生成属性合并消息](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/coc_forward_msg.md) | 修改内置 `.coc`，将生成结果合并为一条消息，需 ob11 网络连接依赖 |
+| utils/link.js | [LINK!!!](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/LINK.md) | 连接群聊与私聊消息，使用 `.link` 查看帮助 |
+| utils/ping_3d.js | [三骰联合延迟测试](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/ping_3d.md) | 三个骰子同时安装时测试指令延迟，使用 `.乒` 开始测试 |
+| utils/ping_auto.js | [多骰联合延迟测试](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/ping_auto.md) | 自动化的多骰延迟测试，依赖 team 插件，使用 `.乒乓` 查看帮助 |
+| group_manage/postnow.js | [骰主公告极速版](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/postnow.md) | 发送公告/广告，安装 ob11 依赖后自动启用 HTTP 模式，使用 `.pn` 查看帮助 |
+| group_manage/rename.js | [群名片集体修改器](https://github.com/error2913/sealdice-js/blob/main/docs/plugins/rename.md) | 批量修改群名片，安装 ob11 依赖后自动启用 HTTP 模式，使用 `.rn` 查看帮助 |
 
 ## TypeScript 插件项目
 
@@ -78,7 +81,7 @@ chart 前端插件保留在本仓库，`chart后端` 与 redbag、run_shell 统�
 
 ### 纯 JS 插件
 
-1. 将需要的 `.js` 文件放入海豹的 js 插件目录（如 `data/extensions/js/`）。
+1. 将需要的分类目录整体放入海豹的 js 插件目录（如 `data/extensions/js/`，海豹会递归加载子目录），也可以只复制单个 `.js` 文件。
 2. 在海豹面板的「扩展管理」中重载 JS。
 3. 按插件内的帮助指令（如 `.agv`、`.投票`）使用。
 

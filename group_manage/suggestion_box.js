@@ -7,7 +7,7 @@
 // 2024-11-19 19:49:09
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
-// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/suggestion_box.js
+// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/group_manage/suggestion_box.js
 // ==/UserScript==
 
 let ext = seal.ext.find('意见箱');
@@ -16,17 +16,18 @@ if (!ext) {
     seal.ext.register(ext);
 
     seal.ext.registerIntConfig(ext, '意见箱通知上限', 100, '意见箱内意见达到上线后会向通知列表发送提醒')
+}
 
-    let data = [];
-    try {
-        data = JSON.parse(ext.storageGet('data') || '[]');
+let data = [];
+try {
+    data = JSON.parse(ext.storageGet('data') || '[]');
 
-        if (!Array.isArray(data)) {
-            throw new Error('data不是数组');
-        }
-    } catch (err) {
-        console.error(`在获取data时出错:${err}`);
+    if (!Array.isArray(data)) {
+        throw new Error('data不是数组');
     }
+} catch (err) {
+    console.error(`在获取data时出错:${err}`);
+}
 
     const box = data;
 
@@ -86,12 +87,14 @@ if (!ext) {
 
     function getRandSuggestions(n) {
         const suggestions = [];
+        const indices = new Set();
 
-        for (let i = 0; i < n; i++) {
-            const index = Math.floor(Math.random() * box.length);
-            const item = box[index];
+        while (indices.size < n) {
+            indices.add(Math.floor(Math.random() * box.length));
+        }
 
-            suggestions.push(item.s);
+        for (const index of indices) {
+            suggestions.push(box[index].s);
         }
 
         return suggestions;
@@ -332,5 +335,4 @@ if (!ext) {
             }
         }
     };
-    ext.cmdMap['意见'] = cmd;
-}
+ext.cmdMap['意见'] = cmd;

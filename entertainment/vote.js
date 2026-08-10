@@ -7,6 +7,7 @@
 // 2026-03-24 21:48:05
 // @license      MIT
 // @homepageURL  https://github.com/sealdice/javascript
+// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/entertainment/vote.js
 // ==/UserScript==
 
 let ext = seal.ext.find('投票');
@@ -41,6 +42,7 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             case 'c':
             case 'crt':
             case 'create': {
+                if (ctx.privilegeLevel < 50) throw new Error(seal.formatTmpl(ctx, "核心:提示_无权限"));
                 if (id === '') throw new Error('投票ID不能为空');
                 const limit = cmdArgs.getKwarg('limit');
                 let min = 1, max = 1;
@@ -61,6 +63,7 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             case 'd':
             case 'del':
             case 'delete': {
+                if (ctx.privilegeLevel < 50) throw new Error(seal.formatTmpl(ctx, "核心:提示_无权限"));
                 if (id === '') throw new Error('投票ID不能为空');
                 deleteVote(sid, id);
                 seal.replyToSender(ctx, msg, `投票${id}已删除`);
@@ -102,6 +105,7 @@ ${Object.keys(data[sid]).map((id, index) => `${index + 1}. ${id}`).join('\n')}`)
             }
             case 'clr':
             case 'clear': {
+                if (ctx.privilegeLevel < 50) throw new Error(seal.formatTmpl(ctx, "核心:提示_无权限"));
                 clearVote(sid);
                 seal.replyToSender(ctx, msg, `当前群所有投票已清空`);
                 return ret;

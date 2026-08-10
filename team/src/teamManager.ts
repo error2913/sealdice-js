@@ -225,6 +225,9 @@ export class TeamManager {
 
             const msg = getMsg("group", userId, id);
             const mctx = getCtx(ctx.endPoint.userId, msg);
+            if (!mctx) {
+                continue;
+            }
 
             result.push(mctx.player.name);
         }
@@ -321,6 +324,9 @@ export class TeamManager {
         let mis = team.members.map(userId => {
             const msg = getMsg("group", userId, id);
             const mctx = getCtx(ctx.endPoint.userId, msg);
+            if (!mctx) {
+                return null;
+            }
 
             const attr: { [key: string]: number } = {};
 
@@ -345,7 +351,7 @@ export class TeamManager {
 
         })
 
-        return mis;
+        return mis.filter(mi => mi !== null);
     }
 
     /**
@@ -363,6 +369,9 @@ export class TeamManager {
         let mis = team.members.map(userId => {
             const msg = getMsg("group", userId, id);
             const mctx = getCtx(ctx.endPoint.userId, msg);
+            if (!mctx) {
+                return null;
+            }
 
             /* 防止用户修改豹的内置变量
             if (key[0] == '$') {
@@ -395,7 +404,7 @@ export class TeamManager {
             }
         })
 
-        return mis;
+        return mis.filter(mi => mi !== null);
     }
 
     /**

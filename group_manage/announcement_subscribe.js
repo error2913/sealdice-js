@@ -6,7 +6,7 @@
 // @timestamp    1776872823
 // 2026-04-22 23:47:03
 // @license      MIT
-// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/announcement_subscribe.js
+// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/group_manage/announcement_subscribe.js
 // ==/UserScript==
 
 let ext = seal.ext.find('公告订阅版');
@@ -148,7 +148,8 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             }
             case '频道列表':
             case 'list': {
-                seal.replyToSender(ctx, msg, `当前订阅公告列表\n${Object.keys(data.channels).join('\n')}`);
+                const channels = Object.keys(data.channels);
+                seal.replyToSender(ctx, msg, channels.length === 0 ? '当前没有订阅公告频道' : `当前订阅公告列表\n${channels.join('\n')}`);
                 return ret;
             }
             case '发布':

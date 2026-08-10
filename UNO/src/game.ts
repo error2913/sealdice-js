@@ -135,11 +135,20 @@ export class Game {
         }
 
         function drawStartCard(game: Game): Deck {
-            const startCard = game.mainDeck.draw(0, 1)[0];
-            game.discardDeck.add([startCard]);
+            const specialTypes = ['禁止', '反转', '加二', '万能', '加四'];
+            let startCard;
 
-            if (['禁止', '反转', '加二', '万能', '加四'].includes(deckMap[startCard].info.type)) {
-                return drawStartCard(game);
+            for (let attempt = 0; attempt < 20; attempt++) {
+                startCard = game.mainDeck.draw(0, 1)[0];
+                if (!startCard) {
+                    throw new Error('牌堆已空，无法开始游戏');
+                }
+
+                game.discardDeck.add([startCard]);
+
+                if (!specialTypes.includes(deckMap[startCard].info.type)) {
+                    break;
+                }
             }
 
             return deckMap[startCard].clone();

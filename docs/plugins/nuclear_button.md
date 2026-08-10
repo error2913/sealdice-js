@@ -1,6 +1,6 @@
 # 核弹发射按钮
 
-- 源码：[nuclear_button.js](https://github.com/error2913/sealdice-js/blob/main/nuclear_button.js)
+- 源码：[nuclear_button.js](https://github.com/error2913/sealdice-js/blob/main/entertainment/nuclear_button.js)
 - 版本：1.0.0
 - 作者：错误
 - 依赖：game依赖（>= 1.0.0）

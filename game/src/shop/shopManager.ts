@@ -61,7 +61,7 @@ export class ShopManager {
         const now = Math.floor(Date.now() / 1000);
         const updateTime = this.cache[name].updateTime;
         const interval = this.map[name].interval;
-        const dateDiff = Math.ceil((now - updateTime) / 24 * 60 * 60);
+        const dateDiff = Math.ceil((now - updateTime) / (24 * 60 * 60));
         if (interval !== 0 && dateDiff >= interval) {
             this.cache[name].updateShop();
             this.saveShop(name);

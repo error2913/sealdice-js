@@ -7,19 +7,20 @@
 // 2024-11-25 21:59:28
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
-// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/postnow.js
+// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/group_manage/postnow.js
 // ==/UserScript==
 
 let ext = seal.ext.find('postnow');
 if (!ext) {
     ext = seal.ext.new('postnow', '错误', '1.2.1');
     seal.ext.register(ext);
+}
 
-    let readyToSend = false;
-    let task = async () => {
-        return null;
-    };
-    const data = JSON.parse(ext.storageGet('postData') || '{}');
+let readyToSend = false;
+let task = async () => {
+    return null;
+};
+const data = JSON.parse(ext.storageGet('postData') || '{}');
 
     function save() {
         ext.storageSet('postData', JSON.stringify(data));
@@ -85,6 +86,11 @@ if (!ext) {
         const msg = getMsg(gid, uid);
         const ctx = getCtx(epId, msg);
 
+        if (!ctx) {
+            console.warn(`postnow: 未找到端点 ${epId}，跳过群 ${gid}`);
+            return;
+        }
+
         if (!emg && ctx.group.logOn) {
             return;
         }
@@ -94,12 +100,17 @@ if (!ext) {
 
     // HTTP模式：获取当前端点的全部群
     async function getGidsByHttp(epId) {
-        const data = await globalThis.net.callApi(epId, 'get_group_list?no_cache=true');
-        if (data === null) {
+        try {
+            const data = await globalThis.net.callApi(epId, 'get_group_list?no_cache=true');
+            if (data === null) {
+                return null;
+            }
+
+            return data.map(item => `QQ-Group:${item.group_id}`);
+        } catch (e) {
+            console.error(`postnow: 获取群列表失败 ${epId}:`, e);
             return null;
         }
-
-        return data.map(item => `QQ-Group:${item.group_id}`);
     }
 
     async function post(s, emg = false) {
@@ -185,7 +196,12 @@ if (!ext) {
                 let arr = [];
                 for (let j = 0; j < gids.length; j++) {
                     const gid = gids[j];
-                    const group_member_list = await globalThis.net.callApi(epId, `get_group_member_list?group_id=${gid.replace(/\D+/, '')}`);
+                    let group_member_list = null;
+                    try {
+                        group_member_list = await globalThis.net.callApi(epId, `get_group_member_list?group_id=${gid.replace(/\D+/, '')}`);
+                    } catch (e) {
+                        console.error(`postnow: 获取群成员列表失败 ${epId} ${gid}:`, e);
+                    }
                     if (group_member_list === null) {
                         continue;
                     }
@@ -245,7 +261,7 @@ if (!ext) {
     }
 
     function clean(ts) {
-        const limit = 1000 * 60 * 60 * 24 * 7;
+        const limit = 60 * 60 * 24 * 7;
         const epIds = Object.keys(data);
         for (let i = 0; i < epIds.length; i++) {
             const epId = epIds[i];
@@ -435,7 +451,6 @@ if (!ext) {
     };
     ext.cmdMap['pn'] = cmd;
 
-    globalThis.getPostData = () => {
-        return JSON.parse(JSON.stringify(data));
-    }
+globalThis.getPostData = () => {
+    return JSON.parse(JSON.stringify(data));
 }

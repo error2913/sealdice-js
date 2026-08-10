@@ -7,6 +7,7 @@
 // 2024-06-15 20:59:27
 // @license      MIT
 // @homepageURL  https://github.com/sealdice/javascript
+// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/trpg/sui_favorability.js
 // ==/UserScript==
 // 首先检查是否已经存在
 let ext = seal.ext.find('穗');
@@ -14,9 +15,10 @@ if (!ext) {
   ext = seal.ext.new('穗', '错误', '1.0.1');
   // 注册扩展
   seal.ext.register(ext);
-  const data = JSON.parse(ext.storageGet("data") || '{}')
-  const shopnow = JSON.parse(ext.storageGet("shopnow") || '{}')
-  const goods = {"食物":["一笼肉馒头","一笼菜馒头","干粮","白菜","萝卜","青鱼","番薯"],"礼物":["拨浪鼓","风车","陶响球"]}
+}
+const data = JSON.parse(ext.storageGet("data") || '{}')
+const shopnow = JSON.parse(ext.storageGet("shopnow") || '{}')
+const goods = {"食物":["一笼肉馒头","一笼菜馒头","干粮","白菜","萝卜","青鱼","番薯"],"礼物":["拨浪鼓","风车","陶响球"]}
 
   //添加qq号
   function add(ctx) {
@@ -99,7 +101,7 @@ if (!ext) {
         title += `我的好感：${data[qq]["favor"]}`
 
         seal.replyToSender(ctx, msg, title)
-        return;
+        return seal.ext.newCmdExecuteResult(true);
       }
     }
   }
@@ -128,14 +130,14 @@ if (!ext) {
           goodsnum += data[qq]["bag"][good]
         }
 
-        text = `${data[qq]["name"]}的行囊：\n钱数：${money}文\n物品数量:${goodsnum}`
+        let text = `${data[qq]["name"]}的行囊：\n钱数：${money}文\n物品数量:${goodsnum}`
         for (let i = 0; i < arr.length; i++) {
           if (data[qq]["bag"][arr[i]] != 0) {
             text += `\n${arr[i]}×${data[qq]["bag"][arr[i]]}`
           }
         }
         seal.replyToSender(ctx, msg, text)
-        return;
+        return seal.ext.newCmdExecuteResult(true);
       }
     }
   }
@@ -197,7 +199,7 @@ if (!ext) {
 
         if (sign == date){
           seal.replyToSender(ctx, msg, `${data[qq]["name"]}爷今天已经签到过啦`)
-          return;
+          return seal.ext.newCmdExecuteResult(true);
         }
         else{
           seal.format(ctx, "{$msign=$tDate}")
@@ -206,7 +208,7 @@ if (!ext) {
           data[qq]["money"] += increase
           ext.storageSet("data", JSON.stringify(data))
           seal.replyToSender(ctx, msg, `${data[qq]["name"]}爷签到成功！获得了${increase}文，累计签到${signtime}次`)
-          return;
+          return seal.ext.newCmdExecuteResult(true);
         }
       }
     }
@@ -256,18 +258,18 @@ if (!ext) {
         //没有这玩意
         if (!shopnow["goods"].hasOwnProperty(val)) {
           seal.replyToSender(ctx, msg, `没有在售。`)
-          return;
+          return seal.ext.newCmdExecuteResult(true);
         }
         //剩余数量不足
         if (shopnow["goods"][val]["rest"] <= 0) {
           seal.replyToSender(ctx, msg, `${val}已经卖光啦！`)
-          return;
+          return seal.ext.newCmdExecuteResult(true);
         }
         //钱不够
         let price = shopnow["goods"][val]["price"]
         if (price > money) {
           seal.replyToSender(ctx, msg, `钱不够呢。`)
-          return;
+          return seal.ext.newCmdExecuteResult(true);
         }
 
         data[qq]["money"] = money - price
@@ -277,7 +279,7 @@ if (!ext) {
 
         ext.storageSet("data", JSON.stringify(data))
         seal.replyToSender(ctx, msg, `${data[qq]["name"]}花费了${price}文，买到了${val}。`)
-        return;
+        return seal.ext.newCmdExecuteResult(true);
       }
     }
   }
@@ -303,13 +305,13 @@ if (!ext) {
         let anotherqq = anotherPeople.replace(/\D+/g, "")
         if (qq == anotherqq) {
           seal.replyToSender(ctx, msg, `那么你送给了你自己。`)
-          return;
+          return seal.ext.newCmdExecuteResult(true);
         }
         add(mctx)
 
         if (!data[qq]["bag"].hasOwnProperty(val)) {
           seal.replyToSender(ctx, msg, "行囊中没有此物品。")
-          return;
+          return seal.ext.newCmdExecuteResult(true);
         }
 
         if (!data[anotherqq]["bag"].hasOwnProperty(val)) { data[anotherqq]["bag"][val] = 1 }
@@ -321,7 +323,7 @@ if (!ext) {
         }
         ext.storageSet("data", JSON.stringify(data))
         seal.replyToSender(ctx, msg, `${data[qq]["name"]}送给了${data[anotherqq]["name"]}一件${val}`)
-        return;
+        return seal.ext.newCmdExecuteResult(true);
       }
     }
   }
@@ -344,7 +346,7 @@ if (!ext) {
       }
       default: {
         if (ctx.privilegeLevel != 100) {
-          return;
+          return seal.ext.newCmdExecuteResult(true);
         }
         add(mctx)
         let anotherPeople = mctx.player.userId
@@ -354,7 +356,7 @@ if (!ext) {
         //需要一个参数
         if (!val) {
           seal.replyToSender(ctx, msg, `参数错误`)
-          return;
+          return seal.ext.newCmdExecuteResult(true);
         }
         /*if (val == "del") {
           for (let i in attrb) { delete attrb[i] }
@@ -371,7 +373,7 @@ if (!ext) {
         if (val == "刷新市集") {
           delete shopnow["date"]
           seal.replyToSender(ctx, msg, `成功！`)
-          return;
+          return seal.ext.newCmdExecuteResult(true);
         }
         /*if (val == "保释") {
           //关进医院时间
@@ -386,19 +388,19 @@ if (!ext) {
         //需要两个参数
         if (!val2) {
           seal.replyToSender(ctx, msg, `.cheat xxx xxx`)
-          return;
+          return seal.ext.newCmdExecuteResult(true);
         }
         if (val == "money") {
           data[qq]["money"] = parseInt(val2)
           ext.storageSet("data", JSON.stringify(data))
           seal.replyToSender(ctx, msg, `成功！`)
-          return;
+          return seal.ext.newCmdExecuteResult(true);
         }
         if (val == "favor") {
           data[qq]["favor"] = parseInt(val2)
           ext.storageSet("data", JSON.stringify(data))
           seal.replyToSender(ctx, msg, `成功！`)
-          return;
+          return seal.ext.newCmdExecuteResult(true);
         }
         /*if (val == "加时") {
           //被抓时间
@@ -413,7 +415,7 @@ if (!ext) {
         if (data[qq]["bag"][val] == 0) { delete data[qq]["bag"][val]; }
         ext.storageSet("data", JSON.stringify(data))
         seal.replyToSender(ctx, msg, `成功！`)
-        return;
+        return seal.ext.newCmdExecuteResult(true);
       }
     }
   }
@@ -486,6 +488,5 @@ if (!ext) {
   ext.cmdMap['行囊'] = cmdbag;
   ext.cmdMap['买'] = cmdbuy;
   ext.cmdMap['cheat'] = cmdCheat;
-  ext.cmdMap['赠予'] = cmdgiv;
-  ext.cmdMap['签到'] = cmdsignin;
-}
+ext.cmdMap['赠予'] = cmdgiv;
+ext.cmdMap['签到'] = cmdsignin;

@@ -7,7 +7,7 @@
 // 2024-10-02 19:01:29
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
-// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/dice_group_monitor.js
+// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/group_manage/dice_group_monitor.js
 // ==/UserScript==
 // 首先检查是否已经存在
 let ext = seal.ext.find('集骰监听');
@@ -22,8 +22,9 @@ if (!ext) {
     seal.ext.registerTemplateConfig(ext, "计入消息模版", ["SealDice|Shiki|AstralDice|OlivaDice|SitaNya", "[Dd]\\d"], "使用正则表达式");
     seal.ext.registerIntConfig(ext, "指令后n秒内计入", 5, "");
     seal.ext.registerFloatConfig(ext, "暂时白名单时限/分钟", 720, "监听一次指令后会暂时加入白名单");
+}
 
-    const whiteList = JSON.parse(ext.storageGet("whiteList") || '{}');
+const whiteList = JSON.parse(ext.storageGet("whiteList") || '{}');
 
     ext.onCommandReceived = (ctx, msg, cmdArgs) => {
         if (ctx.isPrivate) return;
@@ -83,6 +84,5 @@ if (!ext) {
         }
         return seal.ext.newCmdExecuteResult(true);
     };
-    // 将命令注册到扩展中
-    ext.cmdMap['monitor'] = cmdmonitor;
-}
+// 将命令注册到扩展中
+ext.cmdMap['monitor'] = cmdmonitor;

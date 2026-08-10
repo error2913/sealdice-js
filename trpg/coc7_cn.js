@@ -7,7 +7,7 @@
 // 2025-06-15 11:54:37
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
-// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/coc7_cn.js
+// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/trpg/coc7_cn.js
 // ==/UserScript==
 
 let ext = seal.ext.find('coc7_cn');
@@ -35,13 +35,19 @@ if (!extcoc) {
 }
 
 for (const cmdName in config) {
+    const source = extcoc.cmdMap[cmdName];
+    if (!source) {
+        console.warn(`coc7指令中文版 未找到内置指令 ${cmdName}，跳过`);
+        continue;
+    }
+
     for (const alias of config[cmdName]) {
         const cmd = seal.ext.newCmdItemInfo();
         cmd.name = alias;
-        cmd.help = extcoc.cmdMap[cmdName].help;
-        cmd.allowDelegate = extcoc.cmdMap[cmdName].allowDelegate;
-        cmd.disabledInPrivate = extcoc.cmdMap[cmdName].disabledInPrivate;
-        cmd.solve = extcoc.cmdMap[cmdName].solve;
+        cmd.help = source.help;
+        cmd.allowDelegate = source.allowDelegate;
+        cmd.disabledInPrivate = source.disabledInPrivate;
+        cmd.solve = source.solve;
         ext.cmdMap[alias] = cmd;
     }
 }

@@ -7,7 +7,7 @@
 // 2024-12-13 20:02:16
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
-// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/auto_groupsign.js
+// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/group_manage/auto_groupsign.js
 // @depends 错误&白鱼:ob11网络连接依赖:>=2.1.0
 // ==/UserScript==
 
@@ -37,7 +37,13 @@ async function sign() {
     for (let i = 0; i < eps.length; i++) {
         const epId = eps[i].userId;
 
-        const data = await globalThis.net.callApi(epId, 'get_group_list?no_cache=true');
+        let data;
+        try {
+            data = await globalThis.net.callApi(epId, 'get_group_list?no_cache=true');
+        } catch (e) {
+            console.error(`获取群列表失败:${e.message}`);
+            continue;
+        }
         if (data === null) {
             continue;
         }
@@ -54,8 +60,12 @@ async function sign() {
                 for (let k = 0; k < arr_copy.length; k++) {
                     const gid = arr_copy[k];
 
-                    await globalThis.net.callApi(epId, `send_group_sign?group_id=${gid.replace(/\D+/, '')}`);
-                    result++;
+                    try {
+                        await globalThis.net.callApi(epId, `send_group_sign?group_id=${gid.replace(/\D+/, '')}`);
+                        result++;
+                    } catch (e) {
+                        console.error(`群(${gid})打卡失败:${e.message}`);
+                    }
                 }
 
                 await new Promise(resolve => setTimeout(resolve, interval + Math.floor(Math.random() * 500)));

@@ -7,7 +7,7 @@
 // 2024-12-04 12:34:34
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
-// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/random_lottery.js
+// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/entertainment/random_lottery.js
 // @depends 错误:骰主公告极速版:>=1.1.0
 // ==/UserScript==
 
@@ -54,6 +54,10 @@ function getAlluids(epId) {
     for (const gid of Object.keys(data[epId])) {
         const members = data[epId][gid].members;
         for (const uid of Object.keys(members)) {
+            // 跳过旧数据迁移产生的占位 uid，避免抽中空 @
+            if (uid === '0' || uid === '') {
+                continue;
+            }
             alluids[uid] = gid;
         }
     }
@@ -106,6 +110,10 @@ async function lottery(epId, n, s) {
                 const uids = wingids[gid];
                 const msg = getMsg(gid, '0');
                 const ctx = getCtx(epId, msg);
+                if (!ctx) {
+                    console.warn(`random_lottery: 未找到端点 ${epId}，跳过群 ${gid}`);
+                    continue;
+                }
 
                 const CQuids = uids.map(uid => `[CQ:at,qq=${uid.replace(/\D+/, '')}]`);
                 const reply = `该群中奖用户:\n${CQuids.join('\n')}\n${s}`;

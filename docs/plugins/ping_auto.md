@@ -1,13 +1,24 @@
 # 多骰联合延迟测试
 
-- 源码：[ping_auto.js](https://github.com/error2913/sealdice-js/blob/main/ping_auto.js)
-- 版本：1.0.3
+- 源码：[ping_auto.js](https://github.com/error2913/sealdice-js/blob/main/utils/ping_auto.js)
+- 版本：1.0.4
 - 作者：错误
 - 依赖：team（>= 4.0.0）
 
 ## 简介
 
 自动化的多骰联合延迟检测。需要先用 `.乒乓 set main @要设置的骰子` 设置一个主机，主机需加载 team 依赖。
+
+每个群由一台主机和若干从机组成：主机依次测量自己到每个从机的延迟，各从机再测量自己到其后所有从机的延迟并上报，最后由主机用三角法汇总出任意两骰之间的延迟报告。一轮检测带轮次令牌，旧消息不会干扰新一轮；成员失联会自动从队伍移除并重新检测。
+
+以下用户指令需要权限等级 100（管理员）：
+
+```text
+【.乒乓 set main @要设置的骰子】
+【.乒乓 ding】
+【.乒乓 dong】
+【.乒乓 click】/【.乒乓 clack】/【.乒乓 status】
+```
 
 ## 指令
 

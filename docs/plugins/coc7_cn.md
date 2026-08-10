@@ -1,6 +1,6 @@
 # coc7指令中文版
 
-- 源码：[coc7_cn.js](https://github.com/error2913/sealdice-js/blob/main/coc7_cn.js)
+- 源码：[coc7_cn.js](https://github.com/error2913/sealdice-js/blob/main/trpg/coc7_cn.js)
 - 版本：1.0.1
 - 作者：错误
 - 依赖：内置 coc7 指令

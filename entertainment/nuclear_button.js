@@ -7,7 +7,7 @@
 // 2024-11-29 15:51:03
 // @license      MIT
 // @homepageURL  https://github.com/error2913/sealdice-js/
-// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/nuclear_button.js
+// @updateUrl    https://raw.githubusercontent.com/error2913/sealdice-js/main/entertainment/nuclear_button.js
 // @depends 错误:game依赖:>=1.0.0
 // ==/UserScript==
 
@@ -16,6 +16,13 @@ if (!ext) {
     ext = seal.ext.new('nuclear', '错误', '1.0.0');
     seal.ext.register(ext);
 
+    seal.ext.registerIntConfig(ext, "污染值系数%", 100)
+    seal.ext.registerIntConfig(ext, "制作时间系数%", 100)
+    seal.ext.registerIntConfig(ext, "污染衰减时间常数/s", 259200)
+    seal.ext.registerIntConfig(ext, "辐射尘阈值", 3000)
+    seal.ext.registerIntConfig(ext, "灰霾阈值", 10000)
+    seal.ext.registerIntConfig(ext, "毒雾阈值", 20000)
+    seal.ext.registerIntConfig(ext, "核冬天阈值", 50000)
 }
 
 // 核弹制造所需道具
@@ -95,20 +102,20 @@ class Pollution {
 
         const now = Math.floor(Date.now() / 1000);
         const t = now - this.time;
-        const tau = 3 * 24 * 60 * 60;
+        const tau = seal.ext.getIntConfig(ext, "污染衰减时间常数/s");
 
         this.value *= Math.pow(Math.E, (-t / tau));
         this.value = parseFloat(this.value.toFixed(2));
 
         this.time = Math.floor(Date.now() / 1000);
 
-        if (this.value > 50000) {
+        if (this.value > seal.ext.getIntConfig(ext, "核冬天阈值")) {
             this.level = '核冬天';
-        } else if (this.value > 20000) {
+        } else if (this.value > seal.ext.getIntConfig(ext, "毒雾阈值")) {
             this.level = '毒雾';
-        } else if (this.value > 10000) {
+        } else if (this.value > seal.ext.getIntConfig(ext, "灰霾阈值")) {
             this.level = '灰霾';
-        } else if (this.value > 3000) {
+        } else if (this.value > seal.ext.getIntConfig(ext, "辐射尘阈值")) {
             this.level = '辐射尘';
         } else if (this.value > 0) {
             this.level = '微尘';
@@ -153,7 +160,7 @@ function nukeRegister(name, desc, val, reduce) {
     prop.desc = desc;
     prop.type = '核弹';
     prop.reply = '';
-    prop.solve = nukeSolve(val, reduce);
+    prop.solve = nukeSolve(Math.round(val * seal.ext.getIntConfig(ext, "污染值系数%") / 100), reduce);
     gm.prop.registerProp(prop);
 }
 
@@ -430,11 +437,11 @@ cmd.solve = (ctx, msg, cmdArgs) => {
 
             if (name !== '') {
                 const t = Math.floor(Date.now() / 1000) - player.varsMap.startProduceTime;
-                const time = nukeMaterials[name].time * 60 * 60;
+                const time = Math.round(nukeMaterials[name].time * 60 * 60 * seal.ext.getIntConfig(ext, "制作时间系数%") / 100);
                 if (t < time) {
                     const progress = Math.floor((t / time) * 100);
                     const restTime = parseFloat(((time - t) / 60).toFixed(2));
-                    const s = `【${item.name}】\n制造进度：${progress}%\n剩余完成时间：${restTime} 分钟`;
+                    const s = `【${name}】\n制造进度：${progress}%\n剩余完成时间：${restTime} 分钟`;
                     seal.replyToSender(ctx, msg, s);
                     return seal.ext.newCmdExecuteResult(true);
                 } else {
@@ -461,7 +468,7 @@ cmd.solve = (ctx, msg, cmdArgs) => {
                 return seal.ext.newCmdExecuteResult(true);
             }
 
-            const materials = nukeMaterials[name].materials;
+            const materials = nukeMaterials[val2].materials;
             for (const material in materials) {
                 if (!player.backpack.checkExists(material, materials[material])) {
                     seal.replyToSender(ctx, msg, `你还需要${materials[material]}件【${material}】`);
@@ -473,10 +480,10 @@ cmd.solve = (ctx, msg, cmdArgs) => {
                 player.backpack.removeItem(material, materials[material]);
             }
 
-            player.varsMap.production = name;
+            player.varsMap.production = val2;
             player.varsMap.startProduceTime = Math.floor(Date.now() / 1000);
 
-            seal.replyToSender(ctx, msg, `【${name}】已加入制作队列`);
+            seal.replyToSender(ctx, msg, `【${val2}】已加入制作队列`);
 
             gm.player.savePlayer(uid);
             return seal.ext.newCmdExecuteResult(true);
@@ -530,9 +537,15 @@ cmd.solve = (ctx, msg, cmdArgs) => {
             const name = cmdArgs.getArgN(2);
             if (name === '') {
                 const s = '可选的排行榜有：\n' + gm.chart.showAvailableChart();
-                seal.replyToSender(ctx, msg, '请输入排行榜名');
+                seal.replyToSender(ctx, msg, '请输入排行榜名\n' + s);
+                return seal.ext.newCmdExecuteResult(true);
             }
             const chart = gm.chart.getChart(name);
+            if (!chart) {
+                const s = '可选的排行榜有：\n' + gm.chart.showAvailableChart();
+                seal.replyToSender(ctx, msg, `排行榜「${name}」不存在\n${s}`);
+                return seal.ext.newCmdExecuteResult(true);
+            }
             const s = chart.showChart();
             seal.replyToSender(ctx, msg, s);
             return seal.ext.newCmdExecuteResult(true);
@@ -564,7 +577,8 @@ cmd.solve = (ctx, msg, cmdArgs) => {
                 return seal.ext.newCmdExecuteResult(true);
             }
 
-            seal.replyToSender(ctx, msg, `你购买了${count}个${name}，花费了${price}元`);
+            const goods = shop.getGoods(name);
+            seal.replyToSender(ctx, msg, `你购买了${count}个${name}，花费了${goods.price * count}元`);
 
             checkNuke(player, game);
             gm.chart.updateAllChart(player);
