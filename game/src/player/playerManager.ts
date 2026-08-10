@@ -3,7 +3,7 @@ import { Player } from "./player";
 
 export class PlayerManager {
     private ext: seal.ExtInfo;
-    private varsInfo: VarsInfo;
+    varsInfo: VarsInfo;
     private cache: { [key: string]: Player };
 
     constructor(ext: seal.ExtInfo) {

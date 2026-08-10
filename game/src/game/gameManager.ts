@@ -2,18 +2,20 @@ import { ChartManager } from "../chart/chartManager";
 import { MarketManager } from "../market/marketManager";
 import { PlayerManager } from "../player/playerManager";
 import { PropManager } from "../prop/propManager";
+import { RoomManager } from "../room/roomManager";
 import { ShopManager } from "../shop/shopManager";
 import { VarsInfo } from "../vars/varsManager";
 import { Game } from "./game";
 
 export class GameManager {
     ext: seal.ExtInfo;
-    private varsInfo: VarsInfo;
+    varsInfo: VarsInfo;
     prop: PropManager;
     player: PlayerManager;
     chart: ChartManager;
     shop: ShopManager;
     market: MarketManager;
+    room: RoomManager;
     private cache: { [key: string]: Game };
 
     constructor(ext: seal.ExtInfo) {
@@ -24,6 +26,7 @@ export class GameManager {
         this.chart = new ChartManager(ext);
         this.shop = new ShopManager(ext);
         this.market = new MarketManager(ext);
+        this.room = new RoomManager(ext);
         this.cache = {};
     }
 

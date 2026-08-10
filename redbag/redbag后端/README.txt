@@ -1,1 +1,0 @@
-背景图片可存放在resources/background内，生成图片时会自动随机选取。支持jpg，png，jpeg格式。

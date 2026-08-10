@@ -101,7 +101,15 @@ export class Game {
         }
 
         //初始化玩家
+        if (!globalThis.teamManager) {
+            seal.replyToSender(ctx, msg, '未找到team插件');
+            return;
+        }
         const teamList = globalThis.teamManager.getTeamList(this.id);
+        if (!teamList || teamList.length === 0) {
+            seal.replyToSender(ctx, msg, '请先使用 .team bind 绑定队伍');
+            return;
+        }
         this.players = teamList[0].members.map(id => new Player(id));
 
         //检查玩家数量

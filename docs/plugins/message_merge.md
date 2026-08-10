@@ -1,0 +1,17 @@
+# 消息合并
+
+- 源码：[message_merge.js](https://github.com/error2913/sealdice-js/blob/main/utils/message_merge.js)
+- 版本：1.0.2
+- 作者：错误
+- 依赖：无
+
+## 简介
+
+手机 QQ 不能进行复杂的图文混排？使用本插件可以把后面的多条消息合并成一条图文混排消息发送。
+
+## 指令
+
+```text
+【.合 <数字>】将后面指定条数的消息合并为一条
+【.合停】暂停合并
+```

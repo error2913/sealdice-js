@@ -345,6 +345,9 @@
         const userId = members.splice(index, 1)[0];
         const msg = getMsg("group", userId, id);
         const mctx = getCtx(ctx.endPoint.userId, msg);
+        if (!mctx) {
+          continue;
+        }
         result.push(mctx.player.name);
       }
       return result;
@@ -420,6 +423,9 @@
       let mis = team.members.map((userId) => {
         const msg = getMsg("group", userId, id);
         const mctx = getCtx(ctx.endPoint.userId, msg);
+        if (!mctx) {
+          return null;
+        }
         const attr = {};
         if (keys.length === 0) {
           keys = ["hp", "con", "siz", "san", "pow", "dex"];
@@ -432,7 +438,7 @@
           attr
         };
       });
-      return mis;
+      return mis.filter((mi) => mi !== null);
     }
     /**
      * 设置属性
@@ -448,6 +454,9 @@
       let mis = team.members.map((userId) => {
         const msg = getMsg("group", userId, id);
         const mctx = getCtx(ctx.endPoint.userId, msg);
+        if (!mctx) {
+          return null;
+        }
         if (["+", "-", "*", "/"].includes(valueText[0])) {
           valueText = key + valueText;
         }
@@ -462,7 +471,7 @@
           attr
         };
       });
-      return mis;
+      return mis.filter((mi) => mi !== null);
     }
     /**
      * 排序属性
@@ -485,10 +494,11 @@
     if (!ext) {
       ext = seal.ext.new("team", "错误", "4.0.2");
       seal.ext.register(ext);
+      const configManager2 = new ConfigManager(ext);
+      configManager2.registerConfig();
     }
     const teamManager = new TeamManager(ext);
     const configManager = new ConfigManager(ext);
-    configManager.registerConfig();
     const cmdteam = seal.ext.newCmdItemInfo();
     cmdteam.name = "team";
     cmdteam.help = `帮助：

@@ -16,7 +16,7 @@ function main() {
   // 注册扩展
   let ext = seal.ext.find('animalWorld');
   if (!ext) {
-    ext = seal.ext.new('animalWorld', '错误', '1.0.0');
+    ext = seal.ext.new('animalWorld', '错误', '1.0.1');
     seal.ext.register(ext);
   }
 
@@ -24,7 +24,10 @@ function main() {
 
   const cmdAW = seal.ext.newCmdItemInfo();
   cmdAW.name = 'aw';
-  cmdAW.help = 'TODO';
+  cmdAW.help = `指令：
+.aw info 查看我的动物信息
+.aw 排行榜 查看积分排行榜
+.aw 查询 <词条/动物/环境/事件> 查询信息`;
   cmdAW.solve = (ctx, msg, cmdArgs) => {
     let val = cmdArgs.getArgN(1);
     switch (val) {
@@ -101,7 +104,7 @@ function main() {
 
   const cmdRevive = seal.ext.newCmdItemInfo();
   cmdRevive.name = 'revive';
-  cmdRevive.help = '没有帮助';
+  cmdRevive.help = '指令：.revive 转生，随机生成一只新的动物';
   cmdRevive.solve = (ctx, msg, _) => {
     const player = Player.getPlayer(ext, ctx.player.userId, ctx);
 
@@ -116,7 +119,7 @@ function main() {
 
   const cmdSurvive = seal.ext.newCmdItemInfo();
   cmdSurvive.name = 'survive';
-  cmdSurvive.help = '没有帮助';
+  cmdSurvive.help = '指令：.survive <事件> 应对生存事件';
   cmdSurvive.solve = (ctx, msg, cmdArgs) => {
     const event = cmdArgs.getArgN(1);
     const player = Player.getPlayer(ext, ctx.player.userId, ctx);
@@ -131,7 +134,7 @@ function main() {
 
   const cmdExplore = seal.ext.newCmdItemInfo();
   cmdExplore.name = 'explore'; // 指令名字，可用中文
-  cmdExplore.help = '';
+  cmdExplore.help = '指令：.explore 探索，获取词条';
   cmdExplore.solve = (ctx, msg, _) => {
     const player = Player.getPlayer(ext, ctx.player.userId, ctx);
 
@@ -145,7 +148,7 @@ function main() {
 
   const cmdMultiply = seal.ext.newCmdItemInfo();
   cmdMultiply.name = 'multiply';
-  cmdMultiply.help = '没有帮助';
+  cmdMultiply.help = '指令：.multiply 繁衍';
   cmdMultiply.solve = (ctx, msg, _) => {
     const player = Player.getPlayer(ext, ctx.player.userId, ctx);
 
@@ -159,7 +162,7 @@ function main() {
 
   const cmdEvolve = seal.ext.newCmdItemInfo();
   cmdEvolve.name = 'evolve';
-  cmdEvolve.help = '';
+  cmdEvolve.help = '指令：.evolve 进化';
   cmdEvolve.solve = (ctx, msg, _) => {
     const player = Player.getPlayer(ext, ctx.player.userId, ctx);
 

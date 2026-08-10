@@ -6,7 +6,7 @@ function main() {
   // 注册扩展
   let ext = seal.ext.find('排行榜');
   if (!ext) {
-    ext = seal.ext.new('排行榜', '错误', '1.2.0');
+    ext = seal.ext.new('排行榜', '错误', '1.2.1');
     seal.ext.register(ext);
   }
 
@@ -61,9 +61,9 @@ function main() {
         return seal.ext.newCmdExecuteResult(true);
       }
       case 'update': {
-        const exthttp = seal.ext.find('HTTP依赖');
-        if (!exthttp) {
-          seal.replyToSender(ctx, msg, '请先安装 错误:HTTP依赖:>=1.0.0');
+        const net = globalThis.net;
+        if (!net) {
+          seal.replyToSender(ctx, msg, '请先安装 错误&白鱼:ob11网络连接依赖:>=2.1.0');
           return seal.ext.newCmdExecuteResult(true);
         }
 
@@ -95,13 +95,15 @@ function main() {
   ext.cmdMap['排行榜'] = cmd;
 
   seal.ext.registerTask(ext, "cron", "0 */2 * * *", () => {
-    const exthttp = seal.ext.find('HTTP依赖');
-    if (!exthttp) {
+    const net = globalThis.net;
+    if (!net) {
       return;
     }
 
     update(ext, cm).then(() => {
       console.log('排行榜数据更新完成');
+    }).catch(err => {
+      console.error('排行榜数据更新失败:', err);
     });
   });
 }

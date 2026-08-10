@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         UNO
 // @author       错误
-// @version      1.0.0
+// @version      1.0.1
 // @description  使用.uno获取帮助。依赖于错误:team:>=4.0.0
 // @timestamp    1730448043
 // 2024-11-01 16:00:43

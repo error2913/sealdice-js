@@ -55,7 +55,7 @@ export class Player {
             if (data && Object.keys(data).length > 0) {
                 cache[id] = Player.parse(data);
             } else {
-                cache[id] = Player.createPlayer(id, ctx.player.name || "未知玩家");
+                cache[id] = Player.createPlayer(id, ctx ? (ctx.player.name || "未知玩家") : "未知玩家");
                 playerList.push(id);
                 savePlayerList(ext);
             }
@@ -101,7 +101,7 @@ export class Player {
 
     //TODO:随机ID，随机名字
     public static createRobot(species: string): Player {
-        const player = new Player(`Robot`, `奇怪的${species}`);
+        const player = new Player(`Robot-${Date.now()}-${Math.floor(Math.random() * 10000)}`, `奇怪的${species}`);
 
         player.animal = getAnimal(species);
         const entries = getEntries(3);

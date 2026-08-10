@@ -104,7 +104,15 @@ export class Game {
         }
 
         //初始化玩家
+        if (!globalThis.teamManager) {
+            seal.replyToSender(ctx, msg, '未找到team插件');
+            return;
+        }
         const teamList = globalThis.teamManager.getTeamList(this.id);
+        if (!teamList || teamList.length === 0) {
+            seal.replyToSender(ctx, msg, '请先使用 .team bind 绑定队伍');
+            return;
+        }
         this.players = teamList[0].members.map(id => new Player(id));
 
         //检查玩家数量
@@ -127,11 +135,20 @@ export class Game {
         }
 
         function drawStartCard(game: Game): Deck {
-            const startCard = game.mainDeck.draw(0, 1)[0];
-            game.discardDeck.add([startCard]);
+            const specialTypes = ['禁止', '反转', '加二', '万能', '加四'];
+            let startCard;
 
-            if (['禁止', '反转', '加二', '万能', '加四'].includes(deckMap[startCard].info.type)) {
-                return drawStartCard(game);
+            for (let attempt = 0; attempt < 20; attempt++) {
+                startCard = game.mainDeck.draw(0, 1)[0];
+                if (!startCard) {
+                    throw new Error('牌堆已空，无法开始游戏');
+                }
+
+                game.discardDeck.add([startCard]);
+
+                if (!specialTypes.includes(deckMap[startCard].info.type)) {
+                    break;
+                }
             }
 
             return deckMap[startCard].clone();
